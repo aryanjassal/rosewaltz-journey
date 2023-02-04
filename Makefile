@@ -5,8 +5,8 @@ OBJ_DIR := obj
 OUT_DIR := out
 
 # The source files to be compiled
-SRC_FILES := $(shell find $(SRC_DIR) -name "*.cpp")
-INC_FILES := $(shell find $(INC_DIR) -name "*.hpp")
+SRC_FILES := $(shell find $(SRC_DIR) -name "*.cpp" -o -name "*.c")
+INC_FILES := $(shell find $(INC_DIR) -name "*.hpp" -o -name "*.h")
 
 # The object files that the source files will be compiled into
 OBJ_FILES := $(patsubst $(SRC_DIR)%.cpp, $(OUT_DIR)%.o, $(SRC_FILES))
@@ -23,7 +23,7 @@ CC := @g++
 COMPILER_FLAGS := -w -I $(INC_DIR)
 
 # The libraries that our executable is being linked against
-LIBRARIES := -l SDL2
+LIBRARIES := -lGL -lglfw3 -lX11
 
 # Some miscallenous commands which will prove useful later (if ever)
 CP := @cp

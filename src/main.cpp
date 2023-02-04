@@ -1,27 +1,27 @@
-#include <SDL2/SDL.h>
-#include <stdio.h>
-#include "utils.hpp"
+#include <glad/gl.h>
+#include <GLFW/glfw3.h>
 
-int main(int argc, char* args[]) {
-  // Initialise the SDL window
-  SDL_Window* window = NULL;
-  SDL_Surface* surface = NULL;
-  sdl_init(&window, &surface, "Rosewaltz Journey");
+int main() {
+  glfwInit();
 
-  SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, 0xff, 0xff, 0xff));
-  SDL_UpdateWindowSurface(window);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-  // Keep the window up and handle the 'X' button
-  SDL_Event e;
-  bool quit = false;
-  while(quit == false) {
-    while (SDL_PollEvent(&e)) {
-      if (e.type == SDL_QUIT) {
-        quit = true;
-      }
-    }
+  GLFWwindow* window = glfwCreateWindow(640, 480, "Rosewaltz Journey", NULL, NULL);
+  glfwMakeContextCurrent(window);
+
+  gladLoadGL(glfwGetProcAddress);
+  glViewport(0, 0, 640, 480);
+  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+  glfwSwapBuffers(window);
+
+  while(!glfwWindowShouldClose(window)) {
+    glfwPollEvents();
   }
 
-  // Safely close SDL
-  sdl_quit(&window);
+  glfwDestroyWindow(window);
+  glfwTerminate();
+  return 0;
 }
