@@ -23,7 +23,7 @@ CC := @g++
 COMPILER_FLAGS := -w -I $(INC_DIR)
 
 # The libraries that our executable is being linked against
-LIBRARIES := -lGL -lglfw3 -lX11
+LIBRARIES := -lGL -lglfw3 -lX11 -lm
 
 # Some miscallenous commands which will prove useful later (if ever)
 CP := @cp
