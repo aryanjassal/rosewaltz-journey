@@ -1,22 +1,12 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <stdio.h>
+#include <cmath>
 
-// Temporary vertex shader
-const char* vertex_shader_source = "#version 330 core\n"
-"layout (location = 0) in vec3 pos_a;\n"
-"void main()\n"
-"{\n"
-" gl_Position = vec4(pos_a.x, pos_a.y, pos_a.z, 1.0);\n"
-"}\0";
-
-// Temporary fragment shader
-const char* fragment_shader_source = "#version 330 core\n"
-"out vec4 frag_color;\n"
-"void main()\n"
-"{\n"
-" frag_color = vec4(0.8f, 0.3f, 0.02f, 1.0f);\n"
-"}\0";
+#include "shaders.h"
+#include "vao.h"
+#include "vbo.h"
+#include "ebo.h"
 
 int main() {
   // Initialise GLFW
@@ -27,15 +17,28 @@ int main() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+  // Use anti-aliasing
+  glfwWindowHint(GLFW_SAMPLES, 16);
+
   // Set vertices of the triangle
   GLfloat triangle_vertices[] = {
-    -0.5f, -0.5f, 0.0f,
-    -0.5f, 0.5f, 0.0f,
-    0.0f, 0.5f, 0.0f
+    -0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,      // Bottom left corner
+    0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,       // Bottom right corner
+    0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f,    // Top corner
+    -0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f,   // Inner left center
+    0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f,    // Inner right center
+    0.0f, -0.5f * float(sqrt(3)) / 3, 0.0f        // Inner bottom center
+  };
+
+  // The index of how to render the vectors
+  GLuint indices[] = {
+    0, 3, 5,  // Bottom left triangle
+    3, 2, 4,  // Top triangle
+    5, 4, 1   // Bottom right triangle
   };
 
   // Create a GLFW window
-  GLFWwindow* window = glfwCreateWindow(640, 480, "Rosewaltz Journey", NULL, NULL);
+  GLFWwindow* window = glfwCreateWindow(600, 600, "Rosewaltz Journey", NULL, NULL);
   glfwMakeContextCurrent(window);
 
   // If the window fails to initialise, then exit the program immediately
@@ -54,71 +57,21 @@ int main() {
   gladLoadGL(glfwGetProcAddress);
 
   // Initialise the OpenGL viewport
-  // In this case, the viewport goes from x=0 y=0 to x=640 y=480
-  glViewport(0, 0, 640, 480);
+  // In this case, the viewport goes from x=0 y=0 to x=600 y=600
+  glViewport(0, 0, 600, 600);
 
-  // Create the vertex shader
-  GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
-  glCompileShader(vertex_shader);
+  Shader shader_program("src/shaders/default.vert", "src/shaders/default.frag");
 
-  // Create the fragment shader
-  GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragment_shader, 1, &fragment_shader_source, NULL);
-  glCompileShader(fragment_shader);
+  VAO vao1;
+  vao1.bind();
 
-  // Attach the shaders to the OpenGL program
-  GLuint shader_program = glCreateProgram();
-  glAttachShader(shader_program, vertex_shader);
-  glAttachShader(shader_program, fragment_shader);
-  glLinkProgram(shader_program);
+  VBO vbo1(triangle_vertices, sizeof(triangle_vertices));
+  EBO ebo1(indices, sizeof(indices));
 
-  // Delete the shaders as they have already been loaded into memory
-  glDeleteShader(vertex_shader);
-  glDeleteShader(fragment_shader);
-
-  // NOTE THE ORDER OF VAO'S AND VBO'S BECAUSE IT MATTERS A LOT
-  // Create a Verted Array Object to store multiple VBO's (more information on VBO's later)
-  GLuint VAO;
-
-  // Create a Vertex Buffer Object to store the vertex buffer data
-  // This usually is an array of objects, but we only need one for now
-  GLuint VBO;
-
-  // Create the Vertex Attribute Object to store the vertex attributes
-  // The size is 1 as there is only one VAO object
-  glGenVertexArrays(1, &VAO);
-
-  // Actually create the VBO buffer
-  // The size is 1 as there is only one VBO object
-  glGenBuffers(1, &VBO);
-
-  // Bind the VAO buffer (not too sure what this does)
-  glBindVertexArray(VAO);
-  
-  // Bind the buffer
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-  // Now let's actually store the vertex data in the buffers
-  // Look up the last parameter in more detail as it can be used to save resources if correctly configured
-  glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_vertices), triangle_vertices, GL_STATIC_DRAW);
-
-  // Now set some attributes so OpenGL actually knows how to read the vertex data
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
-
-  // Confirm that the OpenGL attributes are actually enabled and applied
-  // Not required, but good to do
-  glEnableVertexAttribArray(0);
-
-  // Bind the buffers to ensure nothing is changed later during runtime
-  // Note the ordering because that matters
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindVertexArray(0);
-
-  // Paint the window surface to the given color
-  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
-  glfwSwapBuffers(window);
+  vao1.link_vbo(vbo1, 0);
+  vao1.unbind();
+  vbo1.unbind();
+  ebo1.unbind();
 
   // Main events loop
   while(!glfwWindowShouldClose(window)) {
@@ -126,14 +79,14 @@ int main() {
     glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // Finally use the shader program
-    glUseProgram(shader_program);
+    // // Finally use the shader program
+    shader_program.activate();
 
     // Tell OpenGL which VAO's to use
-    glBindVertexArray(VAO);
+    vao1.bind();
 
-    // Finally, draw the triangle using the vertexes specified in the Vertex Array Object
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    // Finally, draw the triangle using the vertexes specified in the Vertex Array Object using the Element Array Object
+    glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
 
     // Swap the buffers to actually render what we are drawing to the screen
     glfwSwapBuffers(window);
@@ -142,17 +95,11 @@ int main() {
     glfwPollEvents();
   }
 
-  // Delete the Vertex Array Object
-  glDeleteVertexArrays(1, &VAO);
-
-  // Delete the Vertex Attribute Object
-  glDeleteVertexArrays(1, &VAO);
-
-  // Delete the Vertex Buffer Object
-  glDeleteBuffers(1, &VBO);
-
-  // Delete the shader program
-  glDeleteProgram(shader_program);
+  // Delete all the objects we created so far
+  vao1.remove();
+  vbo1.remove();
+  ebo1.remove();
+  shader_program.remove();
 
   // Destroy the window that we created
   glfwDestroyWindow(window);
