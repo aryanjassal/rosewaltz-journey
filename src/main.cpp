@@ -22,12 +22,13 @@ int main() {
 
   // Set vertices of the triangle
   GLfloat triangle_vertices[] = {
-    -0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,      // Bottom left corner
-    0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,       // Bottom right corner
-    0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f,    // Top corner
-    -0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f,   // Inner left center
-    0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f,    // Inner right center
-    0.0f, -0.5f * float(sqrt(3)) / 3, 0.0f        // Inner bottom center
+    //        [[[ POSITION OF VERTICES ]]]            ||    [[[  COLOR ]]]
+    -0.5f,      -0.5f * float(sqrt(3)) / 3,     0.0f,     0.80f, 0.30f, 0.02f,  // Bottom left corner
+    0.5f,       -0.5f * float(sqrt(3)) / 3,     0.0f,     0.80f, 0.30f, 0.02f,  // Bottom right corner
+    0.0f,       0.5f * float(sqrt(3)) * 2 / 3,  0.0f,     1.00f, 0.60f, 0.32f,  // Top corner
+    -0.5f / 2,  0.5f * float(sqrt(3)) / 6,      0.0f,     0.90f, 0.45f, 0.17f,  // Inner left center
+    0.5f / 2,   0.5f * float(sqrt(3)) / 6,      0.0f,     0.90f, 0.45f, 0.17f,  // Inner right center
+    0.0f,      -0.5f * float(sqrt(3)) / 3,      0.0f,     0.80f, 0.30f, 0.02f   // Inner bottom center
   };
 
   // The index of how to render the vectors
@@ -68,10 +69,14 @@ int main() {
   VBO vbo1(triangle_vertices, sizeof(triangle_vertices));
   EBO ebo1(indices, sizeof(indices));
 
-  vao1.link_vbo(vbo1, 0);
+  vao1.link_attrib(vbo1, 0, 3, GL_FLOAT, 6 * sizeof(float), (void*) 0);
+  vao1.link_attrib(vbo1, 1, 3, GL_FLOAT, 6 * sizeof(float), (void*) (3 * sizeof(float)));
   vao1.unbind();
   vbo1.unbind();
   ebo1.unbind();
+
+  // Get the uniform scale variable from within the shader
+  GLuint scale_id = glGetUniformLocation(shader_program.id, "scale");
 
   // Main events loop
   while(!glfwWindowShouldClose(window)) {
@@ -79,8 +84,12 @@ int main() {
     glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // // Finally use the shader program
+    // Finally use the shader program
     shader_program.activate();
+
+    // Change the scale of the triangles
+    // Note that this can only be done after activating the shader
+    glUniform1f(scale_id, 1.0f);
 
     // Tell OpenGL which VAO's to use
     vao1.bind();
