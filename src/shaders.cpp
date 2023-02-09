@@ -1,5 +1,4 @@
 #include "shaders.h"
-#include <fstream>
 
 std::string get_file_contents(const char* filename) {
   std::ifstream file(filename, std::ios::binary);
@@ -26,17 +25,20 @@ Shader::Shader(const char* vertex_file, const char* fragment_file) {
   GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertex_shader, 1, &vertex_source, NULL);
   glCompileShader(vertex_shader);
+  compile_errors(vertex_shader, "VERTEX");
 
   // Create the fragment shader
   GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
   glShaderSource(fragment_shader, 1, &fragment_source, NULL);
   glCompileShader(fragment_shader);
+  compile_errors(fragment_shader, "FRAGMENT");
 
   // Attach the shaders to the OpenGL program
   id = glCreateProgram();
   glAttachShader(id, vertex_shader);
   glAttachShader(id, fragment_shader);
   glLinkProgram(id);
+  compile_errors(id, "PROGRAM");
 
   // Delete the shaders as they have already been loaded into memory
   glDeleteShader(vertex_shader);
@@ -49,4 +51,24 @@ void Shader::activate() {
 
 void Shader::remove() {
   glDeleteProgram(id);
+}
+
+// Check if the shaders compile
+// I have no real idea of what is going on here
+void Shader::compile_errors(unsigned int shader, const char* type) {
+  GLint has_compiled;
+  char info_log[1024];
+  if (type != "PROGRAM") {
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &has_compiled);
+    if (has_compiled == GL_FALSE) {
+      glGetShaderInfoLog(shader, 1024, NULL, info_log);
+      printf("SHADER_COMPILATION_ERROR for: %s\n", type);
+    }
+  } else {
+    glGetProgramiv(shader, GL_COMPILE_STATUS, &has_compiled);
+    if (has_compiled == GL_FALSE) {
+      glGetProgramInfoLog(shader, 1024, NULL, info_log);
+      printf("SHADER_LINKING_ERROR for: %s\n", type);
+    }
+  }
 }
