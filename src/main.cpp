@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <cmath>
 
+#include "stb/stb_image.h"
+#include "texture.h"
 #include "shaders.h"
 #include "vao.h"
 #include "vbo.h"
@@ -20,22 +22,35 @@ int main() {
   // Use anti-aliasing
   glfwWindowHint(GLFW_SAMPLES, 16);
 
-  // Set vertices of the triangle
-  GLfloat triangle_vertices[] = {
-    //        [[[ POSITION OF VERTICES ]]]            ||    [[[  COLOR ]]]
-    -0.5f,      -0.5f * float(sqrt(3)) / 3,     0.0f,     0.80f, 0.30f, 0.02f,  // Bottom left corner
-    0.5f,       -0.5f * float(sqrt(3)) / 3,     0.0f,     0.80f, 0.30f, 0.02f,  // Bottom right corner
-    0.0f,       0.5f * float(sqrt(3)) * 2 / 3,  0.0f,     1.00f, 0.60f, 0.32f,  // Top corner
-    -0.5f / 2,  0.5f * float(sqrt(3)) / 6,      0.0f,     0.90f, 0.45f, 0.17f,  // Inner left center
-    0.5f / 2,   0.5f * float(sqrt(3)) / 6,      0.0f,     0.90f, 0.45f, 0.17f,  // Inner right center
-    0.0f,      -0.5f * float(sqrt(3)) / 3,      0.0f,     0.80f, 0.30f, 0.02f   // Inner bottom center
+  // // Set vertices of the triangle
+  // GLfloat triangle_vertices[] = {
+  //   //        [[[ POSITION OF VERTICES ]]]            ||    [[[  COLOR ]]]
+  //   -0.5f,      -0.5f * float(sqrt(3)) / 3,     0.0f,     0.80f, 0.30f, 0.02f,  // Bottom left corner
+  //   0.5f,       -0.5f * float(sqrt(3)) / 3,     0.0f,     0.80f, 0.30f, 0.02f,  // Bottom right corner
+  //   0.0f,       0.5f * float(sqrt(3)) * 2 / 3,  0.0f,     1.00f, 0.60f, 0.32f,  // Top corner
+  //   -0.5f / 2,  0.5f * float(sqrt(3)) / 6,      0.0f,     0.90f, 0.45f, 0.17f,  // Inner left center
+  //   0.5f / 2,   0.5f * float(sqrt(3)) / 6,      0.0f,     0.90f, 0.45f, 0.17f,  // Inner right center
+  //   0.0f,      -0.5f * float(sqrt(3)) / 3,      0.0f,     0.80f, 0.30f, 0.02f   // Inner bottom center
+  // };
+
+  // // The index of how to render the vectors
+  // GLuint indices[] = {
+  //   0, 3, 5,  // Bottom left triangle
+  //   3, 2, 4,  // Top triangle
+  //   5, 4, 1   // Bottom right triangle
+  // };
+
+  // Set vertices of a square
+  GLfloat square_vertices[] = {
+    -0.5f, -0.5f, 0.0f,         1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
+    -0.5f,  0.5f, 0.0f,         0.0f, 1.0f, 0.0f,   0.0f, 1.0f,
+     0.5f,  0.5f, 0.0f,         0.0f, 0.0f, 1.0f,   1.0f, 1.0f,
+     0.5f, -0.5f, 0.0f,         1.0f, 1.0f, 1.0f,   1.0f, 0.0f
   };
 
-  // The index of how to render the vectors
-  GLuint indices[] = {
-    0, 3, 5,  // Bottom left triangle
-    3, 2, 4,  // Top triangle
-    5, 4, 1   // Bottom right triangle
+  GLuint square_indices[] = {
+    0, 2, 1,
+    0, 3, 2
   };
 
   // Create a GLFW window
@@ -61,19 +76,35 @@ int main() {
   // In this case, the viewport goes from x=0 y=0 to x=600 y=600
   glViewport(0, 0, 600, 600);
 
+  // Create a shader program, providing the vertex and fragment shaders
   Shader shader_program("src/shaders/default.vert", "src/shaders/default.frag");
 
+  // Create and bind the VAO
   VAO vao1;
   vao1.bind();
 
-  VBO vbo1(triangle_vertices, sizeof(triangle_vertices));
-  EBO ebo1(indices, sizeof(indices));
+  // Create and bind the VBO and the EBO
+  VBO vbo1(square_vertices, sizeof(square_vertices));
+  EBO ebo1(square_indices, sizeof(square_indices));
 
-  vao1.link_attrib(vbo1, 0, 3, GL_FLOAT, 6 * sizeof(float), (void*) 0);
-  vao1.link_attrib(vbo1, 1, 3, GL_FLOAT, 6 * sizeof(float), (void*) (3 * sizeof(float)));
+  // Tell the VAO the structure of the vertices and colors that the vertices store
+  vao1.link_attrib(vbo1, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*) 0);
+  vao1.link_attrib(vbo1, 1, 3, GL_FLOAT, 8 * sizeof(float), (void*) (3 * sizeof(float)));
+  vao1.link_attrib(vbo1, 2, 2, GL_FLOAT, 8 * sizeof(float), (void*) (6 * sizeof(float)));
+
+  // Unbind VAO, VBO, and EBO
   vao1.unbind();
   vbo1.unbind();
   ebo1.unbind();
+
+  // Create the image texture
+  Texture windows("textures/windows-11.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+  windows.texture_unit(shader_program, "frag_texture", 0);
+
+  // Enable alpha
+  //TODO: Find a better place to move them
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   // Get the uniform scale variable from within the shader
   GLuint scale_id = glGetUniformLocation(shader_program.id, "scale");
@@ -91,11 +122,14 @@ int main() {
     // Note that this can only be done after activating the shader
     glUniform1f(scale_id, 1.0f);
 
+    // Bind the texture
+    windows.bind();
+
     // Tell OpenGL which VAO's to use
     vao1.bind();
 
     // Finally, draw the triangle using the vertexes specified in the Vertex Array Object using the Element Array Object
-    glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     // Swap the buffers to actually render what we are drawing to the screen
     glfwSwapBuffers(window);
@@ -108,6 +142,7 @@ int main() {
   vao1.remove();
   vbo1.remove();
   ebo1.remove();
+  windows.remove();
   shader_program.remove();
 
   // Destroy the window that we created
