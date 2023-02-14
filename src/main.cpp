@@ -22,32 +22,16 @@ int main() {
   // Use anti-aliasing
   glfwWindowHint(GLFW_SAMPLES, 16);
 
-  // // Set vertices of the triangle
-  // GLfloat triangle_vertices[] = {
-  //   //        [[[ POSITION OF VERTICES ]]]            ||    [[[  COLOR ]]]
-  //   -0.5f,      -0.5f * float(sqrt(3)) / 3,     0.0f,     0.80f, 0.30f, 0.02f,  // Bottom left corner
-  //   0.5f,       -0.5f * float(sqrt(3)) / 3,     0.0f,     0.80f, 0.30f, 0.02f,  // Bottom right corner
-  //   0.0f,       0.5f * float(sqrt(3)) * 2 / 3,  0.0f,     1.00f, 0.60f, 0.32f,  // Top corner
-  //   -0.5f / 2,  0.5f * float(sqrt(3)) / 6,      0.0f,     0.90f, 0.45f, 0.17f,  // Inner left center
-  //   0.5f / 2,   0.5f * float(sqrt(3)) / 6,      0.0f,     0.90f, 0.45f, 0.17f,  // Inner right center
-  //   0.0f,      -0.5f * float(sqrt(3)) / 3,      0.0f,     0.80f, 0.30f, 0.02f   // Inner bottom center
-  // };
-
-  // // The index of how to render the vectors
-  // GLuint indices[] = {
-  //   0, 3, 5,  // Bottom left triangle
-  //   3, 2, 4,  // Top triangle
-  //   5, 4, 1   // Bottom right triangle
-  // };
-
-  // Set vertices of a square
+  // Set vertices, color, and texture coordinates of a square
   GLfloat square_vertices[] = {
-    -0.5f, -0.5f, 0.0f,         1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
-    -0.5f,  0.5f, 0.0f,         0.0f, 1.0f, 0.0f,   0.0f, 1.0f,
-     0.5f,  0.5f, 0.0f,         0.0f, 0.0f, 1.0f,   1.0f, 1.0f,
-     0.5f, -0.5f, 0.0f,         1.0f, 1.0f, 1.0f,   1.0f, 0.0f
+  /* VERTEX COORDINATES   \\\   COLOR INFORMATION   \\\   TEXTURE COORDINATES  */
+    -0.5f, -0.5f, 0.0f,         1.0f, 0.0f, 0.0f,             0.0f, 0.0f,
+    -0.5f,  0.5f, 0.0f,         0.0f, 1.0f, 0.0f,             0.0f, 1.0f,
+     0.5f,  0.5f, 0.0f,         0.0f, 0.0f, 1.0f,             1.0f, 1.0f,
+     0.5f, -0.5f, 0.0f,         1.0f, 1.0f, 1.0f,             1.0f, 0.0f
   };
 
+  // Set the index buffer to create the square
   GLuint square_indices[] = {
     0, 2, 1,
     0, 3, 2
@@ -76,6 +60,10 @@ int main() {
   // In this case, the viewport goes from x=0 y=0 to x=600 y=600
   glViewport(0, 0, 600, 600);
 
+  // Enable alpha and transparency in OpenGL
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
   // Create a shader program, providing the vertex and fragment shaders
   Shader shader_program("src/shaders/default.vert", "src/shaders/default.frag");
 
@@ -100,11 +88,6 @@ int main() {
   // Create the image texture
   Texture windows("textures/windows-11.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
   windows.texture_unit(shader_program, "frag_texture", 0);
-
-  // Enable alpha
-  //TODO: Find a better place to move them
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   // Get the uniform scale variable from within the shader
   GLuint scale_id = glGetUniformLocation(shader_program.id, "scale");
