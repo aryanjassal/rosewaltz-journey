@@ -11,7 +11,6 @@ in vec2 texture_coordinate;
 uniform sampler2D frag_texture;
 
 void main() {
-  // The fourth value in this color is the alpha or the transparency value
-  // frag_color = vec4(color, 1.0f);
+  // Display the texture  
   frag_color = texture(frag_texture, texture_coordinate);
 }

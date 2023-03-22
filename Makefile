@@ -33,6 +33,7 @@ ECHO := @echo
 all: compile run
 
 compile : $(SRC_FILES)
+	$(ECHO) "Compiling project..."
 	$(CC) $(SRC_FILES) $(COMPILER_FLAGS) $(LIBRARIES) -o $(OUT_FILE)
 	$(ECHO) "Compilation done."
 

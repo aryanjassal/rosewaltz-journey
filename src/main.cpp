@@ -4,6 +4,10 @@
 #include <cmath>
 
 #include "stb/stb_image.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
+
 #include "texture.h"
 #include "shaders.h"
 #include "vao.h"
@@ -89,9 +93,6 @@ int main() {
   Texture windows("textures/windows-11.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
   windows.texture_unit(shader_program, "frag_texture", 0);
 
-  // Get the uniform scale variable from within the shader
-  GLuint scale_id = glGetUniformLocation(shader_program.id, "scale");
-
   // Main events loop
   while(!glfwWindowShouldClose(window)) {
     // Paint the window surface to the given color
@@ -101,9 +102,14 @@ int main() {
     // Finally use the shader program
     shader_program.activate();
 
-    // Change the scale of the triangles
-    // Note that this can only be done after activating the shader
-    glUniform1f(scale_id, 1.0f);
+    // Perform transformations on the objects
+    glm::mat4 identity_matrix = glm::mat4(1.0f);
+    identity_matrix = glm::rotate(identity_matrix, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+    identity_matrix = glm::scale(identity_matrix, glm::vec3(0.5f, 0.5f, 0.5f));
+
+    // Get the transform uniform
+    GLuint transform_matrix = glGetUniformLocation(shader_program.id, "transform");
+    glUniformMatrix4fv(transform_matrix, 1, GL_FALSE, glm::value_ptr(identity_matrix));
 
     // Bind the texture
     windows.bind();
