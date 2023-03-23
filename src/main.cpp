@@ -8,18 +8,22 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-#include "camera.h"
-#include "texture.h"
-#include "shaders.h"
 #include "vao.h"
 #include "vbo.h"
 #include "ebo.h"
+#include "texture.h"
+#include "shaders.h"
+#include "camera.h"
+#include "mouse.h"
 
+// The main function
 int main() {
   // Constants
   static const int WIDTH = 1280;
   static const int HEIGHT = 720;
-  // static const float ASPECT_RATIO = (float)WIDTH / (float)HEIGHT;
+
+  // // To store the mouse position for drag-and-drop
+  // struct MOUSE_POS mouse_pos;
 
   // Initialise GLFW
   glfwInit();
@@ -51,10 +55,9 @@ int main() {
   GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Rosewaltz Journey", NULL, NULL);
   glfwMakeContextCurrent(window);
 
-  // If the window fails to initialise, then exit the program immediately
-  if (window == NULL) {
+  if (window == NULL)  {
     // Print an error message if the window fails to create
-    printf("GLFW failed to create a window!\n");
+    printf("GLFW window failed to initialise!");
 
     // Terminate GLFW
     glfwTerminate();
@@ -62,6 +65,10 @@ int main() {
     // Exit the program with an error code
     return -1;
   }
+
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+  glfwSetCursorPosCallback(window, mouse_callback);
+  glfwSetMouseButtonCallback(window, mouse_button_callback);
 
   // Initialise OpenGL using GLAD
   gladLoadGL(glfwGetProcAddress);
@@ -72,11 +79,7 @@ int main() {
 
   // Enable alpha and transparency in OpenGL
   glEnable(GL_BLEND);
-  // glEnable(GL_DEPTH_TEST);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-  // // Enable depth buffer
-  // glEnable(GL_DEPTH_TEST);
 
   // Create a shader program, providing the vertex and fragment shaders
   Shader shader_program("src/shaders/default.vert", "src/shaders/default.frag");
@@ -101,18 +104,16 @@ int main() {
 
   // Create the model, view, and projection matrices
   glm::mat4 model_matrix = glm::mat4(1.0f);
-  // model_matrix = glm::rotate(model_matrix, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
   glm::mat4 view_matrix = glm::mat4(1.0f);
   view_matrix = glm::translate(view_matrix, glm::vec3(0.0f, 0.0f, -1.0f));
   view_matrix = glm::scale(view_matrix, glm::vec3((float)HEIGHT / 2.0f, (float)HEIGHT / 2.0f, 0.0f));
 
   glm::mat4 projection_matrix = glm::mat4(1.0f);
-  // projection_matrix = glm::perspective(glm::radians(45.0f), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
   projection_matrix = glm::ortho(-((float)WIDTH / 2.0f), (float)WIDTH / 2.0f, (-(float)HEIGHT / 2.0f) , (float)HEIGHT / 2.0f, 0.0f, 100.0f);
 
-  // // Create the camera
-  // Camera camera(model_matrix, view_matrix, projection_matrix);
+  // Create the camera
+  Camera camera(model_matrix, view_matrix, projection_matrix);
 
   // Create the image texture
   Texture windows("textures/windows-11.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
@@ -123,7 +124,6 @@ int main() {
     // Paint the window surface to the given color
     glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Finally use the shader program
     shader_program.activate();
@@ -134,15 +134,8 @@ int main() {
     identity_matrix = glm::rotate(identity_matrix, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));        // Rotate the object
     identity_matrix = glm::scale(identity_matrix, glm::vec3(0.5f, 0.5f, 0.5f));                               // Scale the object
 
-    // Pass the model, view, and the projection matrix to the shader
-    int model_shader = glGetUniformLocation(shader_program.id, "model_matrix");
-    glUniformMatrix4fv(model_shader, 1, GL_FALSE, glm::value_ptr(model_matrix));
-
-    int view_shader = glGetUniformLocation(shader_program.id, "view_matrix");
-    glUniformMatrix4fv(view_shader, 1, GL_FALSE, glm::value_ptr(view_matrix));
-
-    int projection_shader = glGetUniformLocation(shader_program.id, "projection_matrix");
-    glUniformMatrix4fv(projection_shader, 1, GL_FALSE, glm::value_ptr(projection_matrix));
+    // Resolve the camera matrices
+    camera.resolve_matrices(shader_program, "model_matrix", "view_matrix", "projection_matrix");
 
     // Get the transform uniform
     GLuint transform_matrix = glGetUniformLocation(shader_program.id, "transform_matrix");
