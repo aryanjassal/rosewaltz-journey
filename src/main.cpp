@@ -8,6 +8,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
+#include "camera.h"
 #include "texture.h"
 #include "shaders.h"
 #include "vao.h"
@@ -15,6 +16,11 @@
 #include "ebo.h"
 
 int main() {
+  // Constants
+  static const int WIDTH = 1280;
+  static const int HEIGHT = 720;
+  // static const float ASPECT_RATIO = (float)WIDTH / (float)HEIGHT;
+
   // Initialise GLFW
   glfwInit();
 
@@ -42,7 +48,7 @@ int main() {
   };
 
   // Create a GLFW window
-  GLFWwindow* window = glfwCreateWindow(600, 600, "Rosewaltz Journey", NULL, NULL);
+  GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Rosewaltz Journey", NULL, NULL);
   glfwMakeContextCurrent(window);
 
   // If the window fails to initialise, then exit the program immediately
@@ -61,12 +67,16 @@ int main() {
   gladLoadGL(glfwGetProcAddress);
 
   // Initialise the OpenGL viewport
-  // In this case, the viewport goes from x=0 y=0 to x=600 y=600
-  glViewport(0, 0, 600, 600);
+  // In this case, the viewport goes from x=0 y=0 to x=width y=height
+  glViewport(0, 0, WIDTH, HEIGHT);
 
   // Enable alpha and transparency in OpenGL
   glEnable(GL_BLEND);
+  // glEnable(GL_DEPTH_TEST);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  // // Enable depth buffer
+  // glEnable(GL_DEPTH_TEST);
 
   // Create a shader program, providing the vertex and fragment shaders
   Shader shader_program("src/shaders/default.vert", "src/shaders/default.frag");
@@ -89,6 +99,21 @@ int main() {
   vbo1.unbind();
   ebo1.unbind();
 
+  // Create the model, view, and projection matrices
+  glm::mat4 model_matrix = glm::mat4(1.0f);
+  // model_matrix = glm::rotate(model_matrix, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+  glm::mat4 view_matrix = glm::mat4(1.0f);
+  view_matrix = glm::translate(view_matrix, glm::vec3(0.0f, 0.0f, -1.0f));
+  view_matrix = glm::scale(view_matrix, glm::vec3((float)HEIGHT / 2.0f, (float)HEIGHT / 2.0f, 0.0f));
+
+  glm::mat4 projection_matrix = glm::mat4(1.0f);
+  // projection_matrix = glm::perspective(glm::radians(45.0f), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+  projection_matrix = glm::ortho(-((float)WIDTH / 2.0f), (float)WIDTH / 2.0f, (-(float)HEIGHT / 2.0f) , (float)HEIGHT / 2.0f, 0.0f, 100.0f);
+
+  // // Create the camera
+  // Camera camera(model_matrix, view_matrix, projection_matrix);
+
   // Create the image texture
   Texture windows("textures/windows-11.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
   windows.texture_unit(shader_program, "frag_texture", 0);
@@ -98,17 +123,29 @@ int main() {
     // Paint the window surface to the given color
     glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Finally use the shader program
     shader_program.activate();
 
     // Perform transformations on the objects
     glm::mat4 identity_matrix = glm::mat4(1.0f);
-    identity_matrix = glm::rotate(identity_matrix, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
-    identity_matrix = glm::scale(identity_matrix, glm::vec3(0.5f, 0.5f, 0.5f));
+    identity_matrix = glm::translate(identity_matrix, glm::vec3(0.5f, 0.5f, 0.0f));                           // Translate the object
+    identity_matrix = glm::rotate(identity_matrix, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));        // Rotate the object
+    identity_matrix = glm::scale(identity_matrix, glm::vec3(0.5f, 0.5f, 0.5f));                               // Scale the object
+
+    // Pass the model, view, and the projection matrix to the shader
+    int model_shader = glGetUniformLocation(shader_program.id, "model_matrix");
+    glUniformMatrix4fv(model_shader, 1, GL_FALSE, glm::value_ptr(model_matrix));
+
+    int view_shader = glGetUniformLocation(shader_program.id, "view_matrix");
+    glUniformMatrix4fv(view_shader, 1, GL_FALSE, glm::value_ptr(view_matrix));
+
+    int projection_shader = glGetUniformLocation(shader_program.id, "projection_matrix");
+    glUniformMatrix4fv(projection_shader, 1, GL_FALSE, glm::value_ptr(projection_matrix));
 
     // Get the transform uniform
-    GLuint transform_matrix = glGetUniformLocation(shader_program.id, "transform");
+    GLuint transform_matrix = glGetUniformLocation(shader_program.id, "transform_matrix");
     glUniformMatrix4fv(transform_matrix, 1, GL_FALSE, glm::value_ptr(identity_matrix));
 
     // Bind the texture

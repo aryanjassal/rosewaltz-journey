@@ -10,11 +10,18 @@ layout (location = 2) in vec2 texture_a;
 out vec2 texture_coordinate;
 
 // A uniform for the translation matrix
-uniform mat4 transform;
+uniform mat4 transform_matrix;
+
+// Uniforms for the perspective camera matrices
+uniform mat4 model_matrix;
+uniform mat4 view_matrix;
+uniform mat4 projection_matrix;
 
 void main() {
-  // The OpenGL position will be the current vertex coordinates and an arbirary fourth dimension
-  gl_Position = transform * vec4(pos_a, 1.0);
+  // Calculate the OpenGL vertex position
+  // gl_Position = projection_matrix * view_matrix * model_matrix * transform_matrix * vec4(pos_a, 1.0);
+  gl_Position = projection_matrix * view_matrix * model_matrix * vec4(pos_a, 1.0);
+  // gl_Position = vec4(pos_a, 1.0);
 
   // Also output the correct color and texture coordinate for each vertex
   // color = color_a;
