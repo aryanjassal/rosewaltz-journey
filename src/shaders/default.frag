@@ -4,7 +4,6 @@
 out vec4 frag_color;
 
 // Get the colors and the texture coordinates that were output from the vertex shader
-// in vec3 color;
 in vec2 texture_coordinate;
 
 // The uniform texture

@@ -18,12 +18,8 @@
 
 // The main function
 int main() {
-  // Constants
   static const int WIDTH = 1280;
   static const int HEIGHT = 720;
-
-  // // To store the mouse position for drag-and-drop
-  // struct MOUSE_POS mouse_pos;
 
   // Initialise GLFW
   glfwInit();
@@ -38,11 +34,11 @@ int main() {
 
   // Set vertices, color, and texture coordinates of a square
   GLfloat square_vertices[] = {
-  /* VERTEX COORDINATES   \\\   COLOR INFORMATION   \\\   TEXTURE COORDINATES  */
-    -0.5f, -0.5f, 0.0f,         1.0f, 0.0f, 0.0f,             0.0f, 0.0f,
-    -0.5f,  0.5f, 0.0f,         0.0f, 1.0f, 0.0f,             0.0f, 1.0f,
-     0.5f,  0.5f, 0.0f,         0.0f, 0.0f, 1.0f,             1.0f, 1.0f,
-     0.5f, -0.5f, 0.0f,         1.0f, 1.0f, 1.0f,             1.0f, 0.0f
+  /* VERTEX COORDINATES \\\ TEXTURE COORDINATES  */
+    -0.5f, -0.5f, 0.0f,         0.0f, 0.0f,
+    -0.5f,  0.5f, 0.0f,         0.0f, 1.0f,
+     0.5f,  0.5f, 0.0f,         1.0f, 1.0f,
+     0.5f, -0.5f, 0.0f,         1.0f, 0.0f
   };
 
   // Set the index buffer to create the square
@@ -92,10 +88,10 @@ int main() {
   VBO vbo1(square_vertices, sizeof(square_vertices));
   EBO ebo1(square_indices, sizeof(square_indices));
 
-  // Tell the VAO the structure of the vertices and colors that the vertices store
-  vao1.link_attrib(vbo1, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*) 0);
-  vao1.link_attrib(vbo1, 1, 3, GL_FLOAT, 8 * sizeof(float), (void*) (3 * sizeof(float)));
-  vao1.link_attrib(vbo1, 2, 2, GL_FLOAT, 8 * sizeof(float), (void*) (6 * sizeof(float)));
+  // Tell the VAO the structure of the vertices and texture coordinates that the vertices store
+  //TODO: Automate the numbers (which are very easy to mess up)
+  vao1.link_attrib(vbo1, 0, 3, GL_FLOAT, 5 * sizeof(float), (void*) 0);
+  vao1.link_attrib(vbo1, 1, 2, GL_FLOAT, 5 * sizeof(float), (void*) (3 * sizeof(float)));
 
   // Unbind VAO, VBO, and EBO
   vao1.unbind();
@@ -128,18 +124,18 @@ int main() {
     // Finally use the shader program
     shader_program.activate();
 
-    // Perform transformations on the objects
-    glm::mat4 identity_matrix = glm::mat4(1.0f);
-    identity_matrix = glm::translate(identity_matrix, glm::vec3(0.5f, 0.5f, 0.0f));                           // Translate the object
-    identity_matrix = glm::rotate(identity_matrix, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));        // Rotate the object
-    identity_matrix = glm::scale(identity_matrix, glm::vec3(0.5f, 0.5f, 0.5f));                               // Scale the object
+    // // Perform transformations on the objects
+    // glm::mat4 identity_matrix = glm::mat4(1.0f);
+    // identity_matrix = glm::translate(identity_matrix, glm::vec3(0.5f, 0.5f, 0.0f));                           // Translate the object
+    // identity_matrix = glm::rotate(identity_matrix, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));        // Rotate the object
+    // identity_matrix = glm::scale(identity_matrix, glm::vec3(0.5f, 0.5f, 0.5f));                               // Scale the object
 
-    // Resolve the camera matrices
+    // Resolve the camera matrices (the camera information needs to update every frame for the shaders to work properly)
     camera.resolve_matrices(shader_program, "model_matrix", "view_matrix", "projection_matrix");
 
-    // Get the transform uniform
-    GLuint transform_matrix = glGetUniformLocation(shader_program.id, "transform_matrix");
-    glUniformMatrix4fv(transform_matrix, 1, GL_FALSE, glm::value_ptr(identity_matrix));
+    // // Get the transform uniform
+    // GLuint transform_matrix = glGetUniformLocation(shader_program.id, "transform_matrix");
+    // glUniformMatrix4fv(transform_matrix, 1, GL_FALSE, glm::value_ptr(identity_matrix));
 
     // Bind the texture
     windows.bind();
