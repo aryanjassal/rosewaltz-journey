@@ -1,24 +1,39 @@
 #ifndef __CAMERA_CLASS_H__
 #define __CAMERA_CLASS_H__
 
+#include "glad/gl.h"
 #include "glm/glm.hpp"
-#include "shaders.h"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
-class Camera {
-  public:
-    Camera(glm::mat4 view, glm::mat4 projection);
+#include "shader.h"
 
-    void translate(glm::vec3 translation);
-    void rotate(float radians, glm::vec3 rotation);
-    void resolve_matrices(Shader& shader, const char* view_uniform, const char* projection_uniform);
-  
-  private:
-    // Camera matrices
-    glm::mat4 view_matrix;
-    glm::mat4 projection_matrix;
+namespace Camera {
+  class OrthoCamera {
+    public:
+      // Set the camera's width and height
+      unsigned int width, height;
 
-    // Camera position
-    glm::vec3 camera_position;
-};
+      // The constructor takes in the parameters to create a projection matrix
+      OrthoCamera(unsigned int width, unsigned int height, unsigned int near_plane, unsigned int far_plane);
+
+      // Translate the camera's view matrix
+      //! UNIMPLEMENTED
+      void translate(glm::vec3 translation);
+      
+      // Rotate the camera's view matrix
+      //! UNIMPLEMENTED
+      void rotate(float radians, glm::vec3 rotation);
+
+      // Scale the camera's view matrix
+      void scale(float x, float y);
+      void scale(glm::vec2 scale_factor);
+    
+    private:
+      // Camera matrices
+      glm::mat4 view_matrix = glm::mat4(1.0f);
+      glm::mat4 projection_matrix = glm::mat4(1.0f);
+  };
+}
 
 #endif

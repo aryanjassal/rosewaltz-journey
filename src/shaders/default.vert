@@ -1,25 +1,21 @@
 #version 330 core
 
-// Create two layouts with 3 inputs each for coordinates and color, and one layout with 2 inputs for the texture coordinate
-layout (location = 0) in vec3 pos_a;
-layout (location = 1) in vec2 texture_a;
+// Define a layout with two points for a vertex and two for the texture coordinates
+layout (location = 0) in vec4 vertex;
 
-// Output the color and texture coordinate for each fragment
+// Output the color and texture coordinate for each pixel
 out vec2 texture_coordinate;
 
-// // A uniform for the translation matrix
-// uniform mat4 transform_matrix;
-
-// Uniforms for the perspective camera matrices
-uniform mat4 model_matrix;
-uniform mat4 view_matrix;
-uniform mat4 projection_matrix;
+// Uniform matrices for conversion from local space to world space to screen space
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
 void main() {
   // Calculate the OpenGL vertex position
-  // gl_Position = projection_matrix * view_matrix * model_matrix * transform_matrix * vec4(pos_a, 1.0);
-  gl_Position = projection_matrix * view_matrix * model_matrix * vec4(pos_a, 1.0);
+  //! Unsure about how the different matrices play together here
+  gl_Position = projection * view * model * vec4(vertex.xy, 0.0f, 1.0f);
 
   // Also output the correct texture coordinate for each vertex
-  texture_coordinate = texture_a;
+  texture_coordinate = vertex.zw;
 }

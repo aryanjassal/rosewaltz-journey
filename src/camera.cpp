@@ -1,25 +1,18 @@
 #include "camera.h"
 
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
+Camera::OrthoCamera::OrthoCamera(unsigned int width, unsigned int height, unsigned int near_plane, unsigned int far_plane) {
+  // Set the camera width and height
+  this->width = width;
+  this->height = height;
 
-Camera::Camera(glm::mat4 view, glm::mat4 projection) {
-  view_matrix = view;
-  projection_matrix = projection;
+  // Create and set the projection matrix
+  this->projection_matrix = glm::ortho(0.0f, (float)width, (float)height, 0.0f, (float)near_plane, (float)far_plane);
 }
 
-void Camera::translate(glm::vec3 translation) {
-  projection_matrix = glm::translate(projection_matrix, translation);
+void Camera::OrthoCamera::scale(float x, float y) {
+  this->view_matrix = glm::scale(this->view_matrix, glm::vec3(x, y, 0.0f));
 }
 
-void Camera::rotate(float radians, glm::vec3 rotation) {
-  projection_matrix = glm::rotate(projection_matrix, radians, rotation);
-}
-
-void Camera::resolve_matrices(Shader& shader,  const char* view_uniform, const char* projection_uniform) {
-  int view_shader = glGetUniformLocation(shader.id, view_uniform);
-  glUniformMatrix4fv(view_shader, 1, GL_FALSE, glm::value_ptr(view_matrix));
-
-  int projection_shader = glGetUniformLocation(shader.id, projection_uniform);
-  glUniformMatrix4fv(projection_shader, 1, GL_FALSE, glm::value_ptr(projection_matrix));
+void Camera::OrthoCamera::scale(glm::vec2 scale_factor) {
+  this->view_matrix = glm::scale(this->view_matrix, glm::vec3(scale_factor, 0.0f));
 }
