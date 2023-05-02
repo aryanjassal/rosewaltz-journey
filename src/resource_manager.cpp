@@ -32,6 +32,7 @@
   const char *fragment_shader = fragment_shader_code.c_str();
   shader.compile(vertex_shader, fragment_shader);
   Shaders[handle] = shader;
+  return shader;
 }
 
 ::Shader ResourceManager::Shader::get(std::string handle) {
@@ -53,7 +54,6 @@ void ResourceManager::Shader::deallocate(std::string handle) {
 
   // Load the image file as raw bytes
   int width, height, color_channels;
-  stbi_set_flip_vertically_on_load(true);
   unsigned char* data = stbi_load(file_path, &width, &height, &color_channels, 0);
 
   // Generate the texture

@@ -1,72 +1,79 @@
 #include "sprite.h"
 
-Sprite::Sprite(Shader &shader) {
+SpriteRenderer::SpriteRenderer(Shader &shader, Camera::OrthoCamera camera) {
   this->shader = shader;
 
   // Set up the vertices
   unsigned int vbo;
 
-  // // Set vertices, color, and texture coordinates of a square
-  // // The sprites by default have origin at middle-center
-  // float vertices[] = {
-  // /* VERTEX COORDINATES \\\ TEXTURE COORDINATES  */
-  //   -0.5f, -0.5f,              0.0f, 0.0f,
-  //   -0.5f,  0.5f,              0.0f, 1.0f,
-  //    0.5f,  0.5f,              1.0f, 1.0f,
-  //    0.5f, -0.5f,              1.0f, 0.0f
-  // };
-
-  float vertices[] = { 
-    // pos      // tex
-    -0.5f, 0.5f, 0.0f, 1.0f,
-    0.5f, -0.5f, 1.0f, 0.0f,
-    -0.5f, -0.5f, 0.0f, 0.0f, 
-
-    -0.5f, 0.5f, 0.0f, 1.0f,
-    0.5f, 0.5f, 1.0f, 1.0f,
-    0.5f, -0.5f, 1.0f, 0.0f
+  // Set vertices, color, and texture coordinates of a square
+  // The sprites by default have origin at middle-center
+  float vertices[] = {
+  /* VERTEX COORDINATES \\\ TEXTURE COORDINATES  */
+    -0.5f, -0.5f,              0.0f, 0.0f,
+    -0.5f,  0.5f,              0.0f, 1.0f,
+     0.5f,  0.5f,              1.0f, 1.0f,
+     0.5f, -0.5f,              1.0f, 0.0f
   };
 
-  // unsigned int indices[] = {
-  //   0, 2, 1,
-  //   0, 3, 2
+  // // Set vertices, color, and texture coordinates of a square
+  // // The sprites by default have origin at top-left corner
+  // float vertices[] = {
+  // /* VERTEX COORDINATES \\\ TEXTURE COORDINATES  */
+  //   0.0f, 0.0f,              0.0f, 0.0f,
+  //   0.0f, 1.0f,              0.0f, 1.0f,
+  //   1.0f, 1.0f,              1.0f, 1.0f,
+  //   1.0f, 0.0f,              1.0f, 0.0f
   // };
+
+  // Set the index order of the vertices
+  // Note that the number of indices reflect the number of draw calls to be passed in glDrawElements()
+  unsigned int indices[] = {
+    0, 1, 2,
+    0, 3, 2
+  };
 
   // Initialise the VAO, VBO, and EBO
   glGenVertexArrays(1, &this->vao);
   glGenBuffers(1, &vbo);
-  // glGenBuffers(1, &this->ebo);
+  glGenBuffers(1, &this->ebo);
+
+  // Bind the VAO to prepare for everthing else
+  glBindVertexArray(this->vao);
 
   // Bind the VBO and set some options for it
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-  // // Bind the EBO and set some options for it
-  // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ebo);
-  // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+  // Bind the EBO and set some options for it
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ebo);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-  // Actually use the VAO and the VBO to configure the sprite rendering
-  glBindVertexArray(this->vao);
-  glEnableVertexAttribArray(0);
+  // Edit some options for the VAOs after modifying both the EBO and the VBO
   glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(0);
 
   // Free up memory by unbinding the VAO, VBO, and the EBO
-  // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-  // // Delete the VBO buffer as it is no longer needed
-  // //! Need to confirm whether this should be here or not
-  // glDeleteBuffers(1, &vbo);
+  // Delete the VBO buffer as it is no longer needed
+  glDeleteBuffers(1, &vbo);
+
+  // Apply the projection and the view matrix to the camera
+  shader.activate();
+  shader.set_matrix_4f("projection", camera.projection_matrix);
+  shader.set_matrix_4f("view", camera.view_matrix);
 }
 
-Sprite::~Sprite() {
+SpriteRenderer::~SpriteRenderer() {
   // This runs whenever the sprite is destroyed, so it destroys itself automatically.
   glDeleteVertexArrays(1, &this->vao);
-  // glDeleteBuffers(1, &this->ebo);
+  glDeleteBuffers(1, &this->ebo);
 }
 
-void Sprite::render(Texture texture, glm::vec2 position, glm::vec2 scale, float angle, glm::vec3 colour) {
+void SpriteRenderer::render(Texture texture, glm::vec2 position, glm::vec2 scale, float angle, glm::vec3 colour) {
   // Activate the shader to actually do the model transformations
   this->shader.activate();
 
@@ -82,14 +89,16 @@ void Sprite::render(Texture texture, glm::vec2 position, glm::vec2 scale, float 
 
   // Actually apply these transformations to the sprite
   this->shader.set_matrix_4f("model", model_transform);
+  // this->shader.set_matrix_4f("projection", camera.projection_matrix);
+  // this->shader.set_matrix_4f("view", camera.view_matrix);
 
-  // Render the textured sprite
+  // Prepare the texture
   this->shader.set_vector_3f("colour", colour);
   glActiveTexture(GL_TEXTURE0);
   texture.bind();
 
+  // Bind the VAO, render the sprite, then unbind the VAO
   glBindVertexArray(this->vao);
-  // glDrawArrays(GL_TRIANGLES, 0, 4);
-  glDrawArrays(GL_TRIANGLES, 0, 6);
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
   glBindVertexArray(0);
 }

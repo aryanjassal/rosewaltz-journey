@@ -11,8 +11,10 @@
 namespace Camera {
   class OrthoCamera {
     public:
-      // Set the camera's width and height
+      // Set the camera's width, height, and it's identity view and projection matrices
       unsigned int width, height;
+      glm::mat4 view_matrix = glm::mat4(1.0f);
+      glm::mat4 projection_matrix = glm::mat4(1.0f);
 
       // The constructor takes in the parameters to create a projection matrix
       OrthoCamera(unsigned int width, unsigned int height, unsigned int near_plane, unsigned int far_plane);
@@ -29,10 +31,6 @@ namespace Camera {
       void scale(float x, float y);
       void scale(glm::vec2 scale_factor);
     
-    private:
-      // Camera matrices
-      glm::mat4 view_matrix = glm::mat4(1.0f);
-      glm::mat4 projection_matrix = glm::mat4(1.0f);
   };
 }
 

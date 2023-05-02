@@ -1,5 +1,6 @@
 #include "texture.h"
 
+// This is a different way to set variable defaults
 Texture::Texture() :
   width(0), 
   height(0), 
@@ -13,9 +14,11 @@ Texture::Texture() :
 }
 
 void Texture::generate(unsigned int width, unsigned int height, unsigned char *data) {
+  // Set the texture width and height of the texture
   this->width = width;
   this->height = height;
   
+  // Actually generate the texture
   glBindTexture(GL_TEXTURE_2D, this->id);
   glTexImage2D(GL_TEXTURE_2D, 0, this->texture_format, width, height, 0, this->image_format, GL_UNSIGNED_BYTE, data);
 

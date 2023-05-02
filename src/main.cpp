@@ -12,21 +12,22 @@
 #include "texture.h"
 #include "shader.h"
 #include "camera.h"
-// #include "mouse.h"
 #include "resource_manager.h"
 
-// static int WIDTH = 1280;
-// static int HEIGHT = 720;
-static int WIDTH = 800;
-static int HEIGHT = 800;
-// static float ASPECT_RATIO = (float)WIDTH / (float)HEIGHT;
+static int WIDTH = 1280;
+static int HEIGHT = 720;
 
-//! TEMP
-void window_change_callback(GLFWwindow* window, int width, int height) {
+void resize_viewport(GLFWwindow* window, int width, int height) {
+  // Actually change the OpenGL viewport settings
   glViewport(0, 0, width, height);
+
+  // Reset the global variables referring to the width and height of the current viewport
   WIDTH = width;
   HEIGHT = height;
 }
+
+// Set up pointers to the rendering engine of the game
+SpriteRenderer *Renderer;
 
 int main() {
   // Initialise GLFW
@@ -51,11 +52,9 @@ int main() {
     return -1;
   }
 
-  // Change some GLFW settings post-initialisation (mostly cursor rn)
+  // Change some GLFW settings post-initialisation
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-  // glfwSetCursorPosCallback(window, mouse_callback);
-  // glfwSetMouseButtonCallback(window, mouse_button_callback);
-  glfwSetWindowSizeCallback(window, window_change_callback);
+  glfwSetWindowSizeCallback(window, resize_viewport);
 
   // Initialise OpenGL using GLAD
   gladLoadGL(glfwGetProcAddress);
@@ -68,25 +67,29 @@ int main() {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+  // Set the clear colour of the scene background
+  glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+
   // Create a shader program, providing the vertex and fragment shaders
-  Shader shader = ResourceManager::Shader::load("src/shaders/default.vert", "src/shaders/default.frag", "default");
+  Shader sprite_shader = ResourceManager::Shader::load("src/shaders/default.vert", "src/shaders/default.frag", "sprite");
 
   // Create the camera
-  Camera::OrthoCamera camera(WIDTH, HEIGHT, 0.0f, 100.0f);
-  camera.scale(glm::vec2(5.0f, 5.0f));
+  Camera::OrthoCamera camera(WIDTH, HEIGHT, -1.0f, 1.0f);
+  camera.scale(glm::vec2(2.0f, 2.0f));
 
-  Texture image = ResourceManager::Texture::load("textures/windows-11.png", true, "sprite");
+  // Actually create a sprite renderer instance
+  Renderer = new SpriteRenderer(sprite_shader, camera);
 
-  Sprite sprite(shader);
+  // Load textures into the game
+  ResourceManager::Texture::load("textures/windows-11.png", true, "windows-icon");
 
   // Main events loop
   while(!glfwWindowShouldClose(window)) {
-    // Paint the window surface to the given color
-    glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+    // Clear the screen (paints it to the predefined clear colour)
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Render the sprite
-    sprite.render(image);
+    Renderer->render(ResourceManager::Texture::get("windows-icon"), glm::vec2(100.0f, 100.0f), glm::vec2(100.0f, 100.0f));
 
     // Swap the buffers to actually render what we are drawing to the screen
     glfwSwapBuffers(window);
@@ -96,7 +99,8 @@ int main() {
   }
 
   // Properly remove all the resources in resource manager's list
-  ResourceManager::deallocate();  
+  ResourceManager::deallocate();
+  delete Renderer;
 
   // Clean up and exit the program
   glfwDestroyWindow(window);

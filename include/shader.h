@@ -19,7 +19,7 @@ class Shader {
     // Compile and link the vertex and fragment code to the shader
     void compile(const char *vertex_code, const char *fragment_code);
 
-    // Activate our shader
+    // Activate or deactivate the shader
     void activate();
 
     // Modify a uniform in the shader

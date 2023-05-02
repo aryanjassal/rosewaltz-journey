@@ -13,9 +13,8 @@ uniform mat4 projection;
 
 void main() {
   // Calculate the OpenGL vertex position
-  //! Unsure about how the different matrices play together here
-  gl_Position = projection * view * model * vec4(vertex.xy, 0.0f, 1.0f);
+  gl_Position = projection * view * model * vec4(vertex.xy, 0.0, 1.0);
 
-  // Also output the correct texture coordinate for each vertex
+  // Output the correct texture coordinate for each vertex
   texture_coordinate = vertex.zw;
 }
