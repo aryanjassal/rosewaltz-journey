@@ -11,7 +11,7 @@
 namespace Camera {
   class OrthoCamera {
     public:
-      // Set the camera's width, height, and it's identity view and projection matrices
+      // Set the camera's width, height, its scale factor, and it's identity view and projection matrices
       unsigned int width, height;
       glm::mat4 view_matrix = glm::mat4(1.0f);
       glm::mat4 projection_matrix = glm::mat4(1.0f);
@@ -29,7 +29,7 @@ namespace Camera {
 
       // Scale the camera's view matrix
       void scale(float x, float y);
-      void scale(glm::vec2 scale_factor);
+      void scale(glm::vec2 factor);
     
   };
 }

@@ -1,7 +1,6 @@
 # Useful directories variable
 SRC_DIR := src
 INC_DIR := include
-OBJ_DIR := obj
 OUT_DIR := out
 
 # The source files to be compiled
@@ -38,8 +37,10 @@ RM := @rm -r
 # The default target that compiles the entire project
 all: compile run
 
-compile : $(OBJ_FILES)
+prepare:
 	$(ECHO) "Compiling project..."
+
+compile : prepare $(OBJ_FILES)
 	$(CC) $(OBJ_FILES) $(COMPILER_FLAGS) $(LIBRARIES) -o $(OUT_FILE)
 	$(ECHO) "Compilation done."
 

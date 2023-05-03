@@ -89,8 +89,6 @@ void SpriteRenderer::render(Texture texture, glm::vec2 position, glm::vec2 scale
 
   // Actually apply these transformations to the sprite
   this->shader.set_matrix_4f("model", model_transform);
-  // this->shader.set_matrix_4f("projection", camera.projection_matrix);
-  // this->shader.set_matrix_4f("view", camera.view_matrix);
 
   // Prepare the texture
   this->shader.set_vector_3f("colour", colour);

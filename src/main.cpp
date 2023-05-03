@@ -17,6 +17,10 @@
 static int WIDTH = 1280;
 static int HEIGHT = 720;
 
+int mouse_pos_x, mouse_pos_y;
+// bool left_click;
+
+// Viewport callback function
 void resize_viewport(GLFWwindow* window, int width, int height) {
   // Actually change the OpenGL viewport settings
   glViewport(0, 0, width, height);
@@ -24,6 +28,21 @@ void resize_viewport(GLFWwindow* window, int width, int height) {
   // Reset the global variables referring to the width and height of the current viewport
   WIDTH = width;
   HEIGHT = height;
+}
+
+// // Mouse callback function
+// void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+//   if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+//     left_click = true;
+//   } else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
+//     left_click = false;
+//   }
+// }
+
+// Cursorpos callback function
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+  mouse_pos_x = xpos;
+  mouse_pos_y = ypos;
 }
 
 // Set up pointers to the rendering engine of the game
@@ -55,6 +74,7 @@ int main() {
   // Change some GLFW settings post-initialisation
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
   glfwSetWindowSizeCallback(window, resize_viewport);
+  glfwSetCursorPosCallback(window, mouse_callback);
 
   // Initialise OpenGL using GLAD
   gladLoadGL(glfwGetProcAddress);
@@ -89,7 +109,13 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Render the sprite
-    Renderer->render(ResourceManager::Texture::get("windows-icon"), glm::vec2(100.0f, 100.0f), glm::vec2(100.0f, 100.0f));
+    float xpos, ypos;
+    // xpos = mouse_pos_x;
+    // ypos = mouse_pos_y;
+    xpos = (float)mouse_pos_x / 2.0f;
+    ypos = (float)mouse_pos_y / 2.0f;
+    printf("mouse coordinates: [%d,%d]\ncalculated mouse coordinates: [%.2f,%.2f]\n", mouse_pos_x, mouse_pos_y, xpos, ypos);
+    Renderer->render(ResourceManager::Texture::get("windows-icon"), glm::vec2(xpos, ypos), glm::vec2(100.0f, 100.0f));
 
     // Swap the buffers to actually render what we are drawing to the screen
     glfwSwapBuffers(window);
