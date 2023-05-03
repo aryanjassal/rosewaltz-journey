@@ -11,8 +11,10 @@ Camera::OrthoCamera::OrthoCamera(unsigned int width, unsigned int height, unsign
 
 void Camera::OrthoCamera::scale(float x, float y) {
   this->view_matrix = glm::scale(this->view_matrix, glm::vec3(x, y, 0.0f));
+  this->scale_factor = glm::vec2(x, y);
 }
 
 void Camera::OrthoCamera::scale(glm::vec2 factor) {
   this->view_matrix = glm::scale(this->view_matrix, glm::vec3(factor, 0.0f));
+  this->scale_factor = factor;
 }

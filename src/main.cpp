@@ -1,12 +1,7 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
-#include <stdio.h>
-#include <cmath>
 
-#include "stb/stb_image.h"
 #include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
 
 #include "sprite.h"
 #include "texture.h"
@@ -95,7 +90,6 @@ int main() {
 
   // Create the camera
   Camera::OrthoCamera camera(WIDTH, HEIGHT, -1.0f, 1.0f);
-  camera.scale(glm::vec2(2.0f, 2.0f));
 
   // Actually create a sprite renderer instance
   Renderer = new SpriteRenderer(sprite_shader, camera);
@@ -108,14 +102,8 @@ int main() {
     // Clear the screen (paints it to the predefined clear colour)
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // Render the sprite
-    float xpos, ypos;
-    // xpos = mouse_pos_x;
-    // ypos = mouse_pos_y;
-    xpos = (float)mouse_pos_x / 2.0f;
-    ypos = (float)mouse_pos_y / 2.0f;
-    printf("mouse coordinates: [%d,%d]\ncalculated mouse coordinates: [%.2f,%.2f]\n", mouse_pos_x, mouse_pos_y, xpos, ypos);
-    Renderer->render(ResourceManager::Texture::get("windows-icon"), glm::vec2(xpos, ypos), glm::vec2(100.0f, 100.0f));
+    // Render a sprite at the location specified by scaling the mouse position with the camera's scale factor
+    Renderer->render(ResourceManager::Texture::get("windows-icon"), glm::vec2(mouse_pos_x / camera.scale_factor.x, mouse_pos_y / camera.scale_factor.y), glm::vec2(100.0f, 100.0f));
 
     // Swap the buffers to actually render what we are drawing to the screen
     glfwSwapBuffers(window);
