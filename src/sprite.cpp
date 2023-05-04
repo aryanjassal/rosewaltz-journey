@@ -87,6 +87,11 @@ void SpriteRenderer::render(Texture texture, glm::vec2 position, glm::vec2 scale
   model_transform = glm::rotate(model_transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
   model_transform = glm::scale(model_transform, glm::vec3(scale, 0.0f));
 
+  // // Change the origin to the center before rotating the sprite
+  // model_transform = glm::translate(model_transform, glm::vec3(0.5f, 0.5f, 0.0f));
+  // model_transform = glm::rotate(model_transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
+  // model_transform = glm::translate(model_transform, glm::vec3(-0.5f, -0.5f, 0.0f));
+
   // Actually apply these transformations to the sprite
   this->shader.set_matrix_4f("model", model_transform);
 

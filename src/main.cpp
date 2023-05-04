@@ -1,5 +1,6 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
+#include <cstdio>
 
 #include "glm/glm.hpp"
 
@@ -13,7 +14,7 @@ static int WIDTH = 1280;
 static int HEIGHT = 720;
 
 int mouse_pos_x, mouse_pos_y;
-// bool left_click;
+bool left_click, left_click_now;
 
 // Viewport callback function
 void resize_viewport(GLFWwindow* window, int width, int height) {
@@ -25,14 +26,15 @@ void resize_viewport(GLFWwindow* window, int width, int height) {
   HEIGHT = height;
 }
 
-// // Mouse callback function
-// void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-//   if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-//     left_click = true;
-//   } else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
-//     left_click = false;
-//   }
-// }
+// Mouse callback function
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+  if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+    left_click = true;
+    left_click_now = true;
+  } else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
+    left_click = false;
+  }
+}
 
 // Cursorpos callback function
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
@@ -70,6 +72,7 @@ int main() {
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
   glfwSetWindowSizeCallback(window, resize_viewport);
   glfwSetCursorPosCallback(window, mouse_callback);
+  glfwSetMouseButtonCallback(window, mouse_button_callback);
 
   // Initialise OpenGL using GLAD
   gladLoadGL(glfwGetProcAddress);
@@ -97,18 +100,38 @@ int main() {
   // Load textures into the game
   ResourceManager::Texture::load("textures/windows-11.png", true, "windows-icon");
 
+  int xpos = 100, ypos = 100;
+  bool selected = false;
+
   // Main events loop
   while(!glfwWindowShouldClose(window)) {
     // Clear the screen (paints it to the predefined clear colour)
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Render a sprite at the location specified by scaling the mouse position with the camera's scale factor
-    Renderer->render(ResourceManager::Texture::get("windows-icon"), glm::vec2(mouse_pos_x / camera.scale_factor.x, mouse_pos_y / camera.scale_factor.y), glm::vec2(100.0f, 100.0f));
+    Texture texture = ResourceManager::Texture::get("windows-icon");
+    int size = 100;
+    int right = xpos + ((texture.width / 2) / (texture.width / size)), left = xpos - ((texture.width / 2) / (texture.width / size)), bottom = ypos + ((texture.height / 2) / (texture.width / size)), top = ypos - ((texture.height / 2) / (texture.width / size));
+
+    if (!left_click) selected=false;
+    if (left_click && left_click_now && ((left <= mouse_pos_x) && (right >= mouse_pos_x) && (top <= mouse_pos_y) && (bottom >= mouse_pos_y))) {
+      selected = true;
+    }
+    if (selected) {
+      xpos = mouse_pos_x / camera.scale_factor.x;
+      ypos = mouse_pos_y / camera.scale_factor.y;
+    } else {
+      float snap = 100;
+      xpos = (round(xpos / snap) * snap);
+      ypos = (round(ypos / snap) * snap);
+    }
+    Renderer->render(ResourceManager::Texture::get("windows-icon"), glm::vec2(xpos, ypos), glm::vec2(100.0f, 100.0f));
 
     // Swap the buffers to actually render what we are drawing to the screen
     glfwSwapBuffers(window);
 
     // Poll GLFW for new events
+    left_click_now = false;
     glfwPollEvents();
   }
 
