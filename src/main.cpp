@@ -1,49 +1,16 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
-#include <cstdio>
 
-#include "glm/glm.hpp"
-
-#include "sprite.h"
-#include "texture.h"
-#include "shader.h"
-#include "camera.h"
-#include "resource_manager.h"
+#include "game.h"
 
 static int WIDTH = 1280;
 static int HEIGHT = 720;
 
-int mouse_pos_x, mouse_pos_y;
-bool left_click, left_click_now;
+Game *RosewaltzJourney;
 
-// Viewport callback function
-void resize_viewport(GLFWwindow* window, int width, int height) {
-  // Actually change the OpenGL viewport settings
-  glViewport(0, 0, width, height);
-
-  // Reset the global variables referring to the width and height of the current viewport
-  WIDTH = width;
-  HEIGHT = height;
-}
-
-// Mouse callback function
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-  if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-    left_click = true;
-    left_click_now = true;
-  } else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
-    left_click = false;
-  }
-}
-
-// Cursorpos callback function
-void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-  mouse_pos_x = xpos;
-  mouse_pos_y = ypos;
-}
-
-// Set up pointers to the rendering engine of the game
-SpriteRenderer *Renderer;
+void resize_viewport_callback(GLFWwindow* window, int width, int height);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 
 int main() {
   // Initialise GLFW
@@ -70,7 +37,7 @@ int main() {
 
   // Change some GLFW settings post-initialisation
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-  glfwSetWindowSizeCallback(window, resize_viewport);
+  glfwSetWindowSizeCallback(window, resize_viewport_callback);
   glfwSetCursorPosCallback(window, mouse_callback);
   glfwSetMouseButtonCallback(window, mouse_button_callback);
 
@@ -85,62 +52,47 @@ int main() {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  // Set the clear colour of the scene background
-  glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
-
-  // Create a shader program, providing the vertex and fragment shaders
-  Shader sprite_shader = ResourceManager::Shader::load("src/shaders/default.vert", "src/shaders/default.frag", "sprite");
-
-  // Create the camera
-  Camera::OrthoCamera camera(WIDTH, HEIGHT, -1.0f, 1.0f);
-
-  // Actually create a sprite renderer instance
-  Renderer = new SpriteRenderer(sprite_shader, camera);
-
-  // Load textures into the game
-  ResourceManager::Texture::load("textures/windows-11.png", true, "windows-icon");
-
-  int xpos = 100, ypos = 100;
-  bool selected = false;
+  RosewaltzJourney = new Game(WIDTH, HEIGHT);
+  RosewaltzJourney->init();
 
   // Main events loop
   while(!glfwWindowShouldClose(window)) {
-    // Clear the screen (paints it to the predefined clear colour)
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    // Render a sprite at the location specified by scaling the mouse position with the camera's scale factor
-    Texture texture = ResourceManager::Texture::get("windows-icon");
-    int size = 100;
-    int right = xpos + ((texture.width / 2) / (texture.width / size)), left = xpos - ((texture.width / 2) / (texture.width / size)), bottom = ypos + ((texture.height / 2) / (texture.width / size)), top = ypos - ((texture.height / 2) / (texture.width / size));
-
-    if (!left_click) selected=false;
-    if (left_click && left_click_now && ((left <= mouse_pos_x) && (right >= mouse_pos_x) && (top <= mouse_pos_y) && (bottom >= mouse_pos_y))) {
-      selected = true;
-    }
-    if (selected) {
-      xpos = mouse_pos_x / camera.scale_factor.x;
-      ypos = mouse_pos_y / camera.scale_factor.y;
-    } else {
-      float snap = 100;
-      xpos = (round(xpos / snap) * snap);
-      ypos = (round(ypos / snap) * snap);
-    }
-    Renderer->render(ResourceManager::Texture::get("windows-icon"), glm::vec2(xpos, ypos), glm::vec2(100.0f, 100.0f));
+    RosewaltzJourney->render();
+    RosewaltzJourney->update();
 
     // Swap the buffers to actually render what we are drawing to the screen
     glfwSwapBuffers(window);
-
-    // Poll GLFW for new events
-    left_click_now = false;
-    glfwPollEvents();
   }
-
-  // Properly remove all the resources in resource manager's list
-  ResourceManager::deallocate();
-  delete Renderer;
 
   // Clean up and exit the program
   glfwDestroyWindow(window);
   glfwTerminate();
   return 0;
+}
+
+// Viewport callback function
+void resize_viewport_callback(GLFWwindow* window, int width, int height) {
+  // Actually change the OpenGL viewport settings
+  glViewport(0, 0, width, height);
+
+  // Reset the global variables referring to the width and height of the current viewport
+  RosewaltzJourney->width = width;
+  RosewaltzJourney->height = height;
+}
+
+// Mouse callback function
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+  if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+    RosewaltzJourney->mouse.buttons.left_button = true;
+    RosewaltzJourney->mouse.buttons.left_button_down = true;
+  } else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
+    RosewaltzJourney->mouse.buttons.left_button = false;
+    RosewaltzJourney->mouse.buttons.left_button_up = true;
+  }
+}
+
+// Callback function to update the position of the mouse
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+  RosewaltzJourney->mouse.x = xpos;
+  RosewaltzJourney->mouse.y = ypos;
 }
