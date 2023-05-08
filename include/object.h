@@ -26,10 +26,10 @@ namespace GameObject {
       bool interactive;
 
       typedef struct BoundingBox {
-        int top;
-        int bottom;
-        int left;
-        int right; 
+        float top;
+        float bottom;
+        float left;
+        float right; 
       };
       BoundingBox bounding_box;
 

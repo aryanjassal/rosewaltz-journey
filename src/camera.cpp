@@ -1,6 +1,6 @@
 #include "camera.h"
 
-Camera::OrthoCamera::OrthoCamera(unsigned int width, unsigned int height, unsigned int near_plane, unsigned int far_plane) {
+Camera::OrthoCamera::OrthoCamera(unsigned int width, unsigned int height, float near_plane, float far_plane) {
   // Set the camera width and height
   this->width = width;
   this->height = height;

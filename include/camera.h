@@ -17,7 +17,7 @@ namespace Camera {
       glm::mat4 projection_matrix = glm::mat4(1.0f);
 
       // The constructor takes in the parameters to create a projection matrix
-      OrthoCamera(unsigned int width, unsigned int height, unsigned int near_plane, unsigned int far_plane);
+      OrthoCamera(unsigned int width, unsigned int height, float near_plane, float far_plane);
 
       // // Translate the camera's view matrix
       // void translate(glm::vec3 translation);

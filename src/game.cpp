@@ -71,7 +71,9 @@ void Game::render() {
     }
     object->render(Renderer);
   }
+}
 
-  // // Render each object currently existing
-  // for (auto &object : GameObject::all()) object->render(Renderer);
+void Game::update_viewport(int width, int height) {
+  this->width = width;
+  this->height = height;
 }

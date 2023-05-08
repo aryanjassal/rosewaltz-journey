@@ -23,6 +23,7 @@ int main() {
 
   // Use anti-aliasing
   glfwWindowHint(GLFW_SAMPLES, 16);
+  glfwWindowHint(GLFW_RESIZABLE, false);
 
   // Create a GLFW window
   GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Rosewaltz Journey", NULL, NULL);
@@ -75,9 +76,8 @@ void resize_viewport_callback(GLFWwindow* window, int width, int height) {
   // Actually change the OpenGL viewport settings
   glViewport(0, 0, width, height);
 
-  // Reset the global variables referring to the width and height of the current viewport
-  RosewaltzJourney->width = width;
-  RosewaltzJourney->height = height;
+  // Update the game with the new viewport dimensions
+  RosewaltzJourney->update_viewport(width, height);
 }
 
 // Mouse callback function
@@ -92,7 +92,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 }
 
 // Callback function to update the position of the mouse
-void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-  RosewaltzJourney->mouse.x = xpos;
-  RosewaltzJourney->mouse.y = ypos;
+void mouse_callback(GLFWwindow* window, double x, double y) {
+  RosewaltzJourney->mouse.x = x;
+  RosewaltzJourney->mouse.y = y;
 }

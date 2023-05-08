@@ -49,10 +49,9 @@ class Game {
     // Note: this function should only run once every frame (use delta time)
     void update();
 
-    // Callback functions for GLFW
-    void resize_viewport_callback(GLFWwindow* window, int width, int height);
-    void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
-    void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+    // Update the camera
+    // Tip: this function is typically used after changing the width or height of the game window
+    void update_viewport(int width, int height);
 };
 
 #endif
