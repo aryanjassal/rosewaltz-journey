@@ -28,7 +28,6 @@ namespace Camera {
       // Scale the camera's view matrix
       void scale(float x, float y);
       void scale(glm::vec2 factor);
-    
   };
 }
 

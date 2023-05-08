@@ -4,6 +4,8 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
+#include <stdio.h>
+
 #include "glm/glm.hpp"
 
 #include "sprite.h"
@@ -11,6 +13,7 @@
 #include "shader.h"
 #include "camera.h"
 #include "resource_manager.h"
+#include "object.h"
 
 class Game {
   public:
@@ -24,10 +27,11 @@ class Game {
     typedef struct MouseState {
       int x, y;
       MouseButtonState buttons;
+      GameObject::Object *active_object;
     };
 
     // Set up variables
-    MouseState mouse = { 0, 0, { false, false, false } };
+    MouseState mouse = { 0, 0, { false, false, false }, nullptr };
     unsigned int width, height;
 
     // The constructor function that takes the default width and height as the starting arguments

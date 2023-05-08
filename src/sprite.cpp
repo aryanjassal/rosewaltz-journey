@@ -1,6 +1,6 @@
 #include "sprite.h"
 
-SpriteRenderer::SpriteRenderer(Shader &shader, Camera::OrthoCamera camera) {
+SpriteRenderer::SpriteRenderer(Shader &shader, Camera::OrthoCamera *camera) {
   this->shader = shader;
 
   // Set up the vertices
@@ -63,8 +63,8 @@ SpriteRenderer::SpriteRenderer(Shader &shader, Camera::OrthoCamera camera) {
 
   // Apply the projection and the view matrix to the camera
   shader.activate();
-  shader.set_matrix_4f("projection", camera.projection_matrix);
-  shader.set_matrix_4f("view", camera.view_matrix);
+  shader.set_matrix_4f("projection", camera->projection_matrix);
+  shader.set_matrix_4f("view", camera->view_matrix);
 }
 
 SpriteRenderer::~SpriteRenderer() {
@@ -73,12 +73,12 @@ SpriteRenderer::~SpriteRenderer() {
   glDeleteBuffers(1, &this->ebo);
 }
 
-void SpriteRenderer::render(Texture texture, glm::vec2 position, glm::vec2 scale, float angle, glm::vec3 colour) {
+void SpriteRenderer::render(Texture texture, glm::vec2 position, glm::vec2 scale, float angle, glm::vec3 colour, glm::vec2 origin) {
   // Activate the shader to actually do the model transformations
   this->shader.activate();
 
-  // Create a model transformation matrix
-  glm::mat4 model_transform = glm::mat4(1.0f);
+  // Create a model transformation matrix and apply any origin transformations, if any
+  glm::mat4 model_transform = glm::translate(glm::mat4(1.0f), glm::vec3(origin, 0.0f));
 
   // Apply transformations and translations to the sprite
   // Note that first the object is scaled, then rotated, then translated. However, these transformations
