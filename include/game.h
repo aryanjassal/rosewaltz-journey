@@ -31,7 +31,7 @@ class Game {
     };
 
     // Set up variables
-    MouseState mouse = { 0, 0, { false, false, false }, nullptr };
+    static MouseState mouse;
     unsigned int width, height;
 
     // The constructor function that takes the default width and height as the starting arguments
@@ -40,6 +40,9 @@ class Game {
 
     // This function initialises all the variables and other resources that the game will need access to
     void init();
+
+    // This function handles the main game logic loop
+    void run();
 
     // This function contains code to render stuff on the screen
     // Note: this function should be run as fast as possible
@@ -52,6 +55,21 @@ class Game {
     // Update the camera
     // Tip: this function is typically used after changing the width or height of the game window
     void update_viewport(int width, int height);
+  
+  private:
+    // The GLFW window to which everything is output
+    GLFWwindow *GameWindow;
+
+    // Set all flags/hints for the window
+    void set_window_hints();
+
+    // Create a GLFW window
+    void create_window(bool fullscreen = true, unsigned int width = 0, unsigned int height = 0);
+
+    // Callback functions for GLFW events
+    static void resize_viewport_callback(GLFWwindow* window, int width, int height);
+    static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+    static void mouse_callback(GLFWwindow* window, double x, double y);
 };
 
 #endif
