@@ -3,22 +3,24 @@
 // Set up pointers to global objects for the game
 SpriteRenderer *Renderer;
 Camera::OrthoCamera *GameCamera;
-Game::MouseState Game::mouse = { 0, 0, { false, false, false }, nullptr };
 
-Game::Game(unsigned int width, unsigned int height) {
+Game::Game(unsigned int width, unsigned int height, std::string window_title) {
   // Set internal width and height
   this->width = width;
   this->height = height;
+  this->GameTitle = window_title;
 
-  // // Initialise the mouse struct
-  // mouse = { 0, 0, { false, false, false }, nullptr };
+  // Initialise the mouse state struct
+  mouse = { 0, 0, { false, false, false }, nullptr };
 
   // Initialise GLFW
-  glfwInit();
+  if (!glfwInit()) {
+    printf("ERROR: GLFW failed to initialise!\n");
+  }
 
   // Create a window for the game
   set_window_hints();
-  create_window(false, 1200, 720);
+  create_window(GameWindow, false);
 
   // Initialise OpenGL using GLAD
   gladLoadGL(glfwGetProcAddress);
@@ -126,18 +128,16 @@ void Game::set_window_hints() {
   glfwWindowHint(GLFW_RESIZABLE, false);
 }
 
-void Game::create_window(bool fullscreen, unsigned int width, unsigned int height) {
-  this->width = width;
-  this->height = height;
-  // // Get current window dimensions
-  // if (width && height) 
-  //   const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-  //   this->width = mode->width;
-  //   this->height = mode->height;
-  // }
+void Game::create_window(GLFWwindow *&window, bool fullscreen) {
+  // Get current window dimensions
+  if (!this->width && !this->height) {
+    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    this->width = mode->width;
+    this->height = mode->height;
+  }
 
   // Create a GLFW window
-  GLFWwindow* window = glfwCreateWindow(this->width, this->height, "Rosewaltz Journey", fullscreen ? glfwGetPrimaryMonitor() : NULL, NULL);
+  window = glfwCreateWindow(this->width, this->height, "Rosewaltz Journey", fullscreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
   glfwMakeContextCurrent(window);
 
   // If the window does not exist, then something went wrong!
@@ -149,33 +149,9 @@ void Game::create_window(bool fullscreen, unsigned int width, unsigned int heigh
 
   // Change some GLFW settings post-initialisation
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-  glfwSetWindowSizeCallback(window, resize_viewport_callback);
-  glfwSetCursorPosCallback(window, mouse_callback);
-  glfwSetMouseButtonCallback(window, mouse_button_callback);
 }
 
-// Viewport callback function
-void Game::resize_viewport_callback(GLFWwindow* window, int width, int height) {
-  // Actually change the OpenGL viewport settings
-  glViewport(0, 0, width, height);
-
-  // // Update the game with the new viewport dimensions
-  // update_viewport(width, height);
-}
-
-// Mouse callback function
-void Game::mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-  if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-    mouse.buttons.left_button = true;
-    mouse.buttons.left_button_down = true;
-  } else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
-    mouse.buttons.left_button = false;
-    mouse.buttons.left_button_up = true;
-  }
-}
-
-// Callback function to update the position of the mouse
-void Game::mouse_callback(GLFWwindow* window, double x, double y) {
-  mouse.x = x;
-  mouse.y = y;
+void Game::set_callbacks(GLFWcursorposfun cursorpos_callback, GLFWmousebuttonfun cursorbutton_callback) {
+  glfwSetCursorPosCallback(GameWindow, cursorpos_callback);
+  glfwSetMouseButtonCallback(GameWindow, cursorbutton_callback);
 }

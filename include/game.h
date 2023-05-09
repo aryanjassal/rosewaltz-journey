@@ -4,6 +4,7 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
+#include <functional>
 #include <stdio.h>
 
 #include "glm/glm.hpp"
@@ -31,11 +32,12 @@ class Game {
     };
 
     // Set up variables
-    static MouseState mouse;
+    // static MouseState mouse;
+    MouseState mouse;
     unsigned int width, height;
 
     // The constructor function that takes the default width and height as the starting arguments
-    Game(unsigned int width, unsigned int height);
+    Game(unsigned int width, unsigned int height, std::string window_title);
     ~Game();
 
     // This function initialises all the variables and other resources that the game will need access to
@@ -55,21 +57,22 @@ class Game {
     // Update the camera
     // Tip: this function is typically used after changing the width or height of the game window
     void update_viewport(int width, int height);
+
+    // Set GLFW callbacks
+    void set_callbacks(GLFWcursorposfun cursorpos_callback, GLFWmousebuttonfun cursorbutton_callback);
   
   private:
     // The GLFW window to which everything is output
     GLFWwindow *GameWindow;
 
+    // Store the name of the window
+    std::string GameTitle;
+
     // Set all flags/hints for the window
     void set_window_hints();
 
     // Create a GLFW window
-    void create_window(bool fullscreen = true, unsigned int width = 0, unsigned int height = 0);
-
-    // Callback functions for GLFW events
-    static void resize_viewport_callback(GLFWwindow* window, int width, int height);
-    static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
-    static void mouse_callback(GLFWwindow* window, double x, double y);
+    void create_window(GLFWwindow *&window, bool fullscreen = true);
 };
 
 #endif
