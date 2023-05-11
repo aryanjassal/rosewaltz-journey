@@ -4,8 +4,8 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
-#include <functional>
 #include <stdio.h>
+#include <map>
 
 #include "glm/glm.hpp"
 
@@ -19,21 +19,28 @@
 class Game {
   public:
     // This struct defines how information about mouse buttons is stored within the program
-    typedef struct MouseButtonState {
+    typedef struct MouseButton {
       bool left_button;
       bool left_button_down, left_button_up;
     };
 
     // This struct defines how information about the current mouse state is stored within the program
-    typedef struct MouseState {
+    typedef struct Mouse {
       int x, y;
-      MouseButtonState buttons;
+      MouseButton buttons;
       GameObject::Object *active_object;
     };
 
-    // Set up variables
-    // static MouseState mouse;
-    MouseState mouse;
+    // This sturct defines how information about the current key and keyboard state is stored within the program
+    typedef struct KeyState {
+      bool pressed, down, released;
+    };
+
+    // Set up state variables
+    Mouse MouseState;
+    std::map<int, KeyState> KeyboardState;
+
+    // Set up other generic variables
     unsigned int width, height;
 
     // The constructor function that takes the default width and height as the starting arguments
@@ -59,7 +66,7 @@ class Game {
     void update_viewport(int width, int height);
 
     // Set GLFW callbacks
-    void set_callbacks(GLFWcursorposfun cursorpos_callback, GLFWmousebuttonfun cursorbutton_callback);
+    void set_callbacks(GLFWcursorposfun cursorpos_callback, GLFWmousebuttonfun cursorbutton_callback, GLFWkeyfun keyboard_callback);
   
   private:
     // The GLFW window to which everything is output

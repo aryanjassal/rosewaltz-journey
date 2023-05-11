@@ -1,4 +1,5 @@
 #include "game.h"
+#include <GLFW/glfw3.h>
 
 // Set up pointers to global objects for the game
 SpriteRenderer *Renderer;
@@ -10,8 +11,8 @@ Game::Game(unsigned int width, unsigned int height, std::string window_title) {
   this->height = height;
   this->GameTitle = window_title;
 
-  // Initialise the mouse state struct
-  mouse = { 0, 0, { false, false, false }, nullptr };
+  // Initialise the mouse state
+  this->MouseState = { 0, 0, { false, false, false }, nullptr };
 
   // Initialise GLFW
   if (!glfwInit()) {
@@ -77,11 +78,34 @@ void Game::run() {
 }
 
 void Game::update() {
+  // Reset the pressed and released status of the mouse buttons
+  //TODO: Why does this not work inside the input handler? Can it even be here after the delta-time update?
+  MouseState.buttons.left_button_down = false;
+  MouseState.buttons.left_button_up = false;
+  
+  // If left click has been released, then there should be no active object
+  if (!MouseState.buttons.left_button) MouseState.active_object = nullptr;
+
+  // Reset KeyState::pressed and KeyState::released
+  //! This method is extremely unoptimised. The multiple loops need to be fixed for optimal performance.
+  std::vector<int> released_keys;
+  for (auto pair : this->KeyboardState) {
+    if (pair.second.pressed) this->KeyboardState[pair.first].pressed = false;
+    if (pair.second.released) released_keys.push_back(pair.first);
+  }
+
+  for (int key : released_keys) {
+    this->KeyboardState.erase(this->KeyboardState.find(key));
+  }
+
   // Poll GLFW for new events
-  mouse.buttons.left_button_down = false;
-  mouse.buttons.left_button_up = false;
-  if (!mouse.buttons.left_button) mouse.active_object = nullptr;
   glfwPollEvents();
+
+  // Print out debug keyboard info
+  printf("\n");
+  for (auto pair : this->KeyboardState) {
+    printf("%i : %s, %s, %s\n", (char)pair.first, pair.second.pressed ? "true" : "false", pair.second.down ? "true" : "false", pair.second.released ? "true" : "false");
+  }
 }
 
 void Game::render() {
@@ -89,24 +113,24 @@ void Game::render() {
   glClear(GL_COLOR_BUFFER_BIT);
 
   // If an object is selected, then move the object along with the mouse
-  if (mouse.active_object != nullptr) {
-    mouse.active_object->translate_to_point(glm::vec2(mouse.x, mouse.y));
+  if (MouseState.active_object != nullptr) {
+    MouseState.active_object->translate_to_point(glm::vec2(MouseState.x, MouseState.y));
   }
 
   // If we just released the mouse button and there is an object currently selected,
   // then reset the snap to 100.0f (temporary value) and update the position
-  if (mouse.buttons.left_button_up && mouse.active_object != nullptr) {
-    mouse.active_object->snap = glm::vec2(100.0f, 100.0f);
-    mouse.active_object->update_position();
+  if (MouseState.buttons.left_button_up && MouseState.active_object != nullptr) {
+    MouseState.active_object->snap = glm::vec2(100.0f, 100.0f);
+    MouseState.active_object->update_position();
   }
 
   // Loop over every game object and check if the object is interactive and if the mouse intersects with it
   // If it does, set the snap to zero for smooth movement and make the current object focused
   // Then, render each object
   for (auto &object : GameObject::all()) {
-    if (mouse.buttons.left_button && mouse.buttons.left_button_down && object->interactive && object->check_point_intersection(glm::vec2(mouse.x, mouse.y))) {
+    if (MouseState.buttons.left_button && MouseState.buttons.left_button_down && object->interactive && object->check_point_intersection(glm::vec2(MouseState.x, MouseState.y))) {
       object->snap = glm::vec2(0.0f);
-      mouse.active_object = object;
+      MouseState.active_object = object;
     }
     object->render(Renderer);
   }
@@ -151,7 +175,8 @@ void Game::create_window(GLFWwindow *&window, bool fullscreen) {
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 
-void Game::set_callbacks(GLFWcursorposfun cursorpos_callback, GLFWmousebuttonfun cursorbutton_callback) {
+void Game::set_callbacks(GLFWcursorposfun cursorpos_callback, GLFWmousebuttonfun cursorbutton_callback, GLFWkeyfun keyboard_callback) {
   glfwSetCursorPosCallback(GameWindow, cursorpos_callback);
   glfwSetMouseButtonCallback(GameWindow, cursorbutton_callback);
+  glfwSetKeyCallback(GameWindow, keyboard_callback);
 }

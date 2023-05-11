@@ -3,3 +3,4 @@ obj/
 out/
 .vscode
 .cache
+neovide_backtraces.log
