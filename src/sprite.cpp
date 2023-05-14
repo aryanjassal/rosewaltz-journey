@@ -2,6 +2,7 @@
 
 SpriteRenderer::SpriteRenderer(Shader &shader, Camera::OrthoCamera *camera) {
   this->shader = shader;
+  this->camera = camera;
 
   // Set up the vertices
   unsigned int vbo;
@@ -61,10 +62,10 @@ SpriteRenderer::SpriteRenderer(Shader &shader, Camera::OrthoCamera *camera) {
   // Delete the VBO buffer as it is no longer needed
   glDeleteBuffers(1, &vbo);
 
-  // Apply the projection and the view matrix to the camera
-  shader.activate();
-  shader.set_matrix_4f("projection", camera->projection_matrix);
-  shader.set_matrix_4f("view", camera->view_matrix);
+  // // Apply the projection and the view matrix to the camera
+  // shader.activate();
+  // shader.set_matrix_4f("projection", camera->projection_matrix);
+  // shader.set_matrix_4f("view", camera->view_matrix);
 }
 
 SpriteRenderer::~SpriteRenderer() {
@@ -74,8 +75,10 @@ SpriteRenderer::~SpriteRenderer() {
 }
 
 void SpriteRenderer::render(Texture texture, glm::vec2 position, glm::vec2 scale, float angle, glm::vec3 colour, glm::vec2 origin) {
-  // Activate the shader to actually do the model transformations
+  // Activate the shader and apply the camera matrices
   this->shader.activate();
+  this->shader.set_matrix_4f("projection", this->camera->projection_matrix);
+  this->shader.set_matrix_4f("view", this->camera->view_matrix);
 
   // Create a model transformation matrix and apply any origin transformations, if any
   glm::mat4 model_transform = glm::translate(glm::mat4(1.0f), glm::vec3(origin, 0.0f));

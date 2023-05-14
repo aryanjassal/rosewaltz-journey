@@ -42,6 +42,7 @@ class Game {
 
     // Set up other generic variables
     unsigned int width, height;
+    bool fullscreen = false;
 
     // The constructor function that takes the default width and height as the starting arguments
     Game(unsigned int width, unsigned int height, std::string window_title);
@@ -61,9 +62,9 @@ class Game {
     // Note: this function should only run once every frame (use delta time)
     void update();
 
-    // Update the camera
-    // Tip: this function is typically used after changing the width or height of the game window
-    void update_viewport(int width, int height);
+    // // Update the camera
+    // // Tip: this function is typically used after changing the width or height of the game window
+    // void update_viewport(int width, int height);
 
     // Set GLFW callbacks
     void set_callbacks(GLFWcursorposfun cursorpos_callback, GLFWmousebuttonfun cursorbutton_callback, GLFWkeyfun keyboard_callback);
@@ -79,7 +80,10 @@ class Game {
     void set_window_hints();
 
     // Create a GLFW window
-    void create_window(GLFWwindow *&window, bool fullscreen = true);
+    void create_window(GLFWwindow *&window);
+
+    // Toggle the fullscreen status of the window
+    void toggle_fullscreen();
 };
 
 #endif

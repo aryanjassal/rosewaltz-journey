@@ -51,10 +51,9 @@ namespace GameObject {
       // Update the position by rerunning all calculations that would be run while updating position
       void update_position();
     
-    private:
       // Update the bounding box according to the new position of the object
       void update_bounding_box();
-
+    private:
       // Update the position of the object based on the snap set
       void update_snap_position();
   };

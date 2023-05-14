@@ -7,7 +7,7 @@ void mouse_callback(GLFWwindow *window, double x, double y);
 void keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
 
 int main() {
-  RosewaltzJourney = new Game(1366, 768, "Rosewaltz Journey");
+  RosewaltzJourney = new Game(1280, 720, "Rosewaltz Journey");
   RosewaltzJourney->init();
   RosewaltzJourney->set_callbacks(mouse_callback, mouse_button_callback, keyboard_callback);
   RosewaltzJourney->run();

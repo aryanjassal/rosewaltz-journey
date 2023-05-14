@@ -4,6 +4,7 @@
 // Set up pointers to global objects for the game
 SpriteRenderer *Renderer;
 Camera::OrthoCamera *GameCamera;
+//TODO: this-> all the GameWindow instances
 
 Game::Game(unsigned int width, unsigned int height, std::string window_title) {
   // Set internal width and height
@@ -20,8 +21,9 @@ Game::Game(unsigned int width, unsigned int height, std::string window_title) {
   }
 
   // Create a window for the game
+  this->fullscreen = false;
   set_window_hints();
-  create_window(GameWindow, false);
+  create_window(GameWindow);
 
   // Initialise OpenGL using GLAD
   gladLoadGL(glfwGetProcAddress);
@@ -62,6 +64,7 @@ void Game::init() {
   ResourceManager::Texture::load("textures/windows-11.png", true, "windows-icon");
 
   // Set up the game objects
+  //TODO: Implement fractional scaling for sprites to keep size constant regardless of window size
   GameObject::create("windows1", GameCamera, ResourceManager::Texture::get("windows-icon"), glm::vec2(100.0f), glm::vec2(100.0f), glm::vec2(100.0f));
   GameObject::create("windows2", GameCamera, ResourceManager::Texture::get("windows-icon"), glm::vec2(200.0f), glm::vec2(100.0f), glm::vec2(100.0f));
 }
@@ -86,6 +89,9 @@ void Game::update() {
   // If left click has been released, then there should be no active object
   if (!MouseState.buttons.left_button) MouseState.active_object = nullptr;
 
+  // If the escape key was pressed, then close the window
+  if (KeyboardState[256].pressed) glfwSetWindowShouldClose(this->GameWindow, true);
+
   // Reset KeyState::pressed and KeyState::released
   //! This method is extremely unoptimised. The multiple loops need to be fixed for optimal performance.
   std::vector<int> released_keys;
@@ -100,12 +106,6 @@ void Game::update() {
 
   // Poll GLFW for new events
   glfwPollEvents();
-
-  // Print out debug keyboard info
-  printf("\n");
-  for (auto pair : this->KeyboardState) {
-    printf("%i : %s, %s, %s\n", (char)pair.first, pair.second.pressed ? "true" : "false", pair.second.down ? "true" : "false", pair.second.released ? "true" : "false");
-  }
 }
 
 void Game::render() {
@@ -134,11 +134,9 @@ void Game::render() {
     }
     object->render(Renderer);
   }
-}
 
-void Game::update_viewport(int width, int height) {
-  this->width = width;
-  this->height = height;
+  // If the F key is pressed, toggle fullscreen
+  if (this->KeyboardState['F'].pressed) toggle_fullscreen();
 }
 
 void Game::set_window_hints() {
@@ -152,16 +150,9 @@ void Game::set_window_hints() {
   glfwWindowHint(GLFW_RESIZABLE, false);
 }
 
-void Game::create_window(GLFWwindow *&window, bool fullscreen) {
-  // Get current window dimensions
-  if (!this->width && !this->height) {
-    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-    this->width = mode->width;
-    this->height = mode->height;
-  }
-
+void Game::create_window(GLFWwindow *&window) {
   // Create a GLFW window
-  window = glfwCreateWindow(this->width, this->height, "Rosewaltz Journey", fullscreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
+  window = glfwCreateWindow(width, height, "Rosewaltz Journey", this->fullscreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
   glfwMakeContextCurrent(window);
 
   // If the window does not exist, then something went wrong!
@@ -179,4 +170,27 @@ void Game::set_callbacks(GLFWcursorposfun cursorpos_callback, GLFWmousebuttonfun
   glfwSetCursorPosCallback(GameWindow, cursorpos_callback);
   glfwSetMouseButtonCallback(GameWindow, cursorbutton_callback);
   glfwSetKeyCallback(GameWindow, keyboard_callback);
+}
+
+void Game::toggle_fullscreen() {
+  // Actually toggle the fullscreen mode
+  this->fullscreen = !this->fullscreen;
+
+  // Get current window dimensions
+  int width = this->width;
+  int height = this->height;
+
+  // If the window mode is fullscreen, then actually apply the fullscreen window dimensions
+  if (this->fullscreen) {
+    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    width = mode->width;
+    height = mode->height;
+  }
+
+  // Update the OpenGL viewport
+  glViewport(0, 0, width, height);
+  GameCamera->resize((float)width, (float)height);
+
+  // Toggle the window fullscreen state
+  glfwSetWindowMonitor(this->GameWindow, this->fullscreen ? glfwGetPrimaryMonitor() : nullptr, 0, 0, width, height, 0);
 }

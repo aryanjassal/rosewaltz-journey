@@ -33,10 +33,7 @@ GameObject::Object *GameObject::create(std::string handle, Camera::OrthoCamera *
   object.scale = scale;
   object.snap = snap;
 
-  object.bounding_box.right = position.x + ((texture.width / 2) / (texture.width / scale.x));
-  object.bounding_box.left = position.x - ((texture.width / 2) / (texture.width / scale.x));
-  object.bounding_box.bottom = position.y + ((texture.height / 2) / (texture.height / scale.y));
-  object.bounding_box.top = position.y - ((texture.height / 2) / (texture.height / scale.y));
+  object.update_bounding_box();
 
   Objects[handle] = object;
   return &Objects[handle];
@@ -61,10 +58,10 @@ void GameObject::update(std::string handle, GameObject::Object object) {
 }
 
 void GameObject::Object::update_bounding_box() {
-  this->bounding_box.right = position.x + ((texture.width / 2) / (texture.width / scale.x));
-  this->bounding_box.left = position.x - ((texture.width / 2) / (texture.width / scale.x));
-  this->bounding_box.bottom = position.y + ((texture.height / 2) / (texture.height / scale.y));
-  this->bounding_box.top = position.y - ((texture.height / 2) / (texture.height / scale.y));
+  this->bounding_box.right = this->position.x + ((this->texture.width / 2) / (this->texture.width / this->scale.x));
+  this->bounding_box.left = this->position.x - ((this->texture.width / 2) / (this->texture.width / this->scale.x));
+  this->bounding_box.bottom = this->position.y + ((this->texture.height / 2) / (this->texture.height / this->scale.y));
+  this->bounding_box.top = this->position.y - ((this->texture.height / 2) / (this->texture.height / this->scale.y));
 }
 
 void GameObject::Object::update_snap_position() {
