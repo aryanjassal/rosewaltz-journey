@@ -65,8 +65,8 @@ void Game::init() {
 
   // Set up the game objects
   //TODO: Implement fractional scaling for sprites to keep size constant regardless of window size
-  GameObject::create("windows1", GameCamera, ResourceManager::Texture::get("windows-icon"), glm::vec2(100.0f), glm::vec2(100.0f), glm::vec2(100.0f));
-  GameObject::create("windows2", GameCamera, ResourceManager::Texture::get("windows-icon"), glm::vec2(200.0f), glm::vec2(100.0f), glm::vec2(100.0f));
+  GameObject::create("windows1", GameCamera, ResourceManager::Texture::get("windows-icon"), glm::vec2(75.0f), glm::vec2(100.0f), false, glm::vec2(100.0f));
+  GameObject::create("windows2", GameCamera, ResourceManager::Texture::get("windows-icon"), glm::vec2(225.0f), glm::vec2(100.0f), false, glm::vec2(100.0f));
 }
 
 void Game::run() {
@@ -190,6 +190,10 @@ void Game::toggle_fullscreen() {
   // Update the OpenGL viewport
   glViewport(0, 0, width, height);
   GameCamera->resize((float)width, (float)height);
+  for (auto object : GameObject::all()) {
+    object->scale_factor = (float)GameCamera->width / (float)GameCamera->height;
+    GameObject::update(object->handle, *object);
+  }
 
   // Toggle the window fullscreen state
   glfwSetWindowMonitor(this->GameWindow, this->fullscreen ? glfwGetPrimaryMonitor() : nullptr, 0, 0, width, height, 0);

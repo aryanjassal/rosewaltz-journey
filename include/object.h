@@ -18,13 +18,17 @@ namespace GameObject {
   class Object {
     public:
       // Define variables for game objects
+      std::string handle;
       glm::vec2 position;
       glm::vec2 scale;
       Texture texture;
       Camera::OrthoCamera *camera;
       bool active;
       bool interactive;
+      bool absolute_scaling = false;
+      float scale_factor = 1.0f;
 
+      // Define the bounding box of the object
       typedef struct BoundingBox {
         float top;
         float bottom;
@@ -62,7 +66,7 @@ namespace GameObject {
   static std::map<std::string, GameObject::Object> Objects;
 
   // Create a new game object instance
-  Object *create(std::string handle, Camera::OrthoCamera *camera, Texture texture, glm::vec2 position = glm::vec2(0.0f), glm::vec2 scale = glm::vec2(100.0f), glm::vec2 snap = glm::vec2(0.0f));
+  Object *create(std::string handle, Camera::OrthoCamera *camera, Texture texture, glm::vec2 position = glm::vec2(0.0f), glm::vec2 scale = glm::vec2(100.0f), bool absolute_scaling = false, glm::vec2 snap = glm::vec2(0.0f));
 
   // Fetch the game object
   Object *get(std::string handle);
