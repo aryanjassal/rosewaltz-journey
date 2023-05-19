@@ -58,10 +58,11 @@ void Game::init() {
   Renderer = new SpriteRenderer(sprite_shader, GameCamera);
 
   // // Set an icon for the game
+  // // NON-FUNCTIONAL
   // GLFWimage icons[1];
   // icons[0].pixels = ResourceManager::Image::load("icon.png");
   // glfwSetWindowIcon(this->GameWindow, sizeof(icons), icons);
-  // for (auto icon : icons) ResourceManager::Image::deallocate(icon.pixels);
+  // for (auto &icon : icons) ResourceManager::Image::deallocate(icon.pixels);
 
   // Load textures into the game
   ResourceManager::Texture::load("textures/gigachad.jpg", true, "gigachad");
@@ -69,20 +70,11 @@ void Game::init() {
 
   // Set up the game objects
   glm::vec2 w_dimensions = glm::vec2(this->width, this->height);
+  glm::vec2 origin = glm::vec2(0.5f);
   // glm::vec2 grid = glm::vec2(this->width / 3, this->height / 2);
   glm::vec2 grid = glm::vec2(100.0f);
-  GameObject::create("gigachad", GameCamera, ResourceManager::Texture::get("gigachad"), w_dimensions, glm::vec2(0.0f), glm::vec2(100.0f), grid);
-  GameObject::create("windows", GameCamera, ResourceManager::Texture::get("windows"), w_dimensions, glm::vec2(100.0f), glm::vec2(100.0f), grid);
-
-  GameObject::ObjectGroup *tile1 = GameObject::create_group("tile1");
-  tile1->add("gigachad", GameObject::get("gigachad"));
-  tile1->add("windows", GameObject::get("windows"));
-  for (auto &object : tile1->all()) {
-    object->interactive = false;
-    printf("[%s] interactivity of object [%s] set to '%s'\n", tile1->handle.c_str(), object->handle.c_str(), tile1->get(object->handle)->interactive ? "true" : "false");
-    // tile1->update(object->handle, *object);
-  }
-  GameObject::update("tile1", tile1);
+  GameObjects::create("gigachad", GameCamera, ResourceManager::Texture::get("gigachad"), w_dimensions, glm::vec2(50.0f), glm::vec2(100.0f), origin, grid);
+  GameObjects::create("windows", GameCamera, ResourceManager::Texture::get("windows"), w_dimensions, glm::vec2(100.0f), glm::vec2(100.0f), origin, grid);
 }
 
 void Game::run() {
@@ -98,12 +90,11 @@ void Game::run() {
 
 void Game::update() {
   // Reset the pressed and released status of the mouse buttons
-  //TODO: Why does this not work inside the input handler? Can it even be here after the delta-time update?
   MouseState.buttons.left_button_down = false;
   MouseState.buttons.left_button_up = false;
   
   // If left click has been released, then there should be no active object
-  if (!MouseState.buttons.left_button) MouseState.active_object = nullptr;
+  if (!MouseState.buttons.left_button) MouseState.focused_object = nullptr;
 
   // If the escape key was pressed, then close the window
   if (KeyboardState[256].pressed) glfwSetWindowShouldClose(this->GameWindow, true);
@@ -129,30 +120,30 @@ void Game::render() {
   glClear(GL_COLOR_BUFFER_BIT);
 
   // If an object is selected, then move the object along with the mouse
-  if (MouseState.active_object != nullptr) {
-    MouseState.active_object->translate_to_point(glm::vec2(MouseState.x, MouseState.y), glm::vec2(0.5f));
+  if (MouseState.focused_object != nullptr) {
+    MouseState.focused_object->translate_to_point(glm::vec2(MouseState.x, MouseState.y));
   }
 
   // If we just released the mouse button and there is an object currently selected,
   // then reset the snap to 100.0f (temporary value) and update the position
-  if (MouseState.buttons.left_button_up && MouseState.active_object != nullptr) {
-    MouseState.active_object->snap = true;
-    MouseState.active_object->update_snap_position();
+  if (MouseState.buttons.left_button_up && MouseState.focused_object != nullptr) {
+    MouseState.focused_object->snap = true;
+    MouseState.focused_object->update_snap_position();
   }
 
   // Loop over every game object and check if the object is interactive and if the mouse intersects with it
   // If it does, set the snap to zero for smooth movement and make the current object focused
   // Then, render each object
-  for (auto &object : GameObject::all()) {
-    if (MouseState.buttons.left_button && MouseState.buttons.left_button_down && object->interactive && object->check_point_intersection(glm::vec2(MouseState.x, MouseState.y), glm::vec2(0.5f))) {
-      object->snap = false;
-      MouseState.active_object = object;
+  for (auto &object : GameObjects::all()) {
+    if (MouseState.buttons.left_button 
+      && MouseState.buttons.left_button_down 
+      && object->interactive 
+      && object->check_point_intersection(glm::vec2(MouseState.x, MouseState.y))) {
+        object->snap = false;
+        MouseState.focused_object = object;
     }
-    // object->render(Renderer);
+    object->render(Renderer);
   }
-
-  auto tile = GameObject::get_group("tile1");
-  tile->render(Renderer);
 
   // If the F key is pressed, toggle fullscreen
   if (this->KeyboardState['F'].pressed) toggle_fullscreen();
@@ -212,9 +203,9 @@ void Game::toggle_fullscreen() {
   // Here, the command `*Camera->resize(width, height);` must be run for a Camera object if the objects are expected to
   // have absolute sizes irrespective of the screen size. If the objects are expected to keep the same size regardless of
   // the window size, then resize the camera's matrices here.
-  for (auto &object : GameObject::all()) {
+  for (auto &object : GameObjects::all()) {
     object->window_dimensions = glm::vec2(width, height);
-    GameObject::update(object->handle, *object);
+    // GameObject::update(object->handle, *object);
   }
 
   // Toggle the window fullscreen state

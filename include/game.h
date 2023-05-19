@@ -28,7 +28,7 @@ class Game {
     typedef struct Mouse {
       int x, y;
       MouseButton buttons;
-      GameObject::Object *active_object;
+      GameObject *focused_object;
     };
 
     // This sturct defines how information about the current key and keyboard state is stored within the program
