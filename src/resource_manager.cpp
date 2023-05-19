@@ -1,5 +1,8 @@
 #include "resource_manager.h"
 
+//TODO: For deallocation, also remove the reference to their handle and everything from the map, as even
+//TODO: the memory has been freed, there are some pointers still referencing what it used to be.
+
 ::Shader ResourceManager::Shader::load(const char *vertex_shader_path, const char *fragment_shader_path, std::string handle) {
   std::string vertex_shader_code, fragment_shader_code;
 
@@ -23,7 +26,7 @@
     vertex_shader_code = vertex_shader_stream.str();
     fragment_shader_code = fragment_shader_stream.str();
   } catch (std::exception e) {
-    std::cout << "ERROR: could not read shader files" << std::endl;
+    printf("ERROR: could not read shader files!\n");
   }
 
   // Create a shader with the given vertex and fragment shader and add it to the resource manager
@@ -52,15 +55,15 @@ void ResourceManager::Shader::deallocate(std::string handle) {
     texture.image_format = GL_RGBA;
   }
 
-  // Load the image file as raw bytes
-  int width, height, color_channels;
-  unsigned char* data = stbi_load(file_path, &width, &height, &color_channels, 0);
+  // Load the requested image as raw bytes
+  int width, height, colour_channels;
+  unsigned char *data = ResourceManager::Image::load(file_path, width, height, colour_channels);
 
   // Generate the texture
   texture.generate(width, height, data);
 
   // Clean up the memory used by loading the texture
-  stbi_image_free(data);
+  ResourceManager::Image::deallocate(data);
 
   // Add the texture to the resource manager and return the texture
   Textures[handle] = texture;
@@ -73,6 +76,33 @@ void ResourceManager::Shader::deallocate(std::string handle) {
 
 void ResourceManager::Texture::deallocate(std::string handle) {
   glDeleteTextures(1, &Textures[handle].id);
+}
+
+unsigned char *ResourceManager::Image::load(const char *file_path, int &width, int &height, int &colour_channels) {
+  // Load the image file as raw bytes
+  unsigned char* data = stbi_load(file_path, &width, &height, &colour_channels, 4);
+
+  // If the pixel data is empty, then throw a runtime error
+  if (!data) {
+    std::string error_message = "Failure to load image ";
+    error_message.append(file_path);
+    error_message.append("\n");
+
+    printf("\n");
+    if (stbi_failure_reason()) printf("stbi_failure on file \"%s\" [%s]\n", file_path, stbi_failure_reason());
+    throw std::runtime_error(error_message);
+  }
+
+  return data;
+}
+
+unsigned char *ResourceManager::Image::load(const char *file_path) {
+  int width, height, colour_channels;
+  return ResourceManager::Image::load(file_path, width, height, colour_channels);
+}
+
+void ResourceManager::Image::deallocate(unsigned char *image_data) {
+  stbi_image_free(image_data);
 }
 
 void ResourceManager::deallocate() {

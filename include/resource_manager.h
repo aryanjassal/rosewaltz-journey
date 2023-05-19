@@ -11,7 +11,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
-#include <iostream>
+#include <stdio.h>
 
 // A namespace hosting a myriad of functions related to managing game assets
 // and resources during runtime. Each resource is stored for future use using
@@ -42,6 +42,17 @@ namespace ResourceManager {
 
     // Deallocates a texture with the given handle
     void deallocate(std::string handle);
+  }
+
+  // Manages loading and deallocating image files.
+  // ResourceManager::Texture uses functions from this namespace.
+  namespace Image {
+    // Load raw pixel data from an image. Do not track it in the resource manager. 
+    unsigned char *load(const char *file_path, int &width, int &height, int &colour_channels);
+    unsigned char *load(const char *file_path);
+
+    // Delete any hogged memory by removing image data no longer required
+    void deallocate(unsigned char *image_data);
   }
 
   // Deallocates all resources being managed by the program, freeing up memory.

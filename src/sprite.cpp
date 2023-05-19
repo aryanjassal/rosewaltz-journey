@@ -8,24 +8,14 @@ SpriteRenderer::SpriteRenderer(Shader &shader, Camera::OrthoCamera *camera) {
   unsigned int vbo;
 
   // Set vertices, color, and texture coordinates of a square
-  // The sprites by default have origin at middle-center
+  // The sprites by default have origin at top-left corner
   float vertices[] = {
   /* VERTEX COORDINATES \\\ TEXTURE COORDINATES  */
-    -0.5f, -0.5f,              0.0f, 0.0f,
-    -0.5f,  0.5f,              0.0f, 1.0f,
-     0.5f,  0.5f,              1.0f, 1.0f,
-     0.5f, -0.5f,              1.0f, 0.0f
+    0.0f, 0.0f,              0.0f, 0.0f,
+    0.0f, 1.0f,              0.0f, 1.0f,
+    1.0f, 1.0f,              1.0f, 1.0f,
+    1.0f, 0.0f,              1.0f, 0.0f
   };
-
-  // // Set vertices, color, and texture coordinates of a square
-  // // The sprites by default have origin at top-left corner
-  // float vertices[] = {
-  // /* VERTEX COORDINATES \\\ TEXTURE COORDINATES  */
-  //   0.0f, 0.0f,              0.0f, 0.0f,
-  //   0.0f, 1.0f,              0.0f, 1.0f,
-  //   1.0f, 1.0f,              1.0f, 1.0f,
-  //   1.0f, 0.0f,              1.0f, 0.0f
-  // };
 
   // Set the index order of the vertices
   // Note that the number of indices reflect the number of draw calls to be passed in glDrawElements()
@@ -62,10 +52,14 @@ SpriteRenderer::SpriteRenderer(Shader &shader, Camera::OrthoCamera *camera) {
   // Delete the VBO buffer as it is no longer needed
   glDeleteBuffers(1, &vbo);
 
-  // // Apply the projection and the view matrix to the camera
-  // shader.activate();
-  // shader.set_matrix_4f("projection", camera->projection_matrix);
-  // shader.set_matrix_4f("view", camera->view_matrix);
+  // Apply the projection and the view matrix to the camera
+  //! This method of assigning matrices won't work with keeping the size absolute
+  //! regardless of screen size. Meaning, if the objects are meant to scale, then
+  //! this approach works perfectly. Otherwise, they need to be updated every time
+  //! they are changed.
+  shader.activate();
+  shader.set_matrix_4f("projection", camera->projection_matrix);
+  shader.set_matrix_4f("view", camera->view_matrix);
 }
 
 SpriteRenderer::~SpriteRenderer() {
@@ -75,25 +69,23 @@ SpriteRenderer::~SpriteRenderer() {
 }
 
 void SpriteRenderer::render(Texture texture, glm::vec2 position, glm::vec2 scale, float angle, glm::vec3 colour, glm::vec2 origin) {
-  // Activate the shader and apply the camera matrices
-  this->shader.activate();
-  this->shader.set_matrix_4f("projection", this->camera->projection_matrix);
-  this->shader.set_matrix_4f("view", this->camera->view_matrix);
-
   // Create a model transformation matrix and apply any origin transformations, if any
   glm::mat4 model_transform = glm::translate(glm::mat4(1.0f), glm::vec3(origin, 0.0f));
 
   // Apply transformations and translations to the sprite
   // Note that first the object is scaled, then rotated, then translated. However, these transformations
-  // need to be listed in reverse order (probably an internal stack)
-  model_transform = glm::translate(model_transform, glm::vec3(position, 0.0f));
-  model_transform = glm::rotate(model_transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
-  model_transform = glm::scale(model_transform, glm::vec3(scale, 0.0f));
+  // need to be listed in reverse order
 
-  // // Change the origin to the center before rotating the sprite
-  // model_transform = glm::translate(model_transform, glm::vec3(0.5f, 0.5f, 0.0f));
-  // model_transform = glm::rotate(model_transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
-  // model_transform = glm::translate(model_transform, glm::vec3(-0.5f, -0.5f, 0.0f));
+  // Translate the object
+  model_transform = glm::translate(model_transform, glm::vec3(position, 0.0f));
+
+  // Change the origin to the center before rotating the sprite
+  model_transform = glm::translate(model_transform, glm::vec3(0.5f, 0.5f, 0.0f));
+  model_transform = glm::rotate(model_transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
+  model_transform = glm::translate(model_transform, glm::vec3(-0.5f, -0.5f, 0.0f));
+
+  // Properly scale the object
+  model_transform = glm::scale(model_transform, glm::vec3(scale, 0.0f));
 
   // Actually apply these transformations to the sprite
   this->shader.set_matrix_4f("model", model_transform);
