@@ -2,6 +2,7 @@
 SRC_DIR := src
 INC_DIR := include
 OUT_DIR := out
+LIB_DIR := lib
 
 # The source files to be compiled
 C_SRC_FILES := $(shell find $(SRC_DIR) -name "*.c")
@@ -27,7 +28,7 @@ MKDIR := @mkdir -p
 COMPILER_FLAGS := -w -I $(INC_DIR)
 
 # The libraries that our executable is being linked against
-LIBRARIES := -lGL -lglfw3 -lX11 -lm
+LIBRARIES := -L $(LIB_DIR) -lGL -lglfw3 -lX11 -lm
 
 # Some miscallenous commands which will prove useful later (if ever)
 CP := @cp
