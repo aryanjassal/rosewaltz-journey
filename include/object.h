@@ -4,6 +4,8 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <algorithm>
+#include <cmath>
 
 #include "camera.h"
 #include "glm/glm.hpp"
@@ -28,6 +30,13 @@ class GameObject {
     // Defines a unique identifier for each GameObject
     std::string handle;
 
+    // Defines the transformations of the object
+    Transform transform;
+
+    // Defines a vector of tags that the GameObject has
+    // The tags can help filter GameObjects or pair them up together
+    std::vector<std::string> tags;
+
     // Defines the texture the GameObject will render
     Texture texture;
 
@@ -36,13 +45,14 @@ class GameObject {
 
     // Defines the position, scale, origin, and the grid-snap of the object
     // The origin of the object is a transform operation that will be executed before any other transformation
-    glm::vec2 position, scale, origin, grid;
+    glm::vec2 origin, grid;
 
     // Snap controls wheather the object should snap to a predefined grid or not
+    // Originate controls wheather the origin setting will be respected or not
     // Inactive object won't be rendered or have any calculations run on them
     // Interactivity controls whether the mouse should be able to interact with the object or not 
     // [UNIMPLEMENTED] Ridigbody controls if the object will be involved in physics collisions or not
-    bool snap, active, interactive, rigidbody;
+    bool snap, originate, active, interactive, rigidbody;
   
     // The window dimensions are needed to ensure correct bounding box calculation when resizing the viewport
     // and not the camera's matrices in order to keep the Objects' size consistent across screen sizes.
@@ -88,8 +98,20 @@ namespace GameObjects {
     Camera::OrthoCamera *camera, 
     Texture texture, 
     glm::vec2 window_dimensions, 
+    std::vector<std::string> tags = std::vector<std::string>(),
+    Transform transform = { glm::vec2(0.0f), glm::vec2(100.0f), 0.0f },
+    glm::vec2 origin = glm::vec2(0.0f),
+    glm::vec2 grid = glm::vec2(0.0f)
+  );
+  GameObject *create(
+    std::string handle, 
+    Camera::OrthoCamera *camera, 
+    Texture texture, 
+    glm::vec2 window_dimensions, 
+    std::vector<std::string> tags = std::vector<std::string>(),
     glm::vec2 position = glm::vec2(0.0f),
-    glm::vec2 scale = glm::vec2(0.0f),
+    glm::vec2 scale = glm::vec2(100.0f), 
+    float rotation = 0.0f,
     glm::vec2 origin = glm::vec2(0.0f),
     glm::vec2 grid = glm::vec2(0.0f)
   );
@@ -99,6 +121,10 @@ namespace GameObjects {
 
   // Fetch a vector with a pointer to all active GameObjects
   std::vector<GameObject *> all();
+
+  // Filter all the GameObjects and return a vector with a pointer to active filtered GameObjects
+  std::vector<GameObject *> filter(std::string tag);
+  std::vector<GameObject *> filter(std::vector<std::string> tags);
 }
 
 #endif

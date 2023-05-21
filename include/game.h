@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <map>
+#include <stdexcept>
 
 #include "glm/glm.hpp"
 
@@ -28,7 +29,8 @@ class Game {
     typedef struct Mouse {
       int x, y;
       MouseButton buttons;
-      GameObject *focused_object;
+      GameObject *clicked_object = nullptr;
+      std::vector<GameObject *> focused_objects;
     };
 
     // This sturct defines how information about the current key and keyboard state is stored within the program

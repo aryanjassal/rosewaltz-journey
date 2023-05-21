@@ -1,6 +1,5 @@
 #include "game.h"
 #include "object.h"
-#include <GLFW/glfw3.h>
 
 // Set up pointers to global objects for the game
 SpriteRenderer *Renderer;
@@ -70,11 +69,22 @@ void Game::init() {
 
   // Set up the game objects
   glm::vec2 w_dimensions = glm::vec2(this->width, this->height);
-  glm::vec2 origin = glm::vec2(0.5f);
-  // glm::vec2 grid = glm::vec2(this->width / 3, this->height / 2);
+  glm::vec2 origin = glm::vec2(50.0f);
   glm::vec2 grid = glm::vec2(100.0f);
-  GameObjects::create("gigachad", GameCamera, ResourceManager::Texture::get("gigachad"), w_dimensions, glm::vec2(50.0f), glm::vec2(100.0f), origin, grid);
-  GameObjects::create("windows", GameCamera, ResourceManager::Texture::get("windows"), w_dimensions, glm::vec2(100.0f), glm::vec2(100.0f), origin, grid);
+  std::vector<std::string> tags;
+  tags.push_back("tile");
+
+  GameObjects::create("gigachad", GameCamera, ResourceManager::Texture::get("gigachad"), w_dimensions, tags, glm::vec2(0.0f), glm::vec2(100.0f), 0.0f, origin, grid);
+  // GameObjects::create("windows", GameCamera, ResourceManager::Texture::get("windows"), w_dimensions, tags, glm::vec2(100.0f), glm::vec2(100.0f), 0.0f, origin, grid);
+
+  // // Testing tag filtering
+  // auto fil1 = GameObjects::filter(tags);
+  // std::vector<std::string> vec_t;
+  // vec_t.push_back("nothing");
+  // auto fil2 = GameObjects::filter(vec_t);
+  //
+  // printf("[test] objects with tag '%s' %s (len: %i)\n", tags[0].c_str(), fil1 == std::vector<GameObject *>() ? "not found" : "found", fil1.size());
+  // printf("[test] objects with tag '%s' %s\n", vec_t[0].c_str(), fil2 == std::vector<GameObject *>() ? "not found" : "found");
 }
 
 void Game::run() {
@@ -94,7 +104,10 @@ void Game::update() {
   MouseState.buttons.left_button_up = false;
   
   // If left click has been released, then there should be no active object
-  if (!MouseState.buttons.left_button) MouseState.focused_object = nullptr;
+  if (!MouseState.buttons.left_button) {
+    MouseState.focused_objects = std::vector<GameObject *>();
+    MouseState.clicked_object = nullptr;
+  }
 
   // If the escape key was pressed, then close the window
   if (KeyboardState[256].pressed) glfwSetWindowShouldClose(this->GameWindow, true);
@@ -120,15 +133,26 @@ void Game::render() {
   glClear(GL_COLOR_BUFFER_BIT);
 
   // If an object is selected, then move the object along with the mouse
-  if (MouseState.focused_object != nullptr) {
-    MouseState.focused_object->translate_to_point(glm::vec2(MouseState.x, MouseState.y));
+  if (MouseState.focused_objects != std::vector<GameObject *>()) {
+    for (GameObject *&object : MouseState.focused_objects) {
+      if (object == MouseState.clicked_object) {
+        object->originate = true;
+        object->translate_to_point(glm::vec2(MouseState.x, MouseState.y));
+      } else {
+        // object->originate = true;
+        // object->origin = glm::vec2(-50.0);
+        // object->translate_to_point(glm::vec2(MouseState.x, MouseState.y));
+      }
+    }
   }
 
-  // If we just released the mouse button and there is an object currently selected,
-  // then reset the snap to 100.0f (temporary value) and update the position
-  if (MouseState.buttons.left_button_up && MouseState.focused_object != nullptr) {
-    MouseState.focused_object->snap = true;
-    MouseState.focused_object->update_snap_position();
+  // If we just released the left mouse button, then update its snap position
+  if (MouseState.buttons.left_button_up && MouseState.focused_objects != std::vector<GameObject *>()) {
+    for (GameObject *&object : MouseState.focused_objects) {
+      object->snap = true;
+      object->originate = false;
+      object->update_snap_position();
+    }
   }
 
   // Loop over every game object and check if the object is interactive and if the mouse intersects with it
@@ -139,8 +163,12 @@ void Game::render() {
       && MouseState.buttons.left_button_down 
       && object->interactive 
       && object->check_point_intersection(glm::vec2(MouseState.x, MouseState.y))) {
-        object->snap = false;
-        MouseState.focused_object = object;
+        MouseState.clicked_object = object;
+        for (GameObject *&f_object : GameObjects::filter(object->tags)) {
+          f_object->snap = false;
+          f_object->originate = true;
+          MouseState.focused_objects.push_back(f_object);
+      }
     }
     object->render(Renderer);
   }

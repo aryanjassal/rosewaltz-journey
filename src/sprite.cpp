@@ -68,24 +68,24 @@ SpriteRenderer::~SpriteRenderer() {
   glDeleteBuffers(1, &this->ebo);
 }
 
-void SpriteRenderer::render(Texture texture, glm::vec2 position, glm::vec2 scale, float angle, glm::vec3 colour, glm::vec2 origin) {
+void SpriteRenderer::render(Texture texture, Transform transform, glm::vec3 colour) {
   // Create a model transformation matrix and apply any origin transformations, if any
-  glm::mat4 model_transform = glm::translate(glm::mat4(1.0f), glm::vec3(origin, 0.0f));
+  glm::mat4 model_transform = glm::mat4(1.0f);
 
   // Apply transformations and translations to the sprite
   // Note that first the object is scaled, then rotated, then translated. However, these transformations
   // need to be listed in reverse order
 
   // Translate the object
-  model_transform = glm::translate(model_transform, glm::vec3(position, 0.0f));
+  model_transform = glm::translate(model_transform, glm::vec3(transform.position, 0.0f));
 
   // Change the origin to the center before rotating the sprite
   model_transform = glm::translate(model_transform, glm::vec3(0.5f, 0.5f, 0.0f));
-  model_transform = glm::rotate(model_transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
+  model_transform = glm::rotate(model_transform, glm::radians(transform.rotation), glm::vec3(0.0f, 0.0f, 1.0f));
   model_transform = glm::translate(model_transform, glm::vec3(-0.5f, -0.5f, 0.0f));
 
   // Properly scale the object
-  model_transform = glm::scale(model_transform, glm::vec3(scale, 0.0f));
+  model_transform = glm::scale(model_transform, glm::vec3(transform.scale, 0.0f));
 
   // Actually apply these transformations to the sprite
   this->shader.set_matrix_4f("model", model_transform);

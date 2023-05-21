@@ -9,6 +9,12 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glad/gl.h"
 
+// Struct holding the transformations to be applied to the object
+typedef struct Transform {
+  glm::vec2 position, scale;
+  float rotation;
+};
+
 class SpriteRenderer {
   public:
     // The constructor initialises the shader and the shape of the sprite
@@ -20,7 +26,11 @@ class SpriteRenderer {
     // Actually render the sprite to the screen
     // Note that only an orthographic camera is supported for now.
     //! The program unefficiently resets the projection and view matrices every frame, when once is enough. Fix this
-    void render(Texture texture, glm::vec2 position = glm::vec2(0.0f), glm::vec2 scale = glm::vec2(1.0f), float angle = 0.0f, glm::vec3 colour = glm::vec3(1.0f), glm::vec2 origin = glm::vec2(0.0f));
+    void render(
+      Texture texture, 
+      Transform transform,
+      glm::vec3 colour = glm::vec3(1.0f)
+    ); 
 
   private:
     Shader shader;
