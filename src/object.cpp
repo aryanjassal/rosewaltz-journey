@@ -7,20 +7,19 @@ void GameObject::render(SpriteRenderer *renderer) {
 }
 
 void GameObject::translate_to_point(glm::vec2 point) {
+  glm::vec2 old_pos = this->transform.position;
+
   point = (point / this->window_dimensions) * glm::vec2(this->camera->width, this->camera->height);
   glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
-  printf("[%s] [translate] point: %.2f, %.2f; origin: %.2f, %.2f\n", this->handle.c_str(), point.x, point.y, origin.x, origin.y);
 
-  // Transform the point to the new origin provided
-  // glm::vec2 transformed_point = glm::vec2(0.0f);
-  // transformed_point.x = point.x - (this->texture.width / (this->texture.width / this->transform.scale.x));
-  // transformed_point.y = point.y - (this->texture.height / (this->texture.height / this->transform.scale.y));
-  glm::vec2 transformed_point = point;
-  this->transform.position = transformed_point - origin;
+  // printf("[%s] \t[translate]\t point: %.2f, %.2f; origin: %.2f, %.2f\n", this->handle.c_str(), point.x, point.y, origin.x, origin.y);
+
+  this->transform.position = point - origin;
 
   // Snap the object and update its bounding box
   if (this->snap) this->update_snap_position();
   this->update_bounding_box();
+  this->delta_transform.position = this->transform.position - old_pos; 
 }
 
 void GameObject::update_position() {
@@ -30,14 +29,10 @@ void GameObject::update_position() {
 bool GameObject::check_point_intersection(glm::vec2 point) {
   point = (point / this->window_dimensions) * glm::vec2(this->camera->width, this->camera->height);
 
-  // [REDUNDANT]?
-  glm::vec2 transformed_point;
-  transformed_point = point;
-
-  return ((this->bounding_box.left <= transformed_point.x) 
-    && (this->bounding_box.right >= transformed_point.x) 
-    && (this->bounding_box.top <= transformed_point.y) 
-    && (this->bounding_box.bottom >= transformed_point.y));
+  return ((this->bounding_box.left <= point.x) 
+    && (this->bounding_box.right >= point.x) 
+    && (this->bounding_box.top <= point.y) 
+    && (this->bounding_box.bottom >= point.y));
 }
 
 void GameObject::update_bounding_box() {
@@ -68,8 +63,8 @@ void GameObject::update_snap_position() {
 
   this->update_bounding_box();
 
-  //DEBUG print the bounding box of the object along with its handle
-  printf("[%s] [snap] %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", this->handle.c_str(), this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, this->transform.position.x, this->transform.position.y);
+  // //DEBUG print the bounding box of the object along with its handle
+  // printf("[%s] \t[snap]\t %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", this->handle.c_str(), this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, this->transform.position.x, this->transform.position.y);
 }
 
 GameObject *GameObjects::create(

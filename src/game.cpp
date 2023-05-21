@@ -66,6 +66,7 @@ void Game::init() {
   // Load textures into the game
   ResourceManager::Texture::load("textures/gigachad.jpg", true, "gigachad");
   ResourceManager::Texture::load("textures/windows-11.png", true, "windows");
+  ResourceManager::Texture::load("textures/windows.png", true, "windows2");
 
   // Set up the game objects
   glm::vec2 w_dimensions = glm::vec2(this->width, this->height);
@@ -75,7 +76,8 @@ void Game::init() {
   tags.push_back("tile");
 
   GameObjects::create("gigachad", GameCamera, ResourceManager::Texture::get("gigachad"), w_dimensions, tags, glm::vec2(0.0f), glm::vec2(100.0f), 0.0f, origin, grid);
-  // GameObjects::create("windows", GameCamera, ResourceManager::Texture::get("windows"), w_dimensions, tags, glm::vec2(100.0f), glm::vec2(100.0f), 0.0f, origin, grid);
+  GameObjects::create("windows", GameCamera, ResourceManager::Texture::get("windows"), w_dimensions, tags, glm::vec2(100.0f), glm::vec2(100.0f), 0.0f, origin, grid);
+  GameObjects::create("windows2", GameCamera, ResourceManager::Texture::get("windows2"), w_dimensions, tags, glm::vec2(200.0f), glm::vec2(100.0f), 0.0f, origin, grid);
 
   // // Testing tag filtering
   // auto fil1 = GameObjects::filter(tags);
@@ -134,14 +136,12 @@ void Game::render() {
 
   // If an object is selected, then move the object along with the mouse
   if (MouseState.focused_objects != std::vector<GameObject *>()) {
+    MouseState.clicked_object->originate = true;
+    MouseState.clicked_object->translate_to_point(glm::vec2(MouseState.x, MouseState.y));
     for (GameObject *&object : MouseState.focused_objects) {
-      if (object == MouseState.clicked_object) {
+      if (object != MouseState.clicked_object) {
         object->originate = true;
-        object->translate_to_point(glm::vec2(MouseState.x, MouseState.y));
-      } else {
-        // object->originate = true;
-        // object->origin = glm::vec2(-50.0);
-        // object->translate_to_point(glm::vec2(MouseState.x, MouseState.y));
+        object->transform.position += MouseState.clicked_object->delta_transform.position;
       }
     }
   }

@@ -33,6 +33,9 @@ class GameObject {
     // Defines the transformations of the object
     Transform transform;
 
+    // Stores the change in transformation over the previous frame
+    Transform delta_transform;
+
     // Defines a vector of tags that the GameObject has
     // The tags can help filter GameObjects or pair them up together
     std::vector<std::string> tags;
