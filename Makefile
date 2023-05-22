@@ -25,7 +25,7 @@ MKDIR := @mkdir -p
 
 # The flags to be passed to the C compiler (the $CC)
 # -w -> supresses all warnings
-COMPILER_FLAGS := -w -I $(INC_DIR)
+COMPILER_FLAGS := -w -I $(INC_DIR) -g
 
 # The libraries that our executable is being linked against
 LIBRARIES := -L $(LIB_DIR) -lGL -lglfw3 -lX11 -lm

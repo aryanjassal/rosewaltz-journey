@@ -51,20 +51,22 @@ void GameObject::update_bounding_box() {
 void GameObject::update_snap_position() {
   // If snapping is disabled in the object settings, then do nothing
   if (!this->snap) return;
+  glm::vec2 old_pos = this->transform.position;
 
   // Otherwise, update the position to snap to the nearest snap point
   // glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
   glm::vec2 origin = this->origin;
   glm::vec2 new_position;
-  new_position.x = std::floor((this->transform.position.x + origin.x) / this->grid.x) * this->grid.x;
-  new_position.y = std::floor((this->transform.position.y + origin.y) / this->grid.y) * this->grid.y;
+  new_position.x = std::clamp(std::floor((this->transform.position.x + origin.x) / this->grid.x) * this->grid.x, 0.0f, (float)this->camera->width - this->grid.x);
+  new_position.y = std::clamp(std::floor((this->transform.position.y + origin.y) / this->grid.y) * this->grid.y, 0.0f, (float)this->camera->height - this->grid.y);
+  this->delta_transform.position = this->transform.position - old_pos; 
   // this->transform.position = new_position + (this->originate ? this->origin : glm::vec2(0.0f));
   this->transform.position = new_position;
 
   this->update_bounding_box();
 
   // //DEBUG print the bounding box of the object along with its handle
-  // printf("[%s] \t[snap]\t %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", this->handle.c_str(), this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, this->transform.position.x, this->transform.position.y);
+  // printf("[%s] [snap] %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", this->handle.c_str(), this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, this->transform.position.x, this->transform.position.y);
 }
 
 GameObject *GameObjects::create(
@@ -84,13 +86,14 @@ GameObject *GameObjects::create(
     object.tags = tags;
     object.transform = transform;
     object.origin = origin;
-    object.originate = true;
+    object.originate = false;
     if (grid != glm::vec2(0.0f)) {
       object.grid = grid;
       object.snap = true;
+      object.update_snap_position();
+    } else {
+      object.update_position();
     }
-    object.update_snap_position();
-    // object.update_position();
 
     GameObjects::Objects[handle] = object;
     return &GameObjects::Objects[handle];

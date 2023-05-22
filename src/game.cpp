@@ -66,18 +66,25 @@ void Game::init() {
   // Load textures into the game
   ResourceManager::Texture::load("textures/gigachad.jpg", true, "gigachad");
   ResourceManager::Texture::load("textures/windows-11.png", true, "windows");
-  ResourceManager::Texture::load("textures/windows.png", true, "windows2");
+  // ResourceManager::Texture::load("textures/windows.png", true, "windows2");
+  ResourceManager::Texture::load("textures/nothing.png", true, "nothing");
 
   // Set up the game objects
   glm::vec2 w_dimensions = glm::vec2(this->width, this->height);
   glm::vec2 origin = glm::vec2(50.0f);
-  glm::vec2 grid = glm::vec2(100.0f);
+  glm::vec2 grid = glm::vec2((float)width / 3.0f, (float)height / 2.0f);
   std::vector<std::string> tags;
   tags.push_back("tile");
 
-  GameObjects::create("gigachad", GameCamera, ResourceManager::Texture::get("gigachad"), w_dimensions, tags, glm::vec2(0.0f), glm::vec2(100.0f), 0.0f, origin, grid);
-  GameObjects::create("windows", GameCamera, ResourceManager::Texture::get("windows"), w_dimensions, tags, glm::vec2(100.0f), glm::vec2(100.0f), 0.0f, origin, grid);
-  GameObjects::create("windows2", GameCamera, ResourceManager::Texture::get("windows2"), w_dimensions, tags, glm::vec2(200.0f), glm::vec2(100.0f), 0.0f, origin, grid);
+  GameObjects::create("gigachad", GameCamera, ResourceManager::Texture::get("windows"), w_dimensions, tags, glm::vec2(0.0f), glm::vec2(100.0f), 0.0f, origin);
+  GameObjects::create("windows", GameCamera, ResourceManager::Texture::get("windows"), w_dimensions, tags, glm::vec2(100.0f), glm::vec2(100.0f), 0.0f, origin);
+  // GameObjects::create("windows2", GameCamera, ResourceManager::Texture::get("windows2"), w_dimensions, tags, glm::vec2(200.0f, 0.0f), glm::vec2(100.0f), 0.0f, origin);
+
+  for (GameObject *&object : GameObjects::all()) {
+    object->interactive = false;
+  }
+
+  GameObjects::create("tile1", GameCamera, ResourceManager::Texture::get("nothing"), w_dimensions, tags, glm::vec2(0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
 
   // // Testing tag filtering
   // auto fil1 = GameObjects::filter(tags);
@@ -148,10 +155,18 @@ void Game::render() {
 
   // If we just released the left mouse button, then update its snap position
   if (MouseState.buttons.left_button_up && MouseState.focused_objects != std::vector<GameObject *>()) {
+    MouseState.clicked_object->snap = true;
+    MouseState.clicked_object->originate = false;
+    glm::vec2 old_pos = MouseState.clicked_object->transform.position;
+    MouseState.clicked_object->update_snap_position();
+    glm::vec2 delta = MouseState.clicked_object->transform.position - old_pos;
+    // printf("[delta] %.2f, %.2f\n", delta.x, delta.y);
     for (GameObject *&object : MouseState.focused_objects) {
-      object->snap = true;
-      object->originate = false;
-      object->update_snap_position();
+      if (object != MouseState.clicked_object) {
+        object->originate = false;
+        object->update_snap_position();
+        object->transform.position += delta;
+      }
     }
   }
 
