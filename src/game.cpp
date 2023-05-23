@@ -56,12 +56,12 @@ void Game::init() {
   // Create a sprite renderer instance
   Renderer = new SpriteRenderer(sprite_shader, GameCamera);
 
-  // // Set an icon for the game
-  // // NON-FUNCTIONAL
-  // GLFWimage icons[1];
-  // icons[0].pixels = ResourceManager::Image::load("icon.png");
-  // glfwSetWindowIcon(this->GameWindow, sizeof(icons), icons);
-  // for (auto &icon : icons) ResourceManager::Image::deallocate(icon.pixels);
+  // Set an icon for the game
+  // NON-FUNCTIONAL
+  GLFWimage icons[1];
+  icons[0].pixels = ResourceManager::Image::load("icon.png");
+  glfwSetWindowIcon(this->GameWindow, sizeof(icons), icons);
+  for (auto &icon : icons) ResourceManager::Image::deallocate(icon.pixels);
 
   // Load textures into the game
   ResourceManager::Texture::load("textures/gigachad.jpg", true, "gigachad");
