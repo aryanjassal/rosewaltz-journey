@@ -4,3 +4,4 @@ out/
 .vscode
 .cache
 neovide_backtraces.log
+AppDir/
