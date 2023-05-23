@@ -48,7 +48,7 @@ void Game::init() {
   glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 
   // Create a shader program, providing the vertex and fragment shaders
-  Shader sprite_shader = ResourceManager::Shader::load("src/shaders/default.vert", "src/shaders/default.frag", "sprite");
+  Shader sprite_shader = ResourceManager::Shader::load("src/shaders/default.vert", "src/shaders/default.frag", "src/shaders/default.geom", "default");
 
   // Create the camera
   GameCamera = new Camera::OrthoCamera(this->width, this->height, -1.0f, 1.0f);
@@ -66,7 +66,6 @@ void Game::init() {
   // Load textures into the game
   ResourceManager::Texture::load("textures/gigachad.jpg", true, "gigachad");
   ResourceManager::Texture::load("textures/windows-11.png", true, "windows");
-  // ResourceManager::Texture::load("textures/windows.png", true, "windows2");
   ResourceManager::Texture::load("textures/nothing.png", true, "nothing");
 
   // Set up the game objects
@@ -76,19 +75,21 @@ void Game::init() {
   std::vector<std::string> tags;
   tags.push_back("tile");
 
-  GameObjects::create("gigachad", GameCamera, ResourceManager::Texture::get("windows"), w_dimensions, tags, glm::vec2(0.0f), glm::vec2(100.0f), 0.0f, origin);
-  GameObjects::create("windows", GameCamera, ResourceManager::Texture::get("windows"), w_dimensions, tags, glm::vec2(100.0f), glm::vec2(100.0f), 0.0f, origin);
-  // GameObjects::create("windows2", GameCamera, ResourceManager::Texture::get("windows2"), w_dimensions, tags, glm::vec2(200.0f, 0.0f), glm::vec2(100.0f), 0.0f, origin);
+  GameObject *chad = GameObjects::create("gigachad", GameCamera, ResourceManager::Texture::get("gigachad"), w_dimensions, tags, glm::vec2(0.0f), glm::vec2(100.0f), 0.0f, origin);
+  // GameObjects::create("windows", GameCamera, ResourceManager::Texture::get("windows"), w_dimensions, tags, glm::vec2(100.0f), glm::vec2(100.0f), 0.0f, origin);
+
+  // sprite_shader.set_vector_2f("geometry_offset", glm::vec2(1.0f, 1.0f));
 
   for (GameObject *&object : GameObjects::all()) {
     object->interactive = false;
   }
 
-  GameObjects::create("tile1", GameCamera, ResourceManager::Texture::get("nothing"), w_dimensions, tags, glm::vec2(0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
+  // GameObjects::create("tile1", GameCamera, ResourceManager::Texture::get("nothing"), w_dimensions, tags, glm::vec2(0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
 
   // // Testing tag filtering
   // auto fil1 = GameObjects::filter(tags);
   // std::vector<std::string> vec_t;
+// [UNIMPLEMENTED]
   // vec_t.push_back("nothing");
   // auto fil2 = GameObjects::filter(vec_t);
   //
@@ -160,7 +161,6 @@ void Game::render() {
     glm::vec2 old_pos = MouseState.clicked_object->transform.position;
     MouseState.clicked_object->update_snap_position();
     glm::vec2 delta = MouseState.clicked_object->transform.position - old_pos;
-    // printf("[delta] %.2f, %.2f\n", delta.x, delta.y);
     for (GameObject *&object : MouseState.focused_objects) {
       if (object != MouseState.clicked_object) {
         object->originate = false;

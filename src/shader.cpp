@@ -1,5 +1,38 @@
 #include "shader.h"
 
+void Shader::compile(const char *vertex_code, const char *fragment_code, const char *geometry_code) {
+  // Create the vertex shader
+  unsigned int vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+  glShaderSource(vertex_shader, 1, &vertex_code, NULL);
+  glCompileShader(vertex_shader);
+  compile_errors(vertex_shader, "VERTEX");
+
+  // Create the fragment shader
+  unsigned int fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(fragment_shader, 1, &fragment_code, NULL);
+  glCompileShader(fragment_shader);
+  compile_errors(fragment_shader, "FRAGMENT");
+
+  // Create the geometry shader
+  unsigned int geometry_shader = glCreateShader(GL_GEOMETRY_SHADER);
+  glShaderSource(geometry_shader, 1, &geometry_code, NULL);
+  glCompileShader(geometry_shader);
+  compile_errors(geometry_shader, "GEOMETRY");
+
+  // Attach the shaders to the OpenGL program
+  id = glCreateProgram();
+  glAttachShader(id, vertex_shader);
+  glAttachShader(id, fragment_shader);
+  glAttachShader(id, geometry_shader);
+  glLinkProgram(id);
+  compile_errors(id, "PROGRAM");
+
+  // Delete the shaders as they have already been linked to the shader
+  glDeleteShader(vertex_shader);
+  glDeleteShader(fragment_shader);
+  glDeleteShader(geometry_shader);
+}
+
 void Shader::compile(const char *vertex_code, const char *fragment_code) {
   // Create the vertex shader
   unsigned int vertex_shader = glCreateShader(GL_VERTEX_SHADER);

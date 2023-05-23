@@ -34,15 +34,17 @@ SpriteRenderer::SpriteRenderer(Shader &shader, Camera::OrthoCamera *camera) {
 
   // Bind the VBO and set some options for it
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 
   // Bind the EBO and set some options for it
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ebo);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW);
 
   // Edit some options for the VAOs after modifying both the EBO and the VBO
-  glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)(2 * sizeof(float)));
   glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
 
   // Free up memory by unbinding the VAO, VBO, and the EBO
   glBindVertexArray(0);
@@ -53,17 +55,13 @@ SpriteRenderer::SpriteRenderer(Shader &shader, Camera::OrthoCamera *camera) {
   glDeleteBuffers(1, &vbo);
 
   // Apply the projection and the view matrix to the camera
-  //! This method of assigning matrices won't work with keeping the size absolute
-  //! regardless of screen size. Meaning, if the objects are meant to scale, then
-  //! this approach works perfectly. Otherwise, they need to be updated every time
-  //! they are changed.
   shader.activate();
   shader.set_matrix_4f("projection", camera->projection_matrix);
   shader.set_matrix_4f("view", camera->view_matrix);
 }
 
 SpriteRenderer::~SpriteRenderer() {
-  // This runs whenever the sprite is destroyed, so it destroys itself automatically.
+  // This runs whenever the sprite renderer is destroyed, so it destroys itself automatically.
   glDeleteVertexArrays(1, &this->vao);
   glDeleteBuffers(1, &this->ebo);
 }

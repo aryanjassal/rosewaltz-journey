@@ -23,6 +23,7 @@ namespace ResourceManager {
   // Manages all shaders used by the program
   namespace Shader {
     // Loads the vertex and fragment shader files to create a new shader in the resource manager
+    ::Shader load(const char *vertex_shader_path, const char *fragment_shader_path, const char *geometry_shader_path, std::string handle);
     ::Shader load(const char *vertex_shader_path, const char *fragment_shader_path, std::string handle);
 
     // Fetches a shader using the given handle

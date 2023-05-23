@@ -17,6 +17,7 @@ class Shader {
     Shader() { }
 
     // Compile and link the vertex and fragment code to the shader
+    void compile(const char *vertex_code, const char *fragment_code, const char *geometry_shader);
     void compile(const char *vertex_code, const char *fragment_code);
 
     // Activate or deactivate the shader

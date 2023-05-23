@@ -3,6 +3,46 @@
 //TODO: For deallocation, also remove the reference to their handle and everything from the map, as even
 //TODO: the memory has been freed, there are some pointers still referencing what it used to be.
 
+::Shader ResourceManager::Shader::load(const char *vertex_shader_path, const char *fragment_shader_path, const char *geometry_shader_path, std::string handle) {
+  std::string vertex_shader_code, fragment_shader_code, geometry_shader_code;
+
+  try {
+    // Open input file streams to read file contents
+    std::ifstream vertex_shader_file(vertex_shader_path);
+    std::ifstream fragment_shader_file(fragment_shader_path);
+    std::ifstream geometry_shader_file(geometry_shader_path);
+
+    // Prepare string streams to store the file buffer contents
+    std::stringstream vertex_shader_stream, fragment_shader_stream, geometry_shader_stream;
+
+    // Read the file by copying the file buffeer to the string stream
+    vertex_shader_stream << vertex_shader_file.rdbuf();
+    fragment_shader_stream << fragment_shader_file.rdbuf();
+    geometry_shader_stream << geometry_shader_file.rdbuf();
+
+    // Close the shader files to free up memory
+    vertex_shader_file.close();
+    fragment_shader_file.close();
+    geometry_shader_file.close();
+
+    // Convert the string streams to usable code
+    vertex_shader_code = vertex_shader_stream.str();
+    fragment_shader_code = fragment_shader_stream.str();
+    geometry_shader_code = geometry_shader_stream.str();
+  } catch (std::exception e) {
+    printf("ERROR: could not read shader files!\n");
+  }
+
+  // Create a shader with the given vertex and fragment shader and add it to the resource manager
+  ::Shader shader;
+  const char *vertex_shader = vertex_shader_code.c_str();
+  const char *fragment_shader = fragment_shader_code.c_str();
+  const char *geometry_shader = geometry_shader_code.c_str();
+  shader.compile(vertex_shader, fragment_shader, geometry_shader);
+  Shaders[handle] = shader;
+  return shader;
+}
+
 ::Shader ResourceManager::Shader::load(const char *vertex_shader_path, const char *fragment_shader_path, std::string handle) {
   std::string vertex_shader_code, fragment_shader_code;
 
