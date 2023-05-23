@@ -75,7 +75,7 @@ void SpriteRenderer::render(Texture texture, Transform transform, glm::vec3 colo
   // need to be listed in reverse order
 
   // Translate the object
-  model_transform = glm::translate(model_transform, glm::vec3(transform.position, 0.0f));
+  model_transform = glm::translate(model_transform, transform.position);
 
   // Change the origin to the center before rotating the sprite
   model_transform = glm::translate(model_transform, glm::vec3(0.5f, 0.5f, 0.0f));

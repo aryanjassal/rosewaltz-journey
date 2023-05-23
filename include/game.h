@@ -47,7 +47,7 @@ class Game {
     bool fullscreen = false;
 
     // The constructor function that takes the default width and height as the starting arguments
-    Game(unsigned int width, unsigned int height, std::string window_title);
+    Game(unsigned int width, unsigned int height, std::string window_title, bool fullscreen = false);
     ~Game();
 
     // This function initialises all the variables and other resources that the game will need access to

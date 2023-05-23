@@ -102,7 +102,7 @@ namespace GameObjects {
     Texture texture, 
     glm::vec2 window_dimensions, 
     std::vector<std::string> tags = std::vector<std::string>(),
-    Transform transform = { glm::vec2(0.0f), glm::vec2(100.0f), 0.0f },
+    Transform transform = { glm::vec3(0.0f), glm::vec2(100.0f), 0.0f },
     glm::vec2 origin = glm::vec2(0.0f),
     glm::vec2 grid = glm::vec2(0.0f)
   );
@@ -112,7 +112,7 @@ namespace GameObjects {
     Texture texture, 
     glm::vec2 window_dimensions, 
     std::vector<std::string> tags = std::vector<std::string>(),
-    glm::vec2 position = glm::vec2(0.0f),
+    glm::vec3 position = glm::vec3(0.0f),
     glm::vec2 scale = glm::vec2(100.0f), 
     float rotation = 0.0f,
     glm::vec2 origin = glm::vec2(0.0f),

@@ -5,11 +5,12 @@
 SpriteRenderer *Renderer;
 Camera::OrthoCamera *GameCamera;
 
-Game::Game(unsigned int width, unsigned int height, std::string window_title) {
+Game::Game(unsigned int width, unsigned int height, std::string window_title, bool fullscreen) {
   // Set internal width and height
   this->width = width;
   this->height = height;
   this->GameTitle = window_title;
+  this->fullscreen = fullscreen;
 
   // Initialise GLFW
   if (!glfwInit()) {
@@ -56,36 +57,25 @@ void Game::init() {
   // Create a sprite renderer instance
   Renderer = new SpriteRenderer(sprite_shader, GameCamera);
 
-  // Set an icon for the game
-  // NON-FUNCTIONAL
-  GLFWimage icons[1];
-  icons[0].pixels = ResourceManager::Image::load("icon.png");
-  glfwSetWindowIcon(this->GameWindow, sizeof(icons), icons);
-  for (auto &icon : icons) ResourceManager::Image::deallocate(icon.pixels);
-
   // Load textures into the game
-  ResourceManager::Texture::load("textures/gigachad.jpg", true, "gigachad");
-  ResourceManager::Texture::load("textures/windows-11.png", true, "windows");
   ResourceManager::Texture::load("textures/nothing.png", true, "nothing");
+  ResourceManager::Texture::load("textures/background.png", true, "background");
+  ResourceManager::Texture::load("textures/tiles/tile-floor.png", true, "tile-floor");
 
   // Set up the game objects
   glm::vec2 w_dimensions = glm::vec2(this->width, this->height);
   glm::vec2 origin = glm::vec2(50.0f);
   glm::vec2 grid = glm::vec2((float)width / 3.0f, (float)height / 2.0f);
   std::vector<std::string> tags;
-  tags.push_back("tile");
+  tags.push_back("tile1");
 
-  GameObjects::create("gigachad", GameCamera, ResourceManager::Texture::get("gigachad"), w_dimensions, tags, glm::vec2(0.0f, (float)height / 2.0f - 100.0f), glm::vec2(100.0f), 0.0f, origin);
-  GameObjects::create("gigachad2", GameCamera, ResourceManager::Texture::get("gigachad"), w_dimensions, tags, glm::vec2(100.0f, (float)height / 2.0f - 100.0f), glm::vec2(100.0f), 0.0f, origin);
-  GameObjects::create("gigachad3", GameCamera, ResourceManager::Texture::get("gigachad"), w_dimensions, tags, glm::vec2(200.0f, (float)height / 2.0f - 100.0f), glm::vec2(100.0f), 0.0f, origin);
-  GameObjects::create("gigachad4", GameCamera, ResourceManager::Texture::get("gigachad"), w_dimensions, tags, glm::vec2(300.0f, (float)height / 2.0f - 100.0f), glm::vec2(100.0f), 0.0f, origin);
-  GameObjects::create("gigachad5", GameCamera, ResourceManager::Texture::get("gigachad"), w_dimensions, tags, glm::vec2(400.0f, (float)height / 2.0f - 100.0f), glm::vec2(100.0f), 0.0f, origin);
+  GameObjects::create("tile1-floor", GameCamera, ResourceManager::Texture::get("tile-floor"), w_dimensions, tags, glm::vec3(0.0f, (float)height / 2.0f - (float)height / 8.85, 0.0f), glm::vec2((float)width / 3.0f, (float)height / 8.85f), 0.0f, origin);
 
   for (GameObject *&object : GameObjects::all()) {
     object->interactive = false;
   }
 
-  GameObjects::create("tile1", GameCamera, ResourceManager::Texture::get("nothing"), w_dimensions, tags, glm::vec2(0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
+  GameObjects::create("tile1", GameCamera, ResourceManager::Texture::get("nothing"), w_dimensions, tags, glm::vec3(0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
 }
 
 void Game::run() {
@@ -133,6 +123,12 @@ void Game::render() {
   // Clear the screen (paints it to the predefined clear colour)
   glClear(GL_COLOR_BUFFER_BIT);
 
+  Transform transform;
+  transform.position = glm::vec3(0.0f);
+  transform.scale = glm::vec2(width, height);
+  // transform.position.z = -1;
+  Renderer->render(ResourceManager::Texture::get("background"), transform);
+
   // If an object is selected, then move the object along with the mouse
   if (MouseState.focused_objects != std::vector<GameObject *>()) {
     MouseState.clicked_object->originate = true;
@@ -149,9 +145,9 @@ void Game::render() {
   if (MouseState.buttons.left_button_up && MouseState.focused_objects != std::vector<GameObject *>()) {
     MouseState.clicked_object->snap = true;
     MouseState.clicked_object->originate = false;
-    glm::vec2 old_pos = MouseState.clicked_object->transform.position;
+    glm::vec3 old_pos = MouseState.clicked_object->transform.position;
     MouseState.clicked_object->update_snap_position();
-    glm::vec2 delta = MouseState.clicked_object->transform.position - old_pos;
+    glm::vec3 delta = MouseState.clicked_object->transform.position - old_pos;
     for (GameObject *&object : MouseState.focused_objects) {
       if (object != MouseState.clicked_object) {
         object->originate = false;

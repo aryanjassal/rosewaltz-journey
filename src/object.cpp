@@ -14,12 +14,12 @@ void GameObject::translate_to_point(glm::vec2 point) {
 
   // printf("[%s] \t[translate]\t point: %.2f, %.2f; origin: %.2f, %.2f\n", this->handle.c_str(), point.x, point.y, origin.x, origin.y);
 
-  this->transform.position = point - origin;
+  this->transform.position = glm::vec3(point - origin, 0.0f);
 
   // Snap the object and update its bounding box
   if (this->snap) this->update_snap_position();
   this->update_bounding_box();
-  this->delta_transform.position = this->transform.position - old_pos; 
+  this->delta_transform.position = this->transform.position - glm::vec3(old_pos, 0.0f); 
 }
 
 void GameObject::update_position() {
@@ -51,12 +51,12 @@ void GameObject::update_bounding_box() {
 void GameObject::update_snap_position() {
   // If snapping is disabled in the object settings, then do nothing
   if (!this->snap) return;
-  glm::vec2 old_pos = this->transform.position;
+  glm::vec3 old_pos = this->transform.position;
 
   // Otherwise, update the position to snap to the nearest snap point
   // glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
   glm::vec2 origin = this->origin;
-  glm::vec2 new_position;
+  glm::vec3 new_position;
   new_position.x = std::clamp(std::floor((this->transform.position.x + origin.x) / this->grid.x) * this->grid.x, 0.0f, (float)this->camera->width - this->grid.x);
   new_position.y = std::clamp(std::floor((this->transform.position.y + origin.y) / this->grid.y) * this->grid.y, 0.0f, (float)this->camera->height - this->grid.y);
   this->delta_transform.position = this->transform.position - old_pos; 
@@ -105,7 +105,7 @@ GameObject *GameObjects::create(
   Texture texture, 
   glm::vec2 window_dimensions, 
   std::vector<std::string> tags,
-  glm::vec2 position,
+  glm::vec3 position,
   glm::vec2 scale,
   float rotation,
   glm::vec2 origin,

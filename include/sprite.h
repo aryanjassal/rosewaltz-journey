@@ -11,7 +11,8 @@
 
 // Struct holding the transformations to be applied to the object
 typedef struct Transform {
-  glm::vec2 position, scale;
+  glm::vec3 position;
+  glm::vec2 scale;
   float rotation;
 };
 
