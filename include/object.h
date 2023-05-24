@@ -120,7 +120,7 @@ namespace GameObjects {
   );
 
   // Fetch the pointer to a GameObject from the list of GameObjects
-  static GameObject *get(std::string handle);
+  GameObject *get(std::string handle);
 
   // Fetch a vector with a pointer to all active GameObjects
   std::vector<GameObject *> all();

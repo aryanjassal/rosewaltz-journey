@@ -124,9 +124,9 @@ unsigned char *ResourceManager::Image::load(const char *file_path, int &width, i
 
   // If the pixel data is empty, then throw a runtime error
   if (!data) {
-    std::string error_message = "Failure to load image ";
+    std::string error_message = "Failure to load image \"";
     error_message.append(file_path);
-    error_message.append("\n");
+    error_message.append("\"\n");
 
     printf("\n");
     if (stbi_failure_reason()) printf("stbi_failure on file \"%s\" [%s]\n", file_path, stbi_failure_reason());

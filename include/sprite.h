@@ -11,9 +11,9 @@
 
 // Struct holding the transformations to be applied to the object
 typedef struct Transform {
-  glm::vec3 position;
-  glm::vec2 scale;
-  float rotation;
+  glm::vec3 position = glm::vec3(0.0f);
+  glm::vec2 scale = glm::vec2(1.0f);
+  float rotation = 0.0f;
 };
 
 class SpriteRenderer {

@@ -46,7 +46,8 @@ Game::~Game() {
 
 void Game::init() {
   // Set the clear colour of the scene background
-  glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+  // glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
   // Create a shader program, providing the vertex and fragment shaders
   Shader sprite_shader = ResourceManager::Shader::load("src/shaders/default.vert", "src/shaders/default.frag", "default");
@@ -57,19 +58,23 @@ void Game::init() {
   // Create a sprite renderer instance
   Renderer = new SpriteRenderer(sprite_shader, GameCamera);
 
+  // Load the background layers
+  Texture background_bg = ResourceManager::Texture::load("textures/background/background-bg.png", true, "background-bg");
+  Texture background_far = ResourceManager::Texture::load("textures/background/background-far.png", true, "background-far");
+  Texture background_mid = ResourceManager::Texture::load("textures/background/background-mid.png", true, "background-mid");
+  Texture background_near = ResourceManager::Texture::load("textures/background/background-near.png", true, "background-near");
+
   // Load textures into the game
   ResourceManager::Texture::load("textures/nothing.png", true, "nothing");
-  ResourceManager::Texture::load("textures/background.png", true, "background");
   ResourceManager::Texture::load("textures/tiles/tile-floor.png", true, "tile-floor");
 
   // Set up the game objects
   glm::vec2 w_dimensions = glm::vec2(this->width, this->height);
-  glm::vec2 origin = glm::vec2(50.0f);
   glm::vec2 grid = glm::vec2((float)width / 3.0f, (float)height / 2.0f);
   std::vector<std::string> tags;
   tags.push_back("tile1");
 
-  GameObjects::create("tile1-floor", GameCamera, ResourceManager::Texture::get("tile-floor"), w_dimensions, tags, glm::vec3(0.0f, (float)height / 2.0f - (float)height / 8.85, 0.0f), glm::vec2((float)width / 3.0f, (float)height / 8.85f), 0.0f, origin);
+  GameObjects::create("tile1-floor", GameCamera, ResourceManager::Texture::get("tile-floor"), w_dimensions, tags, glm::vec3(0.0f, (float)height / 2.0f - (float)height / 8.85, 0.0f), glm::vec2((float)width / 3.0f, (float)height / 8.85f), 0.0f);
 
   for (GameObject *&object : GameObjects::all()) {
     object->interactive = false;
@@ -123,11 +128,16 @@ void Game::render() {
   // Clear the screen (paints it to the predefined clear colour)
   glClear(GL_COLOR_BUFFER_BIT);
 
+  // Render the parallax background
   Transform transform;
-  transform.position = glm::vec3(0.0f);
-  transform.scale = glm::vec2(width, height);
-  // transform.position.z = -1;
-  Renderer->render(ResourceManager::Texture::get("background"), transform);
+  transform.scale = glm::vec2(width + 100.0f, height + 100.0f);
+  Renderer->render(ResourceManager::Texture::get("background-bg"), transform);
+  transform.position = glm::vec3(glm::vec2(MouseState.x, MouseState.y) / glm::vec2(150.0f), 0.0f);
+  Renderer->render(ResourceManager::Texture::get("background-far"), transform);
+  transform.position = glm::vec3((glm::vec2(MouseState.x, MouseState.y) / glm::vec2(100.0f)) - glm::vec2(50.0f), 0.0f);
+  Renderer->render(ResourceManager::Texture::get("background-mid"), transform);
+  transform.position = glm::vec3((glm::vec2(MouseState.x, MouseState.y) / glm::vec2(50.0f)) - glm::vec2(50.0f), 0.0f);
+  Renderer->render(ResourceManager::Texture::get("background-near"), transform);
 
   // If an object is selected, then move the object along with the mouse
   if (MouseState.focused_objects != std::vector<GameObject *>()) {
