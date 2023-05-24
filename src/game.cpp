@@ -71,16 +71,14 @@ void Game::init() {
   // Set up the game objects
   glm::vec2 w_dimensions = glm::vec2(this->width, this->height);
   glm::vec2 grid = glm::vec2((float)width / 3.0f, (float)height / 2.0f);
-  std::vector<std::string> tags;
-  tags.push_back("tile1");
 
-  GameObjects::create("tile1-floor", GameCamera, ResourceManager::Texture::get("tile-floor"), w_dimensions, tags, glm::vec3(0.0f, (float)height / 2.0f - (float)height / 8.85, 0.0f), glm::vec2((float)width / 3.0f, (float)height / 8.85f), 0.0f);
+  GameObjects::create("tile1-floor", GameCamera, ResourceManager::Texture::get("tile-floor"), w_dimensions, std::vector<std::string>{ "tile1" }, glm::vec3(0.0f, (float)height / 2.0f - (float)height / 8.85, 0.0f), glm::vec2((float)width / 3.0f, (float)height / 8.85f), 0.0f);
 
   for (GameObject *&object : GameObjects::all()) {
     object->interactive = false;
   }
 
-  GameObjects::create("tile1", GameCamera, ResourceManager::Texture::get("nothing"), w_dimensions, tags, glm::vec3(0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
+  GameObjects::create("tile1", GameCamera, ResourceManager::Texture::get("nothing"), w_dimensions, std::vector<std::string>{ "tile1 tile" }, glm::vec3(0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
 }
 
 void Game::run() {
@@ -176,7 +174,7 @@ void Game::render() {
       && object->interactive 
       && object->check_point_intersection(glm::vec2(MouseState.x, MouseState.y))) {
         MouseState.clicked_object = object;
-        for (GameObject *&f_object : GameObjects::filter(object->tags)) {
+        for (GameObject *&f_object : GameObjects::filter(object->tags[0])) {
           f_object->snap = false;
           f_object->originate = true;
           MouseState.focused_objects.push_back(f_object);
