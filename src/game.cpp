@@ -1,5 +1,4 @@
 #include "game.h"
-#include "object.h"
 
 // Set up pointers to global objects for the game
 SpriteRenderer *Renderer;
@@ -102,29 +101,32 @@ void Game::run() {
 }
 
 void Game::update() {
+  // If the F key is pressed, toggle fullscreen
+  if (this->Keyboard['F'].pressed) toggle_fullscreen();
+
   // Reset the pressed and released status of the mouse buttons
-  MouseState.buttons.left_button_down = false;
-  MouseState.buttons.left_button_up = false;
+  Mouse.left_button_down = false;
+  Mouse.left_button_up = false;
   
   // If left click has been released, then there should be no active object
-  if (!MouseState.buttons.left_button) {
-    MouseState.focused_objects = std::vector<GameObject *>();
-    MouseState.clicked_object = nullptr;
+  if (!Mouse.left_button) {
+    Mouse.focused_objects = std::vector<GameObject *>();
+    Mouse.clicked_object = nullptr;
   }
 
   // If the escape key was pressed, then close the window
-  if (KeyboardState[256].pressed) glfwSetWindowShouldClose(this->GameWindow, true);
+  if (Keyboard[256].pressed) glfwSetWindowShouldClose(this->GameWindow, true);
 
   // Reset KeyState::pressed and KeyState::released
   //! This method is extremely unoptimised. The multiple loops need to be fixed for optimal performance.
   std::vector<int> released_keys;
-  for (auto pair : this->KeyboardState) {
-    if (pair.second.pressed) this->KeyboardState[pair.first].pressed = false;
+  for (auto pair : this->Keyboard) {
+    if (pair.second.pressed) this->Keyboard[pair.first].pressed = false;
     if (pair.second.released) released_keys.push_back(pair.first);
   }
 
   for (int key : released_keys) {
-    this->KeyboardState.erase(this->KeyboardState.find(key));
+    this->Keyboard.erase(this->Keyboard.find(key));
   }
 
   // Poll GLFW for new events
@@ -139,38 +141,38 @@ void Game::render() {
   Transform transform;
   transform.scale = glm::vec2(width + 100.0f, height + 100.0f);
   Renderer->render(ResourceManager::Texture::get("background-bg"), transform);
-  transform.position = glm::vec3(glm::vec2(MouseState.x, MouseState.y) / glm::vec2(150.0f), 0.0f);
+  transform.position = glm::vec3(Mouse.position / glm::vec2(150.0f), 0.0f);
   Renderer->render(ResourceManager::Texture::get("background-far"), transform);
-  transform.position = glm::vec3((glm::vec2(MouseState.x, MouseState.y) / glm::vec2(100.0f)) - glm::vec2(50.0f), 0.0f);
+  transform.position = glm::vec3((Mouse.position / glm::vec2(100.0f)) - glm::vec2(50.0f), 0.0f);
   Renderer->render(ResourceManager::Texture::get("background-mid"), transform);
-  transform.position = glm::vec3((glm::vec2(MouseState.x, MouseState.y) / glm::vec2(50.0f)) - glm::vec2(50.0f), 0.0f);
+  transform.position = glm::vec3((Mouse.position / glm::vec2(50.0f)) - glm::vec2(50.0f), 0.0f);
   Renderer->render(ResourceManager::Texture::get("background-near"), transform);
 
   // If an object is selected, then move the object along with the mouse
-  if (MouseState.focused_objects != std::vector<GameObject *>()) {
-    MouseState.clicked_object->originate = true;
-    MouseState.clicked_object->translate_to_point(glm::vec2(MouseState.x, MouseState.y));
-    for (GameObject *&object : MouseState.focused_objects) {
-      if (object != MouseState.clicked_object) {
+  if (Mouse.focused_objects != std::vector<GameObject *>()) {
+    Mouse.clicked_object->originate = true;
+    Mouse.clicked_object->translate_to_point(Mouse.position);
+    for (GameObject *&object : Mouse.focused_objects) {
+      if (object != Mouse.clicked_object) {
         object->originate = true;
-        object->transform.position += MouseState.clicked_object->delta_transform.position;
+        object->transform.position += Mouse.clicked_object->delta_transform.position;
       }
     }
   }
 
   // If we just released the left mouse button, then update its snap position
-  if (MouseState.buttons.left_button_up && MouseState.focused_objects != std::vector<GameObject *>()) {
-    MouseState.clicked_object->snap = true;
-    MouseState.clicked_object->originate = false;
-    glm::vec3 old_pos = MouseState.clicked_object->transform.position;
-    MouseState.clicked_object->update_snap_position();
+  if (Mouse.left_button_up && Mouse.focused_objects != std::vector<GameObject *>()) {
+    Mouse.clicked_object->snap = true;
+    Mouse.clicked_object->originate = false;
+    glm::vec3 old_pos = Mouse.clicked_object->transform.position;
+    Mouse.clicked_object->update_snap_position();
 
 
-    for (GameObject *&object : GameObjects::except(MouseState.clicked_object->tags[0])) {
-      if (object->swap && MouseState.clicked_object->swap) {
-        if (object->transform.position == MouseState.clicked_object->transform.position) {
+    for (GameObject *&object : GameObjects::except(Mouse.clicked_object->tags[0])) {
+      if (object->swap && Mouse.clicked_object->swap) {
+        if (object->transform.position == Mouse.clicked_object->transform.position) {
           object->old_transform.position = object->transform.position;
-          object->translate_to_point(MouseState.clicked_object->old_transform.position);
+          object->translate_to_point(Mouse.clicked_object->old_transform.position);
           
           glm::vec3 delta = object->transform.position - object->old_transform.position;
           for (GameObject *&f_object : GameObjects::filter(object->tags[0])) {
@@ -183,9 +185,9 @@ void Game::render() {
       }
     }
 
-    glm::vec3 delta = MouseState.clicked_object->transform.position - old_pos;
-    for (GameObject *&object : MouseState.focused_objects) {
-      if (object != MouseState.clicked_object) {
+    glm::vec3 delta = Mouse.clicked_object->transform.position - old_pos;
+    for (GameObject *&object : Mouse.focused_objects) {
+      if (object != Mouse.clicked_object) {
         object->originate = false;
         object->update_snap_position();
         object->transform.position += delta;
@@ -197,25 +199,22 @@ void Game::render() {
   // If it does, set the snap to zero for smooth movement and make the current object focused
   // Then, render each object
   for (auto &object : GameObjects::all()) {
-    if (!MouseState.buttons.left_button_up
-      && MouseState.buttons.left_button 
-      && MouseState.buttons.left_button_down 
+    if (!Mouse.left_button_up
+      && Mouse.left_button 
+      && Mouse.left_button_down 
       && object->interactive 
-      && object->check_point_intersection(glm::vec2(MouseState.x, MouseState.y))) {
+      && object->check_point_intersection(Mouse.position)) {
         object->old_transform.position = object->transform.position;
 
-        MouseState.clicked_object = object;
+        Mouse.clicked_object = object;
         for (GameObject *&f_object : GameObjects::filter(object->tags[0])) {
           f_object->snap = false;
           f_object->originate = true;
-          MouseState.focused_objects.push_back(f_object);
+          Mouse.focused_objects.push_back(f_object);
       }
     }
     object->render(Renderer);
   }
-
-  // If the F key is pressed, toggle fullscreen
-  if (this->KeyboardState['F'].pressed) toggle_fullscreen();
 }
 
 void Game::set_window_hints() {

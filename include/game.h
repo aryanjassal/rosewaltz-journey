@@ -19,16 +19,13 @@
 
 class Game {
   public:
-    // This struct defines how information about mouse buttons is stored within the program
-    typedef struct MouseButton {
-      bool left_button;
-      bool left_button_down, left_button_up;
-    };
-
     // This struct defines how information about the current mouse state is stored within the program
-    typedef struct Mouse {
-      int x, y;
-      MouseButton buttons;
+    typedef struct MouseState {
+      // General mouse information
+      bool left_button, left_button_down, left_button_up;
+      glm::vec2 position;
+      
+      // Information relating to selected GameObjects
       GameObject *clicked_object = nullptr;
       std::vector<GameObject *> focused_objects;
     };
@@ -39,8 +36,8 @@ class Game {
     };
 
     // Set up state variables
-    Mouse MouseState;
-    std::map<int, KeyState> KeyboardState;
+    MouseState Mouse;
+    std::map<int, KeyState> Keyboard;
 
     // Set up other generic variables
     unsigned int width, height;
@@ -57,16 +54,12 @@ class Game {
     void run();
 
     // This function contains code to render stuff on the screen
-    // Note: this function should be run as fast as possible
+    // Tip: this function should be run as fast as possible
     void render();
 
     // This function contains code to update variables like input events, etc.
-    // Note: this function should only run once every frame (use delta time)
+    // Tip: this function should only run once every frame (use delta time)
     void update();
-
-    // // Update the camera
-    // // Tip: this function is typically used after changing the width or height of the game window
-    // void update_viewport(int width, int height);
 
     // Set GLFW callbacks
     void set_callbacks(GLFWcursorposfun cursorpos_callback, GLFWmousebuttonfun cursorbutton_callback, GLFWkeyfun keyboard_callback);

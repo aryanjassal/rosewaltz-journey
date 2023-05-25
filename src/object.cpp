@@ -1,8 +1,6 @@
 #include "object.h"
 
 void GameObject::render(SpriteRenderer *renderer) {
-  // Transform new_transform = this->transform;
-  // new_transform.position += this->origin;
   if (this->active) renderer->render(this->texture, this->transform);
 }
 
@@ -11,8 +9,6 @@ void GameObject::translate_to_point(glm::vec2 point) {
 
   point = (point / this->window_dimensions) * glm::vec2(this->camera->width, this->camera->height);
   glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
-
-  // printf("[%s] \t[translate]\t point: %.2f, %.2f; origin: %.2f, %.2f\n", this->handle.c_str(), point.x, point.y, origin.x, origin.y);
 
   this->transform.position = glm::vec3(point - origin, 0.0f);
 
@@ -36,12 +32,11 @@ bool GameObject::check_point_intersection(glm::vec2 point) {
 }
 
 void GameObject::update_bounding_box() {
-  glm::vec2 scale = (this->transform.scale / glm::vec2(this->camera->width, this->camera->height)) * this->window_dimensions;
   glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
 
-  this->bounding_box.right = this->transform.position.x + (this->texture.width / (this->texture.width / scale.x)) + origin.x;
+  this->bounding_box.right = this->transform.position.x + (this->texture.width / (this->texture.width / this->transform.scale.x)) + origin.x;
   this->bounding_box.left = this->transform.position.x + origin.x;
-  this->bounding_box.bottom = this->transform.position.y + (this->texture.height / (this->texture.height / scale.y)) + origin.y;
+  this->bounding_box.bottom = this->transform.position.y + (this->texture.height / (this->texture.height / this->transform.scale.y)) + origin.y;
   this->bounding_box.top = this->transform.position.y + origin.y;
   
   // // DEBUG print the bounding box of the object along with its handle
@@ -54,11 +49,10 @@ void GameObject::update_snap_position() {
   glm::vec3 old_pos = this->transform.position;
 
   // Otherwise, update the position to snap to the nearest snap point
-  // glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
   glm::vec2 origin = this->origin;
   glm::vec3 new_position;
-  new_position.x = std::floor((this->transform.position.x + origin.x) / this->grid.x) * this->grid.x, 0.0f;
-  new_position.y = std::floor((this->transform.position.y + origin.y) / this->grid.y) * this->grid.y, 0.0f;
+  new_position.x = std::floor((this->transform.position.x + origin.x) / this->grid.x) * this->grid.x;
+  new_position.y = std::floor((this->transform.position.y + origin.y) / this->grid.y) * this->grid.y;
 
   if (new_position.x < 0 || new_position.x > this->camera->width - this->grid.x || new_position.y < 0 || new_position.y > this->camera->height - this->grid.y) {
     this->transform.position = this->old_transform.position;
@@ -67,7 +61,6 @@ void GameObject::update_snap_position() {
   }
 
   this->delta_transform.position = this->transform.position - old_pos; 
-  // this->transform.position = new_position + (this->originate ? this->origin : glm::vec2(0.0f));
   this->transform.position = new_position;
 
   this->update_bounding_box();
