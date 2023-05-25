@@ -89,9 +89,6 @@ class GameObject {
 
     // Update the position of the object based on the snap set
     void update_snap_position();
-
-//   // Update an already defined game object within the GameObject manager using its handle
-//   void update(std::string handle, Object object);
 };
 
 // This namespace handles generic functions related to dealing with GameObjects
@@ -135,7 +132,6 @@ namespace GameObjects {
 
   // Filter all the GameObjects and return a vector with a pointer to active filtered GameObjects
   std::vector<GameObject *> except(std::string tag);
-  std::vector<GameObject *> except(std::vector<std::string> tags);
 }
 
 #endif

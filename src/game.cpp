@@ -31,6 +31,9 @@ Game::Game(unsigned int width, unsigned int height, std::string window_title, bo
   // Enable alpha and transparency in OpenGL
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  // Initialise the game
+  this->init();
 }
 
 Game::~Game() {
@@ -64,20 +67,20 @@ void Game::init() {
   Texture background_near = ResourceManager::Texture::load("textures/background/background-near.png", true, "background-near");
 
   // Load textures into the game
-  ResourceManager::Texture::load("textures/nothing.png", true, "nothing");
-  ResourceManager::Texture::load("textures/windows-11.png", true, "windows");
-  ResourceManager::Texture::load("textures/gigachad.jpg", true, "gigachad");
-  ResourceManager::Texture::load("textures/tiles/tile-floor.png", true, "tile-floor");
+  Texture nothing = ResourceManager::Texture::load("textures/nothing.png", true, "nothing");
+  Texture windows = ResourceManager::Texture::load("textures/windows-11.png", true, "windows");
+  Texture gigachad = ResourceManager::Texture::load("textures/gigachad.jpg", true, "gigachad");
+  Texture tile_floor = ResourceManager::Texture::load("textures/tiles/tile-floor.png", true, "tile-floor");
 
   // Set up the game objects
   glm::vec2 w_dimensions = glm::vec2(this->width, this->height);
   glm::vec2 grid = glm::vec2((float)width / 3.0f, (float)height / 2.0f);
 
-  GameObjects::create("tile1-floor", GameCamera, ResourceManager::Texture::get("tile-floor"), w_dimensions, { "tile1" }, glm::vec3(0.0f, (float)height / 2.0f - (float)height / 8.85, 0.0f), glm::vec2((float)width / 3.0f, (float)height / 8.85f), 0.0f);
-  GameObjects::create("tile1", GameCamera, ResourceManager::Texture::get("gigachad"), w_dimensions, { "tile1", "tile" }, glm::vec3(0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
+  GameObjects::create("tile1", GameCamera, gigachad, w_dimensions, { "tile1", "tile" }, glm::vec3(0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
+  GameObjects::create("tile1-floor", GameCamera, tile_floor, w_dimensions, { "tile1" }, glm::vec3(0.0f, (float)height / 2.0f - (float)height / 8.85, 0.0f), glm::vec2((float)width / 3.0f, (float)height / 8.85f), 0.0f);
 
-   GameObjects::create("tile2-floor", GameCamera, ResourceManager::Texture::get("tile-floor"), w_dimensions, { "tile2" }, glm::vec3((float)width / 3.0f, (float)height / 2.0f - (float)height / 8.85, 0.0f), glm::vec2((float)width / 3.0f, (float)height / 8.85f), 0.0f);
-  GameObjects::create("tile2", GameCamera, ResourceManager::Texture::get("windows"), w_dimensions, { "tile2", "tile" }, glm::vec3((float)width / 3.0f, 0.0f, 0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
+  GameObjects::create("tile2", GameCamera, windows, w_dimensions, { "tile2", "tile" }, glm::vec3(grid.x, 0.0f, 0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
+  GameObjects::create("tile2-floor", GameCamera, tile_floor, w_dimensions, { "tile2" }, glm::vec3(grid.x, grid.y - (float)height / 8.85, 0.0f), glm::vec2(grid.x, (float)height / 8.85f), 0.0f);
 
   for (GameObject *&object : GameObjects::all()) {
     object->interactive = false;
@@ -138,15 +141,11 @@ void Game::render() {
   glClear(GL_COLOR_BUFFER_BIT);
 
   // Render the parallax background
-  Transform transform;
-  transform.scale = glm::vec2(width + 100.0f, height + 100.0f);
-  Renderer->render(ResourceManager::Texture::get("background-bg"), transform);
-  transform.position = glm::vec3(Mouse.position / glm::vec2(150.0f), 0.0f);
-  Renderer->render(ResourceManager::Texture::get("background-far"), transform);
-  transform.position = glm::vec3((Mouse.position / glm::vec2(100.0f)) - glm::vec2(50.0f), 0.0f);
-  Renderer->render(ResourceManager::Texture::get("background-mid"), transform);
-  transform.position = glm::vec3((Mouse.position / glm::vec2(50.0f)) - glm::vec2(50.0f), 0.0f);
-  Renderer->render(ResourceManager::Texture::get("background-near"), transform);
+  glm::vec2 scale = glm::vec2(width + 100.0f, height + 100.0f);
+  Renderer->render(ResourceManager::Texture::get("background-bg"), { glm::vec3(0.0f), scale, 0.0f });
+  Renderer->render(ResourceManager::Texture::get("background-far"), { glm::vec3((Mouse.position / glm::vec2(150.0f)) - glm::vec2(50.0f), 0.0f), scale, 0.0f });
+  Renderer->render(ResourceManager::Texture::get("background-mid"), { glm::vec3((Mouse.position / glm::vec2(100.0f)) - glm::vec2(50.0f), 0.0f), scale, 0.0f });
+  Renderer->render(ResourceManager::Texture::get("background-near"), { glm::vec3((Mouse.position / glm::vec2(50.0f)) - glm::vec2(50.0f), 0.0f), scale, 0.0f });
 
   // If an object is selected, then move the object along with the mouse
   if (Mouse.focused_objects != std::vector<GameObject *>()) {
@@ -160,20 +159,26 @@ void Game::render() {
     }
   }
 
-  // If we just released the left mouse button, then update its snap position
+  // If we just released the left mouse button, then update the snap position of each currently
+  // focused object while respecting their swap setting
   if (Mouse.left_button_up && Mouse.focused_objects != std::vector<GameObject *>()) {
     Mouse.clicked_object->snap = true;
     Mouse.clicked_object->originate = false;
     glm::vec3 old_pos = Mouse.clicked_object->transform.position;
     Mouse.clicked_object->update_snap_position();
 
-
+    // If the object has swap enabled, then, if the target snap locaton is already occupied, snap
+    // the other object already there to the position where the first object was, effectly swapping
+    // their locations. Note that this process is quite taxing due to the fact that there are two
+    // nested loops and objects need to be filtered by tags twice, adding further overhead
     for (GameObject *&object : GameObjects::except(Mouse.clicked_object->tags[0])) {
       if (object->swap && Mouse.clicked_object->swap) {
         if (object->transform.position == Mouse.clicked_object->transform.position) {
           object->old_transform.position = object->transform.position;
           object->translate_to_point(Mouse.clicked_object->old_transform.position);
           
+          // Update the position of all the objects with the same tag as the object which got
+          // displaced from its original spot (not the currently selected object)
           glm::vec3 delta = object->transform.position - object->old_transform.position;
           for (GameObject *&f_object : GameObjects::filter(object->tags[0])) {
             if (f_object->handle == object->handle) continue;
@@ -185,6 +190,8 @@ void Game::render() {
       }
     }
 
+    // If the object does not get swapped, then update each object in focus and all other objects
+    // which share the first tag with the parent object
     glm::vec3 delta = Mouse.clicked_object->transform.position - old_pos;
     for (GameObject *&object : Mouse.focused_objects) {
       if (object != Mouse.clicked_object) {
@@ -199,13 +206,13 @@ void Game::render() {
   // If it does, set the snap to zero for smooth movement and make the current object focused
   // Then, render each object
   for (auto &object : GameObjects::all()) {
-    if (!Mouse.left_button_up
-      && Mouse.left_button 
-      && Mouse.left_button_down 
+    // If the left mouse button was just pressed, then add that object and the objects with the same first tag
+    // as the clicked object to the focused objects. No need to do this each frame while left click is being
+    // held down
+    if (Mouse.left_button_down 
       && object->interactive 
       && object->check_point_intersection(Mouse.position)) {
         object->old_transform.position = object->transform.position;
-
         Mouse.clicked_object = object;
         for (GameObject *&f_object : GameObjects::filter(object->tags[0])) {
           f_object->snap = false;
@@ -213,6 +220,8 @@ void Game::render() {
           Mouse.focused_objects.push_back(f_object);
       }
     }
+
+    // Render each GameObject
     object->render(Renderer);
   }
 }
@@ -225,6 +234,8 @@ void Game::set_window_hints() {
 
   // Use anti-aliasing
   glfwWindowHint(GLFW_SAMPLES, 16);
+
+  // Disable resizing as the code is not compatible with resizing the viewport/camera
   glfwWindowHint(GLFW_RESIZABLE, false);
 }
 
@@ -240,7 +251,7 @@ void Game::create_window(GLFWwindow *&window) {
     exit(-1);
   }
 
-  // Change some GLFW settings post-initialisation
+  // Set the GLFW cursor mode to normal
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 
@@ -273,7 +284,6 @@ void Game::toggle_fullscreen() {
   // the window size, then resize the camera's matrices here.
   for (auto &object : GameObjects::all()) {
     object->window_dimensions = glm::vec2(width, height);
-    // GameObject::update(object->handle, *object);
   }
 
   // Toggle the window fullscreen state

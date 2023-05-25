@@ -1,17 +1,24 @@
 #include "game.h"
 
+// Create a pointer to the Game instance
 Game *RosewaltzJourney;
 
+// Forward declare callbacks for the game
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
 void mouse_callback(GLFWwindow *window, double x, double y);
 void keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
 
 int main() {
+  // Create a new Game with the given parameters
   RosewaltzJourney = new Game(1280, 720, "Rosewaltz Journey");
-  RosewaltzJourney->init();
+
+  // Set callback handlers for the game
   RosewaltzJourney->set_callbacks(mouse_callback, mouse_button_callback, keyboard_callback);
+
+  // Run the game (including both render() and update())
   RosewaltzJourney->run();
 
+  // If the game exits, then exit the application
   return 0;
 }
 

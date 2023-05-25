@@ -5,24 +5,36 @@ void GameObject::render(SpriteRenderer *renderer) {
 }
 
 void GameObject::translate_to_point(glm::vec2 point) {
+  // This will be used to set the delta transform of the object
   glm::vec2 old_pos = this->transform.position;
 
+  // Convert the mouse coordinates to camera-space
+  //! Should there be a parameter to optionally disable the conversion?
   point = (point / this->window_dimensions) * glm::vec2(this->camera->width, this->camera->height);
+
+  // Set the origin if originate is set, otherwise don't affect the calculations
   glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
 
+  // Actually change the transform
   this->transform.position = glm::vec3(point - origin, 0.0f);
 
   // Snap the object and update its bounding box
   if (this->snap) this->update_snap_position();
-  this->update_bounding_box();
+  else this->update_bounding_box();
+
+  // Set the delta transform to be used for offsetting similarly tagged objects
   this->delta_transform.position = this->transform.position - glm::vec3(old_pos, 0.0f); 
 }
 
 void GameObject::update_position() {
+  // This translates the object back to its position to recalculate everything else
+  // Useful for (re)calculating bounding boxes snap or something else
   this->translate_to_point(this->transform.position);
 }
 
 bool GameObject::check_point_intersection(glm::vec2 point) {
+  // Convert the screen-space coordinate to camera-space coordinates
+  //! Should there be a parameter to disable this conversion?
   point = (point / this->window_dimensions) * glm::vec2(this->camera->width, this->camera->height);
 
   return ((this->bounding_box.left <= point.x) 
@@ -32,8 +44,10 @@ bool GameObject::check_point_intersection(glm::vec2 point) {
 }
 
 void GameObject::update_bounding_box() {
+  // Use the origin if originate is set, otherwise remove it from any calculations
   glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
 
+  // Update the bounding boxes using some super advanced math
   this->bounding_box.right = this->transform.position.x + (this->texture.width / (this->texture.width / this->transform.scale.x)) + origin.x;
   this->bounding_box.left = this->transform.position.x + origin.x;
   this->bounding_box.bottom = this->transform.position.y + (this->texture.height / (this->texture.height / this->transform.scale.y)) + origin.y;
@@ -46,23 +60,24 @@ void GameObject::update_bounding_box() {
 void GameObject::update_snap_position() {
   // If snapping is disabled in the object settings, then do nothing
   if (!this->snap) return;
-  glm::vec3 old_pos = this->transform.position;
 
   // Otherwise, update the position to snap to the nearest snap point
+  glm::vec3 old_pos = this->transform.position;
   glm::vec2 origin = this->origin;
   glm::vec3 new_position;
   new_position.x = std::floor((this->transform.position.x + origin.x) / this->grid.x) * this->grid.x;
   new_position.y = std::floor((this->transform.position.y + origin.y) / this->grid.y) * this->grid.y;
 
+  // If the new position is outside the dimensions, then just undo any translations and return it to its old position
   if (new_position.x < 0 || new_position.x > this->camera->width - this->grid.x || new_position.y < 0 || new_position.y > this->camera->height - this->grid.y) {
     this->transform.position = this->old_transform.position;
     this->update_bounding_box();
     return;
   }
 
+  // Otherwise, update the delta transform, the object's position, and it's bounding box
   this->delta_transform.position = this->transform.position - old_pos; 
   this->transform.position = new_position;
-
   this->update_bounding_box();
 
   // //DEBUG print the bounding box of the object along with its handle
@@ -119,6 +134,8 @@ GameObject *GameObjects::create(
 
 std::vector<GameObject *> GameObjects::all() {
   std::vector<GameObject *> all_objects;
+
+  // Get all objects if they are active
   for (auto &pair : GameObjects::Objects) {
     if (pair.second.active) {
       all_objects.push_back(&pair.second);
@@ -133,6 +150,10 @@ GameObject *GameObjects::get(std::string handle) {
 
 std::vector<GameObject *> GameObjects::filter(std::vector<std::string> tags) {
   std::vector<GameObject *> filtered_objects;
+
+  // For each object, if the object is active, then check if it has all the tags
+  // if it doesn't, then just skip that object. Otherwise, add that object to the
+  // output vector
   for (auto &pair : GameObjects::Objects) {
     if (pair.second.active) {
       bool contains_tags = true;
@@ -151,36 +172,24 @@ std::vector<GameObject *> GameObjects::filter(std::vector<std::string> tags) {
 
 std::vector<GameObject *> GameObjects::filter(std::string tag) {
   std::vector<GameObject *> filtered_objects;
+
+  // For each object, if the object is active, check all its tags and if
+  // it has the same tag as the one required, then add it to the output vector
   for (auto &pair : GameObjects::Objects) {
-    if (pair.second.active) {
+    if (pair.second.active)
       for (std::string o_tag : pair.second.tags)
         if (tag == o_tag)
           filtered_objects.push_back(&pair.second);
-    }
   }
   return filtered_objects;
 }
 
-// std::vector<GameObject *> GameObjects::except(std::vector<std::string> tags) {
-//   std::vector<GameObject *> filtered_objects;
-//   for (auto &pair : GameObjects::Objects) {
-//     if (pair.second.active) {
-//       bool contains_tags = false;
-//       for (std::string tag : tags) {
-//         // If even one of the tag is not found in the GameObject, then ignore the object
-//         if (std::find(pair.second.tags.begin(), pair.second.tags.end(), tag) == pair.second.tags.end()) {
-//           contains_tags = true;
-//           break;
-//         }
-//       }
-//       if (!contains_tags) filtered_objects.push_back(&pair.second);
-//     }
-//   }
-//   return filtered_objects;
-// }
-
 std::vector<GameObject *> GameObjects::except(std::string tag) {
   std::vector<GameObject *> filtered_objects;
+
+  // For each GameObject, if it is active, check all its tags against the filter tag.
+  // If the tag isn't in linked with the object, then just ignore that object. Otherwise, 
+  // add that object to the output vector
   for (auto &pair : GameObjects::Objects) {
     if (pair.second.active) {
       bool found = true;
