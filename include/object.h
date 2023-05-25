@@ -33,6 +33,9 @@ class GameObject {
     // Defines the transformations of the object
     Transform transform;
 
+    // Defines the old transform before the object was clicked
+    Transform old_transform;
+
     // Stores the change in transformation over the previous frame
     Transform delta_transform;
 
@@ -51,11 +54,12 @@ class GameObject {
     glm::vec2 origin, grid;
 
     // Snap controls wheather the object should snap to a predefined grid or not
+    // Swap controls wheathe the object should swap with another object at the same position or not 
     // Originate controls wheather the origin setting will be respected or not
     // Inactive object won't be rendered or have any calculations run on them
     // Interactivity controls whether the mouse should be able to interact with the object or not 
     // [UNIMPLEMENTED] Ridigbody controls if the object will be involved in physics collisions or not
-    bool snap, originate, active, interactive, rigidbody;
+    bool snap, swap, originate, active, interactive, rigidbody;
   
     // The window dimensions are needed to ensure correct bounding box calculation when resizing the viewport
     // and not the camera's matrices in order to keep the Objects' size consistent across screen sizes.
@@ -128,6 +132,10 @@ namespace GameObjects {
   // Filter all the GameObjects and return a vector with a pointer to active filtered GameObjects
   std::vector<GameObject *> filter(std::string tag);
   std::vector<GameObject *> filter(std::vector<std::string> tags);
+
+  // Filter all the GameObjects and return a vector with a pointer to active filtered GameObjects
+  std::vector<GameObject *> except(std::string tag);
+  std::vector<GameObject *> except(std::vector<std::string> tags);
 }
 
 #endif

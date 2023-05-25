@@ -66,19 +66,28 @@ void Game::init() {
 
   // Load textures into the game
   ResourceManager::Texture::load("textures/nothing.png", true, "nothing");
+  ResourceManager::Texture::load("textures/windows-11.png", true, "windows");
+  ResourceManager::Texture::load("textures/gigachad.jpg", true, "gigachad");
   ResourceManager::Texture::load("textures/tiles/tile-floor.png", true, "tile-floor");
 
   // Set up the game objects
   glm::vec2 w_dimensions = glm::vec2(this->width, this->height);
   glm::vec2 grid = glm::vec2((float)width / 3.0f, (float)height / 2.0f);
 
-  GameObjects::create("tile1-floor", GameCamera, ResourceManager::Texture::get("tile-floor"), w_dimensions, std::vector<std::string>{ "tile1" }, glm::vec3(0.0f, (float)height / 2.0f - (float)height / 8.85, 0.0f), glm::vec2((float)width / 3.0f, (float)height / 8.85f), 0.0f);
+  GameObjects::create("tile1-floor", GameCamera, ResourceManager::Texture::get("tile-floor"), w_dimensions, { "tile1" }, glm::vec3(0.0f, (float)height / 2.0f - (float)height / 8.85, 0.0f), glm::vec2((float)width / 3.0f, (float)height / 8.85f), 0.0f);
+  GameObjects::create("tile1", GameCamera, ResourceManager::Texture::get("gigachad"), w_dimensions, { "tile1", "tile" }, glm::vec3(0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
+
+   GameObjects::create("tile2-floor", GameCamera, ResourceManager::Texture::get("tile-floor"), w_dimensions, { "tile2" }, glm::vec3((float)width / 3.0f, (float)height / 2.0f - (float)height / 8.85, 0.0f), glm::vec2((float)width / 3.0f, (float)height / 8.85f), 0.0f);
+  GameObjects::create("tile2", GameCamera, ResourceManager::Texture::get("windows"), w_dimensions, { "tile2", "tile" }, glm::vec3((float)width / 3.0f, 0.0f, 0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
 
   for (GameObject *&object : GameObjects::all()) {
     object->interactive = false;
   }
 
-  GameObjects::create("tile1", GameCamera, ResourceManager::Texture::get("nothing"), w_dimensions, std::vector<std::string>{ "tile1 tile" }, glm::vec3(0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
+  for (GameObject *&object : GameObjects::filter("tile")) {
+    object->interactive = true;
+    object->swap = true;
+  }
 }
 
 void Game::run() {
@@ -155,6 +164,28 @@ void Game::render() {
     MouseState.clicked_object->originate = false;
     glm::vec3 old_pos = MouseState.clicked_object->transform.position;
     MouseState.clicked_object->update_snap_position();
+
+
+    for (GameObject *&object : GameObjects::except(MouseState.clicked_object->tags[0])) {
+      if (object->swap && MouseState.clicked_object->swap) {
+        if (object->transform.position == MouseState.clicked_object->transform.position) {
+          object->old_transform.position = object->transform.position;
+          object->translate_to_point(MouseState.clicked_object->old_transform.position);
+          
+          glm::vec3 delta = object->transform.position - object->old_transform.position;
+          for (GameObject *&f_object : GameObjects::filter(object->tags[0])) {
+            if (f_object->handle == object->handle) continue;
+            f_object->originate = false;
+            f_object->update_snap_position();
+            f_object->transform.position += delta;
+          }
+        } else {
+          // MouseState.clicked_object->transform.position = MouseState.clicked_object->old_transform.position;
+          // printf("this spot is free\n");
+        }
+      }
+    }
+
     glm::vec3 delta = MouseState.clicked_object->transform.position - old_pos;
     for (GameObject *&object : MouseState.focused_objects) {
       if (object != MouseState.clicked_object) {
@@ -169,10 +200,13 @@ void Game::render() {
   // If it does, set the snap to zero for smooth movement and make the current object focused
   // Then, render each object
   for (auto &object : GameObjects::all()) {
-    if (MouseState.buttons.left_button 
+    if (!MouseState.buttons.left_button_up
+      && MouseState.buttons.left_button 
       && MouseState.buttons.left_button_down 
       && object->interactive 
       && object->check_point_intersection(glm::vec2(MouseState.x, MouseState.y))) {
+        object->old_transform.position = object->transform.position;
+
         MouseState.clicked_object = object;
         for (GameObject *&f_object : GameObjects::filter(object->tags[0])) {
           f_object->snap = false;

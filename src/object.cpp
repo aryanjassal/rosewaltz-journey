@@ -44,8 +44,8 @@ void GameObject::update_bounding_box() {
   this->bounding_box.bottom = this->transform.position.y + (this->texture.height / (this->texture.height / scale.y)) + origin.y;
   this->bounding_box.top = this->transform.position.y + origin.y;
   
-  // // DEBUG print the bounding box of the object along with its handle
-  // printf("[%s] [collider] %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", this->handle.c_str(), this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, this->transform.position.x, this->transform.position.y);
+  // DEBUG print the bounding box of the object along with its handle
+  printf("[%s] [collider] %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", this->handle.c_str(), this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, this->transform.position.x, this->transform.position.y);
 }
 
 void GameObject::update_snap_position() {
@@ -156,6 +156,41 @@ std::vector<GameObject *> GameObjects::filter(std::string tag) {
       for (std::string o_tag : pair.second.tags)
         if (tag == o_tag)
           filtered_objects.push_back(&pair.second);
+    }
+  }
+  return filtered_objects;
+}
+
+// std::vector<GameObject *> GameObjects::except(std::vector<std::string> tags) {
+//   std::vector<GameObject *> filtered_objects;
+//   for (auto &pair : GameObjects::Objects) {
+//     if (pair.second.active) {
+//       bool contains_tags = false;
+//       for (std::string tag : tags) {
+//         // If even one of the tag is not found in the GameObject, then ignore the object
+//         if (std::find(pair.second.tags.begin(), pair.second.tags.end(), tag) == pair.second.tags.end()) {
+//           contains_tags = true;
+//           break;
+//         }
+//       }
+//       if (!contains_tags) filtered_objects.push_back(&pair.second);
+//     }
+//   }
+//   return filtered_objects;
+// }
+
+std::vector<GameObject *> GameObjects::except(std::string tag) {
+  std::vector<GameObject *> filtered_objects;
+  for (auto &pair : GameObjects::Objects) {
+    if (pair.second.active) {
+      bool found = true;
+      for (std::string o_tag : pair.second.tags) {
+        if (tag == o_tag) {
+          found = false;
+          break;
+        }
+      }
+      if (found) filtered_objects.push_back(&pair.second);
     }
   }
   return filtered_objects;
