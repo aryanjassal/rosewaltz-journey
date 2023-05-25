@@ -44,8 +44,8 @@ void GameObject::update_bounding_box() {
   this->bounding_box.bottom = this->transform.position.y + (this->texture.height / (this->texture.height / scale.y)) + origin.y;
   this->bounding_box.top = this->transform.position.y + origin.y;
   
-  // DEBUG print the bounding box of the object along with its handle
-  printf("[%s] [collider] %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", this->handle.c_str(), this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, this->transform.position.x, this->transform.position.y);
+  // // DEBUG print the bounding box of the object along with its handle
+  // printf("[%s] [collider] %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", this->handle.c_str(), this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, this->transform.position.x, this->transform.position.y);
 }
 
 void GameObject::update_snap_position() {
