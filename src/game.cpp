@@ -179,9 +179,6 @@ void Game::render() {
             f_object->update_snap_position();
             f_object->transform.position += delta;
           }
-        } else {
-          // MouseState.clicked_object->transform.position = MouseState.clicked_object->old_transform.position;
-          // printf("this spot is free\n");
         }
       }
     }

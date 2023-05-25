@@ -57,8 +57,15 @@ void GameObject::update_snap_position() {
   // glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
   glm::vec2 origin = this->origin;
   glm::vec3 new_position;
-  new_position.x = std::clamp(std::floor((this->transform.position.x + origin.x) / this->grid.x) * this->grid.x, 0.0f, (float)this->camera->width - this->grid.x);
-  new_position.y = std::clamp(std::floor((this->transform.position.y + origin.y) / this->grid.y) * this->grid.y, 0.0f, (float)this->camera->height - this->grid.y);
+  new_position.x = std::floor((this->transform.position.x + origin.x) / this->grid.x) * this->grid.x, 0.0f;
+  new_position.y = std::floor((this->transform.position.y + origin.y) / this->grid.y) * this->grid.y, 0.0f;
+
+  if (new_position.x < 0 || new_position.x > this->camera->width - this->grid.x || new_position.y < 0 || new_position.y > this->camera->height - this->grid.y) {
+    this->transform.position = this->old_transform.position;
+    this->update_bounding_box();
+    return;
+  }
+
   this->delta_transform.position = this->transform.position - old_pos; 
   // this->transform.position = new_position + (this->originate ? this->origin : glm::vec2(0.0f));
   this->transform.position = new_position;
