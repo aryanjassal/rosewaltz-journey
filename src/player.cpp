@@ -71,16 +71,16 @@ void Player::resolve_collisions() {
 
   // Otherwise, loop over each object and resolve each collision
   for (GameObject *&object : GameObjects::all()) {
-    // if (object->rigidbody) {
-      // printf("[%s] \n", object->handle.c_str());
-      // if ((this->bounding_box.left <= object->bounding_box.right) 
-        // && (this->bounding_box.right >= object->bounding_box.left)
-        // && (this->bounding_box.top <= object->bounding_box.bottom) 
-        // && (this->bounding_box.bottom >= object->bounding_box.top)) {
-      if(object->check_point_intersection(glm::vec2(this->transform.position.x, this->transform.position.y))) {
-        printf("[%s] collision detected\n", this->handle.c_str());
-      } else printf("[%s] no collision\n", this->handle.c_str());
-    // } 
+    if (object->rigidbody) {
+      if ((this->bounding_box.left <= object->bounding_box.right) 
+        || (this->bounding_box.right >= object->bounding_box.left)
+        && (this->bounding_box.top <= object->bounding_box.bottom) 
+        || (this->bounding_box.bottom >= object->bounding_box.top)) {
+      // if(object->check_point_intersection(glm::vec2(this->transform.position.x, this->transform.position.y)), false) {
+        printf("[%s] collision with [%s] detected\n", this->handle.c_str(), object->handle.c_str());
+      } 
+      // else printf("[%s] no collision\n", this->handle.c_str());
+    } 
   }
 }
 

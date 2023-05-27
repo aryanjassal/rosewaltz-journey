@@ -235,6 +235,7 @@ void Game::render() {
     player->resolve_collisions();
     player->render(Renderer);
   }
+  // exit(0);
 }
 
 void Game::set_window_hints() {

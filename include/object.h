@@ -76,10 +76,10 @@ class GameObject {
     void render(SpriteRenderer *renderer);
 
     // Translate the object to a given point
-    void translate_to_point(glm::vec2 point);
+    void translate_to_point(glm::vec2 point, bool convert = true);
 
     // Check if the object is intersecting with a point
-    bool check_point_intersection(glm::vec2 point);
+    bool check_point_intersection(glm::vec2 point, bool convert = true);
 
     // Update the position by rerunning all calculations that would be run while updating position
     void update_position();

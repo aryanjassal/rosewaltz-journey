@@ -4,13 +4,12 @@ void GameObject::render(SpriteRenderer *renderer) {
   if (this->active) renderer->render(this->texture, this->transform);
 }
 
-void GameObject::translate_to_point(glm::vec2 point) {
+void GameObject::translate_to_point(glm::vec2 point, bool convert) {
   // This will be used to set the delta transform of the object
   glm::vec2 old_pos = this->transform.position;
 
   // Convert the mouse coordinates to camera-space
-  //! Should there be a parameter to optionally disable the conversion?
-  point = (point / this->window_dimensions) * glm::vec2(this->camera->width, this->camera->height);
+  if (convert) point = (point / this->window_dimensions) * glm::vec2(this->camera->width, this->camera->height);
 
   // Set the origin if originate is set, otherwise don't affect the calculations
   glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
@@ -29,13 +28,12 @@ void GameObject::translate_to_point(glm::vec2 point) {
 void GameObject::update_position() {
   // This translates the object back to its position to recalculate everything else
   // Useful for (re)calculating bounding boxes snap or something else
-  this->translate_to_point(this->transform.position);
+  this->translate_to_point(this->transform.position, false);
 }
 
-bool GameObject::check_point_intersection(glm::vec2 point) {
+bool GameObject::check_point_intersection(glm::vec2 point, bool convert) {
   // Convert the screen-space coordinate to camera-space coordinates
-  //! Should there be a parameter to disable this conversion?
-  point = (point / this->window_dimensions) * glm::vec2(this->camera->width, this->camera->height);
+  if (convert) point = (point / this->window_dimensions) * glm::vec2(this->camera->width, this->camera->height);
 
   return ((this->bounding_box.left <= point.x) 
     && (this->bounding_box.right >= point.x) 
@@ -48,9 +46,9 @@ void GameObject::update_bounding_box() {
   glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
 
   // Update the bounding boxes using some super advanced math
-  this->bounding_box.right = this->transform.position.x + (this->texture.width / (this->texture.width / this->transform.scale.x)) + origin.x;
+  this->bounding_box.right = this->transform.position.x + this->transform.scale.x + origin.x;
   this->bounding_box.left = this->transform.position.x + origin.x;
-  this->bounding_box.bottom = this->transform.position.y + (this->texture.height / (this->texture.height / this->transform.scale.y)) + origin.y;
+  this->bounding_box.bottom = this->transform.position.y + this->transform.scale.y + origin.y;
   this->bounding_box.top = this->transform.position.y + origin.y;
   
   // // DEBUG print the bounding box of the object along with its handle
