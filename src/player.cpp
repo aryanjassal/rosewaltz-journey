@@ -42,6 +42,7 @@ Player *Characters::Players::create(
   transform.scale = scale;
   transform.rotation = rotation;
   // Characters::Players::create(handle, camera, texture, window_dimensions, transform, tags, origin);
+  
   Player player = Player();
   player.handle = handle;
   player.camera = camera;
@@ -51,6 +52,7 @@ Player *Characters::Players::create(
   player.origin = origin;
   player.rigidbody = true;
   player.active = true;
+  player.bounding_box = { 0.0f, 0.0f, 0.0f, 0.0f };
   player.update_bounding_box();
 
   Characters::Players::Players[handle] = player;
@@ -58,28 +60,28 @@ Player *Characters::Players::create(
 }
 
 void Player::resolve_vectors() {
+  // Apply impulse acceleration and regular acceleration to the object
   this->velocity += this->acceleration;
   this->velocity += this->impulse;
 
+  // Flip the y-component of the velocity as it points upwards, which is incorrect in this context
   this->transform.position += glm::vec3(this->velocity.x, -this->velocity.y, this->transform.position.z);
   this->impulse = glm::vec2(0.0f);
+
+  // Update the bounding box of the player
+  this->update_bounding_box();
 }
 
 void Player::resolve_collisions() {
-  // If this object is not a rigidbody, then do not resolve collisions
+  // If the player is not a rigidbody, then no collisions can happen
   if (!this->rigidbody) return;
 
   // Otherwise, loop over each object and resolve each collision
   for (GameObject *&object : GameObjects::all()) {
     if (object->rigidbody) {
-      if ((this->bounding_box.left <= object->bounding_box.right) 
-        || (this->bounding_box.right >= object->bounding_box.left)
-        && (this->bounding_box.top <= object->bounding_box.bottom) 
-        || (this->bounding_box.bottom >= object->bounding_box.top)) {
-      // if(object->check_point_intersection(glm::vec2(this->transform.position.x, this->transform.position.y)), false) {
+      if (object->check_collision(this->bounding_box)) {
         printf("[%s] collision with [%s] detected\n", this->handle.c_str(), object->handle.c_str());
-      } 
-      // else printf("[%s] no collision\n", this->handle.c_str());
+      }
     } 
   }
 }

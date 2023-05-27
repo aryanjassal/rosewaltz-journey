@@ -13,20 +13,20 @@
 #include "texture.h"
 #include "sprite.h"
 
+// A struct to define the structure of information regarding the GameObject's bounding box
+typedef struct BoundingBox {
+  float top;
+  float bottom;
+  float left;
+  float right;
+};
+
 // This class handles all game objects, containing boilerplate code for
 // collision detection or motion or anything else an object might need.
 // For complex object interactions, usage of this namespace is recommended
 // over using the default SpriteRenderer, as it will only take you so far.
 class GameObject {
   public:
-    // A struct to define the structure of information regarding the GameObject's bounding box
-    typedef struct BoundingBox {
-      float top;
-      float bottom;
-      float left;
-      float right; 
-    };
-
     // Defines a unique identifier for each GameObject
     std::string handle;
 
@@ -80,6 +80,9 @@ class GameObject {
 
     // Check if the object is intersecting with a point
     bool check_point_intersection(glm::vec2 point, bool convert = true);
+
+    // Check collision between two bounding boxes
+    bool check_collision(BoundingBox bounding_box);
 
     // Update the position by rerunning all calculations that would be run while updating position
     void update_position();

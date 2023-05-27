@@ -79,8 +79,8 @@ void Game::init() {
   GameObjects::create("tile1", GameCamera, gigachad, w_dimensions, { "tile1", "tile" }, glm::vec3(0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
   GameObjects::create("tile1-floor", GameCamera, tile_floor, w_dimensions, { "tile1" }, glm::vec3(0.0f, (float)height / 2.0f - (float)height / 8.85, 0.0f), glm::vec2((float)width / 3.0f, (float)height / 8.85f), 0.0f);
 
-  GameObjects::create("tile2", GameCamera, windows, w_dimensions, { "tile2", "tile" }, glm::vec3(grid.x, 0.0f, 0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
-  GameObjects::create("tile2-floor", GameCamera, tile_floor, w_dimensions, { "tile2" }, glm::vec3(grid.x, grid.y - (float)height / 8.85, 0.0f), glm::vec2(grid.x, (float)height / 8.85f), 0.0f);
+  // GameObjects::create("tile2", GameCamera, windows, w_dimensions, { "tile2", "tile" }, glm::vec3(grid.x, 0.0f, 0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
+  // GameObjects::create("tile2-floor", GameCamera, tile_floor, w_dimensions, { "tile2" }, glm::vec3(grid.x, grid.y - (float)height / 8.85, 0.0f), glm::vec2(grid.x, (float)height / 8.85f), 0.0f);
 
   // Create the player
   Characters::Players::create("player", GameCamera, gigachad, w_dimensions, glm::vec3(100.0f, 100.0f, 0.0f));
@@ -109,48 +109,32 @@ void Game::run() {
 }
 
 void Game::update() {
-  // If the F key is pressed, toggle fullscreen
-  if (this->Keyboard['F'].pressed) toggle_fullscreen();
+  // Loop over every game object and check if the object is interactive and if the mouse intersects with it
+  // If it does, set the snap to zero for smooth movement and make the current object focused
+  for (GameObject *&object : GameObjects::all()) {
+    // If the left mouse button was just pressed, then add that object and the objects with the same first tag
+    // as the clicked object to the focused objects. No need to do this each frame while left click is being
+    // held down
+    if (Mouse.left_button_down && object->interactive && object->check_point_intersection(Mouse.position)) {
+      object->old_transform.position = object->transform.position;
+      Mouse.clicked_object = object;
+      for (GameObject *&f_object : GameObjects::filter(object->tags[0])) {
+        f_object->snap = false;
+        f_object->originate = true;
+        Mouse.focused_objects.push_back(f_object);
+      }
+    }
 
-  // Reset the pressed and released status of the mouse buttons
-  Mouse.left_button_down = false;
-  Mouse.left_button_up = false;
-  
-  // If left click has been released, then there should be no active object
-  if (!Mouse.left_button) {
-    Mouse.focused_objects = std::vector<GameObject *>();
-    Mouse.clicked_object = nullptr;
+    // Otherwise, simply update the position of (and rerun all the calculations on) each object
+    object->update_position();
+    if (object->tags.size() == 1) printf("[%s] [collider] %.2f < x < %.2f; %.2f < y < %.2f\n", object->handle.c_str(), object->bounding_box.left, object->bounding_box.right, object->bounding_box.top, object->bounding_box.bottom);
   }
 
-  // If the escape key was pressed, then close the window
-  if (Keyboard[256].pressed) glfwSetWindowShouldClose(this->GameWindow, true);
-
-  // Reset KeyState::pressed and KeyState::released
-  //! This method is extremely unoptimised. The multiple loops need to be fixed for optimal performance.
-  std::vector<int> released_keys;
-  for (auto pair : this->Keyboard) {
-    if (pair.second.pressed) this->Keyboard[pair.first].pressed = false;
-    if (pair.second.released) released_keys.push_back(pair.first);
+  // Update all player entities
+  for (Player *player : Characters::Players::all()) {
+    player->resolve_collisions();
+    player->resolve_vectors();
   }
-
-  for (int key : released_keys) {
-    this->Keyboard.erase(this->Keyboard.find(key));
-  }
-
-  // Poll GLFW for new events
-  glfwPollEvents();
-}
-
-void Game::render() {
-  // Clear the screen (paints it to the predefined clear colour)
-  glClear(GL_COLOR_BUFFER_BIT);
-
-  // Render the parallax background
-  glm::vec2 scale = glm::vec2(width + 100.0f, height + 100.0f);
-  Renderer->render(ResourceManager::Texture::get("background-bg"), { glm::vec3(0.0f), scale, 0.0f });
-  Renderer->render(ResourceManager::Texture::get("background-far"), { glm::vec3((Mouse.position / glm::vec2(150.0f)) - glm::vec2(50.0f), 0.0f), scale, 0.0f });
-  Renderer->render(ResourceManager::Texture::get("background-mid"), { glm::vec3((Mouse.position / glm::vec2(100.0f)) - glm::vec2(50.0f), 0.0f), scale, 0.0f });
-  Renderer->render(ResourceManager::Texture::get("background-near"), { glm::vec3((Mouse.position / glm::vec2(50.0f)) - glm::vec2(50.0f), 0.0f), scale, 0.0f });
 
   // If an object is selected, then move the object along with the mouse
   if (Mouse.focused_objects != std::vector<GameObject *>()) {
@@ -207,35 +191,58 @@ void Game::render() {
     }
   }
 
-  // Loop over every game object and check if the object is interactive and if the mouse intersects with it
-  // If it does, set the snap to zero for smooth movement and make the current object focused
-  // Then, render each object
-  for (GameObject *&object : GameObjects::all()) {
-    // If the left mouse button was just pressed, then add that object and the objects with the same first tag
-    // as the clicked object to the focused objects. No need to do this each frame while left click is being
-    // held down
-    if (Mouse.left_button_down 
-      && object->interactive 
-      && object->check_point_intersection(Mouse.position)) {
-        object->old_transform.position = object->transform.position;
-        Mouse.clicked_object = object;
-        for (GameObject *&f_object : GameObjects::filter(object->tags[0])) {
-          f_object->snap = false;
-          f_object->originate = true;
-          Mouse.focused_objects.push_back(f_object);
-      }
-    }
+  // If the F key is pressed, toggle fullscreen
+  if (this->Keyboard['F'].pressed) toggle_fullscreen();
 
-    // Render each GameObject
+  // Reset the pressed and released status of the mouse buttons
+  Mouse.left_button_down = false;
+  Mouse.left_button_up = false;
+  
+  // If left click has been released, then there should be no active object
+  if (!Mouse.left_button) {
+    Mouse.focused_objects = std::vector<GameObject *>();
+    Mouse.clicked_object = nullptr;
+  }
+
+  // If the escape key was pressed, then close the window
+  if (Keyboard[256].pressed) glfwSetWindowShouldClose(this->GameWindow, true);
+
+  // Reset KeyState::pressed and KeyState::released
+  //! This method is extremely unoptimised. The multiple loops need to be fixed for optimal performance.
+  std::vector<int> released_keys;
+  for (auto pair : this->Keyboard) {
+    if (pair.second.pressed) this->Keyboard[pair.first].pressed = false;
+    if (pair.second.released) released_keys.push_back(pair.first);
+  }
+
+  for (int key : released_keys) {
+    this->Keyboard.erase(this->Keyboard.find(key));
+  }
+
+  // Poll GLFW for new events
+  glfwPollEvents();
+}
+
+void Game::render() {
+  // Clear the screen (paints it to the predefined clear colour)
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  // Render the parallax background
+  glm::vec2 scale = glm::vec2(width + 100.0f, height + 100.0f);
+  Renderer->render(ResourceManager::Texture::get("background-bg"), { glm::vec3(0.0f), scale, 0.0f });
+  Renderer->render(ResourceManager::Texture::get("background-far"), { glm::vec3((Mouse.position / glm::vec2(150.0f)) - glm::vec2(50.0f), 0.0f), scale, 0.0f });
+  Renderer->render(ResourceManager::Texture::get("background-mid"), { glm::vec3((Mouse.position / glm::vec2(100.0f)) - glm::vec2(50.0f), 0.0f), scale, 0.0f });
+  Renderer->render(ResourceManager::Texture::get("background-near"), { glm::vec3((Mouse.position / glm::vec2(50.0f)) - glm::vec2(50.0f), 0.0f), scale, 0.0f });
+
+  // Render each GameObject
+  for (GameObject *&object : GameObjects::all()) {
     object->render(Renderer);
   }
 
+  // Render each Player
   for (Player *&player : Characters::Players::all()) {
-    player->resolve_vectors();
-    player->resolve_collisions();
     player->render(Renderer);
   }
-  // exit(0);
 }
 
 void Game::set_window_hints() {

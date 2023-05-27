@@ -5,16 +5,14 @@ void GameObject::render(SpriteRenderer *renderer) {
 }
 
 void GameObject::translate_to_point(glm::vec2 point, bool convert) {
-  // This will be used to set the delta transform of the object
+  // Set some useful variables
   glm::vec2 old_pos = this->transform.position;
+  glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
 
   // Convert the mouse coordinates to camera-space
   if (convert) point = (point / this->window_dimensions) * glm::vec2(this->camera->width, this->camera->height);
 
-  // Set the origin if originate is set, otherwise don't affect the calculations
-  glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
-
-  // Actually change the transform
+  // Update the transform
   this->transform.position = glm::vec3(point - origin, 0.0f);
 
   // Snap the object and update its bounding box
@@ -39,6 +37,13 @@ bool GameObject::check_point_intersection(glm::vec2 point, bool convert) {
     && (this->bounding_box.right >= point.x) 
     && (this->bounding_box.top <= point.y) 
     && (this->bounding_box.bottom >= point.y));
+}
+
+bool GameObject::check_collision(BoundingBox bounding_box) {
+  return (bounding_box.right >= this->bounding_box.left
+    && bounding_box.left <= this->bounding_box.right
+    && bounding_box.bottom >= this->bounding_box.top
+    && bounding_box.top <= this->bounding_box.bottom);
 }
 
 void GameObject::update_bounding_box() {
@@ -100,6 +105,7 @@ GameObject *GameObjects::create(
     object.transform = transform;
     object.origin = origin;
     object.originate = false;
+    object.bounding_box = { 0.0f, 0.0f, 0.0f, 0.0f };
     if (grid != glm::vec2(0.0f)) {
       object.grid = grid;
       object.snap = true;
