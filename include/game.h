@@ -16,6 +16,7 @@
 #include "camera.h"
 #include "resource_manager.h"
 #include "object.h"
+#include "player.h"
 
 class Game {
   public:

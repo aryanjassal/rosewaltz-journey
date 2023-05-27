@@ -82,13 +82,18 @@ void Game::init() {
   GameObjects::create("tile2", GameCamera, windows, w_dimensions, { "tile2", "tile" }, glm::vec3(grid.x, 0.0f, 0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
   GameObjects::create("tile2-floor", GameCamera, tile_floor, w_dimensions, { "tile2" }, glm::vec3(grid.x, grid.y - (float)height / 8.85, 0.0f), glm::vec2(grid.x, (float)height / 8.85f), 0.0f);
 
+  // Create the player
+  Characters::Players::create("player", GameCamera, gigachad, w_dimensions, glm::vec3(100.0f, 100.0f, 0.0f));
+
   for (GameObject *&object : GameObjects::all()) {
     object->interactive = false;
+    object->rigidbody = true;
   }
 
   for (GameObject *&object : GameObjects::filter("tile")) {
     object->interactive = true;
     object->swap = true;
+    object->rigidbody = false;
   }
 }
 
@@ -205,7 +210,7 @@ void Game::render() {
   // Loop over every game object and check if the object is interactive and if the mouse intersects with it
   // If it does, set the snap to zero for smooth movement and make the current object focused
   // Then, render each object
-  for (auto &object : GameObjects::all()) {
+  for (GameObject *&object : GameObjects::all()) {
     // If the left mouse button was just pressed, then add that object and the objects with the same first tag
     // as the clicked object to the focused objects. No need to do this each frame while left click is being
     // held down
@@ -223,6 +228,12 @@ void Game::render() {
 
     // Render each GameObject
     object->render(Renderer);
+  }
+
+  for (Player *&player : Characters::Players::all()) {
+    player->resolve_vectors();
+    player->resolve_collisions();
+    player->render(Renderer);
   }
 }
 
