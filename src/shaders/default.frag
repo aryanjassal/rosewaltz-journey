@@ -8,9 +8,9 @@ in vec2 texture_coordinate;
 
 // The texture and the colour uniform
 uniform sampler2D sprite;
-uniform vec3 colour;
+uniform vec4 colour;
 
 void main() {
   // Display the texture
-  pixel = vec4(colour, 1.0) * texture(sprite, texture_coordinate);
+  pixel = colour * texture(sprite, texture_coordinate);
 }

@@ -24,13 +24,12 @@ class SpriteRenderer {
     // The deconstructor ensures that the memory is freed and that the sprite is deleted properly
     ~SpriteRenderer();
 
-    // Actually render the sprite to the screen
+    // Actually render the sprite to the screen.
     // Note that only an orthographic camera is supported for now.
-    //! The program unefficiently resets the projection and view matrices every frame, when once is enough. Fix this
     void render(
       Texture texture, 
       Transform transform,
-      glm::vec3 colour = glm::vec3(1.0f)
+      glm::vec4 colour = glm::vec4(1.0f)
     ); 
 
   private:

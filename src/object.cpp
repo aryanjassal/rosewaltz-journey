@@ -1,7 +1,7 @@
 #include "object.h"
 
-void GameObject::render(SpriteRenderer *renderer) {
-  if (this->active) renderer->render(this->texture, this->transform);
+void GameObject::render(SpriteRenderer *renderer, glm::vec4 colour) {
+  if (this->active) renderer->render(this->texture, this->transform, colour);
 }
 
 void GameObject::translate_to_point(glm::vec2 point, bool convert) {
@@ -16,7 +16,8 @@ void GameObject::translate_to_point(glm::vec2 point, bool convert) {
   this->transform.position = glm::vec3(point - origin, 0.0f);
 
   // Set the delta transform to be used for offsetting similarly tagged objects
-  this->delta_transform.position = this->transform.position - glm::vec3(old_pos, 0.0f); 
+  this->update_delta_transform(glm::vec3(old_pos, 0.0f));
+  // this->delta_transform.position = this->transform.position - glm::vec3(old_pos, 0.0f); 
 
   // Snap the object and update its bounding box
   if (this->snap) this->update_snap_position();
@@ -57,7 +58,7 @@ void GameObject::update_bounding_box() {
   this->bounding_box.top = this->transform.position.y + origin.y;
   
   // // DEBUG print the bounding box of the object along with its handle
-  // printf("[%s] [collider] %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", this->handle.c_str(), this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, this->transform.position.x, this->transform.position.y);
+  // if (this->tags[0] != "player") printf("[%s] [collider] %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", this->handle.c_str(), this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, this->transform.position.x, this->transform.position.y);
 }
 
 void GameObject::update_snap_position() {
@@ -86,6 +87,10 @@ void GameObject::update_snap_position() {
 
   // //DEBUG print the bounding box of the object along with its handle
   // printf("[%s] [snap] %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", this->handle.c_str(), this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, this->transform.position.x, this->transform.position.y);
+}
+
+void GameObject::update_delta_transform(glm::vec3 old_position) {
+  this->delta_transform.position = this->transform.position - old_position;
 }
 
 GameObject *GameObjects::create(

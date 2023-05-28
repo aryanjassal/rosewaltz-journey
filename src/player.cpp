@@ -53,6 +53,8 @@ Player *Characters::Players::create(
   player.rigidbody = true;
   player.active = true;
   player.bounding_box = { 0.0f, 0.0f, 0.0f, 0.0f };
+  player.swap = false;
+  player.interactive = false;
   player.update_bounding_box();
 
   Characters::Players::Players[handle] = player;

@@ -73,7 +73,7 @@ class GameObject {
     GameObject() { }
 
     // Actually render the GameObject using a SpriteRenderer
-    void render(SpriteRenderer *renderer);
+    void render(SpriteRenderer *renderer, glm::vec4 colour = glm::vec4(1.0f));
 
     // Translate the object to a given point
     void translate_to_point(glm::vec2 point, bool convert = true);
@@ -92,6 +92,9 @@ class GameObject {
 
     // Update the position of the object based on the snap set
     void update_snap_position();
+
+    // Add a new point in delta transform
+    void update_delta_transform(glm::vec3 old_position);
 };
 
 // This namespace handles generic functions related to dealing with GameObjects

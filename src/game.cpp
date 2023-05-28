@@ -76,8 +76,8 @@ void Game::init() {
   glm::vec2 w_dimensions = glm::vec2(this->width, this->height);
   glm::vec2 grid = glm::vec2((float)width / 3.0f, (float)height / 2.0f);
 
-  // Create the player
-  Characters::Players::create("player", GameCamera, gigachad, w_dimensions, glm::vec3(100.0f, 100.0f, 0.0f));
+  // // Create the player
+  // Characters::Players::create("player", GameCamera, gigachad, w_dimensions, glm::vec3(100.0f, 100.0f, 0.0f), glm::vec2(100.0f), 0.0f, { "player" });
 
   // Create GameObjects
   GameObjects::create("tile1", GameCamera, gigachad, w_dimensions, { "tile1", "tile" }, glm::vec3(0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
@@ -101,8 +101,8 @@ void Game::init() {
 void Game::run() {
   // Main events loop
   while(!glfwWindowShouldClose(this->GameWindow)) {
-    this->render();
     this->update();
+    this->render();
 
     // Swap the buffers to actually render what we are drawing to the screen
     glfwSwapBuffers(this->GameWindow);
@@ -110,6 +110,8 @@ void Game::run() {
 }
 
 void Game::update() {
+  if (Mouse.left_button_up) printf("\n");
+
   // Loop over every game object and check if the object is interactive and if the mouse intersects with it
   // If it does, set the snap to zero for smooth movement and make the current object focused
   for (GameObject *&object : GameObjects::all()) {
@@ -130,14 +132,8 @@ void Game::update() {
     object->update_bounding_box();
   }
 
-  // Update all player entities
-  for (Player *player : Characters::Players::all()) {
-    player->resolve_collisions();
-    player->resolve_vectors();
-  }
-
   // If an object is selected, then move the object along with the mouse
-  if (Mouse.focused_objects != std::vector<GameObject *>()) {
+  if (Mouse.focused_objects != std::vector<GameObject *>() && Mouse.clicked_object != nullptr) {
     Mouse.clicked_object->originate = true;
     Mouse.clicked_object->translate_to_point(Mouse.position);
     for (GameObject *&object : Mouse.focused_objects) {
@@ -160,27 +156,35 @@ void Game::update() {
     // the other object already there to the position where the first object was, effectly swapping
     // their locations. Note that this process is quite taxing due to the fact that there are two
     // nested loops and objects need to be filtered by tags twice, adding further overhead
-    for (GameObject *&object : GameObjects::except(Mouse.clicked_object->tags[0])) {
-      if (object->swap && Mouse.clicked_object->swap) {
-        if (object->transform.position == Mouse.clicked_object->transform.position) {
-          object->old_transform.position = object->transform.position;
-          object->translate_to_point(Mouse.clicked_object->old_transform.position);
-          
-          // Update the position of all the objects with the same tag as the object which got
-          // displaced from its original spot (not the currently selected object)
-          glm::vec3 delta = object->transform.position - object->old_transform.position;
-          for (GameObject *&f_object : GameObjects::filter(object->tags[0])) {
-            if (f_object->handle == object->handle) continue;
-            f_object->originate = false;
-            f_object->update_snap_position();
-            f_object->transform.position += delta;
+    if (Mouse.clicked_object->swap) {
+      for (GameObject *&object : GameObjects::except(Mouse.clicked_object->tags[0])) {
+        if (object->interactive && object->swap) {
+          printf("[%s] target: %.2f, %.2f; [%s] object pos: %.2f, %.2f\n", Mouse.clicked_object->handle.c_str(), Mouse.clicked_object->transform.position.x, Mouse.clicked_object->transform.position.y, object->handle.c_str(), object->transform.position.x, object->transform.position.y);
+
+          if (object->transform.position == Mouse.clicked_object->transform.position) {
+            printf("[%s] swapping with [%s]\n", Mouse.clicked_object->handle.c_str(), object->handle.c_str());
+
+            object->old_transform.position = object->transform.position;
+            object->translate_to_point(Mouse.clicked_object->old_transform.position);
+
+            printf("[%s] pos: %.2f, %.2f; [%s] object pos: %.2f, %.2f\n", Mouse.clicked_object->handle.c_str(), Mouse.clicked_object->transform.position.x, Mouse.clicked_object->transform.position.y, object->handle.c_str(), object->transform.position.x, object->transform.position.y);
+            printf("[%s] [collider] %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", object->handle.c_str(), object->bounding_box.left, object->bounding_box.right, object->bounding_box.top, object->bounding_box.bottom, object->transform.position.x, object->transform.position.y);
+            
+            // Update the position of all the objects with the same tag as the object which got
+            // displaced from its original spot (not the currently selected object)
+            glm::vec3 delta = object->transform.position - object->old_transform.position;
+            for (GameObject *&f_object : GameObjects::filter(object->tags[0])) {
+              if (f_object->handle == object->handle) continue;
+              f_object->originate = false;
+              f_object->update_snap_position();
+              f_object->transform.position += delta;
+            }
           }
         }
       }
     }
 
-    // If the object does not get swapped, then update each object in focus and all other objects
-    // which share the first tag with the parent object
+    // Update all the GameObjects which share their first tag with the parent object
     glm::vec3 delta = Mouse.clicked_object->transform.position - old_pos;
     for (GameObject *&object : Mouse.focused_objects) {
       if (object != Mouse.clicked_object) {
@@ -190,6 +194,14 @@ void Game::update() {
       }
     }
   }
+  
+
+
+  // // Update all player entities
+  // for (Player *player : Characters::Players::all()) {
+  //   player->resolve_collisions();
+  //   player->resolve_vectors();
+  // }
 
   // If the F key is pressed, toggle fullscreen
   if (this->Keyboard['F'].pressed) toggle_fullscreen();
@@ -236,13 +248,15 @@ void Game::render() {
 
   // Render each GameObject
   for (GameObject *&object : GameObjects::all()) {
-    object->render(Renderer);
+    if (object->tags[1] == "tile") object->render(Renderer, glm::vec4(1.0f, 1.0f, 1.0f, 0.5f));
+    else object->render(Renderer);
+    // printf("[%s] rendering self\n", object->handle.c_str());
   }
 
-  // Render each Player
-  for (Player *&player : Characters::Players::all()) {
-    player->render(Renderer);
-  }
+  // // Render each Player
+  // for (Player *&player : Characters::Players::all()) {
+  //   player->render(Renderer);
+  // }
 }
 
 void Game::set_window_hints() {
