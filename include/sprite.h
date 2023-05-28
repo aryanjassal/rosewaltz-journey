@@ -19,7 +19,7 @@ typedef struct Transform {
 class SpriteRenderer {
   public:
     // The constructor initialises the shader and the shape of the sprite
-    SpriteRenderer(Shader &shader, Camera::OrthoCamera *camera);
+    SpriteRenderer(Shader &shader, OrthoCamera *camera);
 
     // The deconstructor ensures that the memory is freed and that the sprite is deleted properly
     ~SpriteRenderer();
@@ -34,7 +34,7 @@ class SpriteRenderer {
 
   private:
     Shader shader;
-    Camera::OrthoCamera *camera;
+    OrthoCamera *camera;
     unsigned int vao, ebo;
 };
 

@@ -47,25 +47,25 @@ class GameObject {
     Texture texture;
 
     // Stores the GameCamera that will be rendering the scene
-    Camera::OrthoCamera *camera;
+    OrthoCamera *camera;
 
     // Defines the position, scale, origin, and the grid-snap of the object
     // The origin of the object is a transform operation that will be executed before any other transformation
     glm::vec2 origin, grid;
 
-    // Snap controls wheather the object should snap to a predefined grid or not
-    // Swap controls wheathe the object should swap with another object at the same position or not 
-    // Originate controls wheather the origin setting will be respected or not
-    // Inactive object won't be rendered or have any calculations run on them
-    // Interactivity controls whether the mouse should be able to interact with the object or not 
-    // Ridigbody controls if the object will be involved in physics collisions or not
+    // Snap controls wheather the object should snap to a predefined grid or not.
+    // Swap controls wheathe the object should swap with another object at the same position or not.
+    // Originate controls wheather the origin setting will be respected or not.
+    // Inactive object won't be rendered or have any calculations run on them.
+    // Interactivity controls whether the mouse should be able to interact with the object or not. 
+    // Ridigbody controls if the object will be involved in physics collisions or not.
     bool snap, swap, originate, active, interactive, rigidbody;
   
     // The window dimensions are needed to ensure correct bounding box calculation when resizing the viewport
     // and not the camera's matrices in order to keep the Objects' size consistent across screen sizes.
     glm::vec2 window_dimensions;
 
-    // Define a bounding box for the object
+    // Define a bounding box for the object.
     // This will be used in the collision detection and the collider used for mouse interaction
     BoundingBox bounding_box;
 
@@ -105,7 +105,7 @@ namespace GameObjects {
   // Create a GameObject by providing all the required parameters
   GameObject *create(
     std::string handle, 
-    Camera::OrthoCamera *camera, 
+    OrthoCamera *camera, 
     Texture texture, 
     glm::vec2 window_dimensions, 
     std::vector<std::string> tags = std::vector<std::string>(),
@@ -115,7 +115,7 @@ namespace GameObjects {
   );
   GameObject *create(
     std::string handle, 
-    Camera::OrthoCamera *camera, 
+    OrthoCamera *camera, 
     Texture texture, 
     glm::vec2 window_dimensions, 
     std::vector<std::string> tags = std::vector<std::string>(),

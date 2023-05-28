@@ -2,7 +2,7 @@
 
 // Set up pointers to global objects for the game
 SpriteRenderer *Renderer;
-Camera::OrthoCamera *GameCamera;
+OrthoCamera *GameCamera;
 
 Game::Game(unsigned int width, unsigned int height, std::string window_title, bool fullscreen) {
   // Set internal width and height
@@ -55,7 +55,7 @@ void Game::init() {
   Shader sprite_shader = ResourceManager::Shader::load("src/shaders/default.vert", "src/shaders/default.frag", "default");
 
   // Create the camera
-  GameCamera = new Camera::OrthoCamera(this->width, this->height, -1.0f, 1.0f);
+  GameCamera = new OrthoCamera(this->width, this->height, -1.0f, 1.0f);
 
   // Create a sprite renderer instance
   Renderer = new SpriteRenderer(sprite_shader, GameCamera);
@@ -110,8 +110,6 @@ void Game::run() {
 }
 
 void Game::update() {
-  if (Mouse.left_button_up) printf("\n");
-
   // Loop over every game object and check if the object is interactive and if the mouse intersects with it
   // If it does, set the snap to zero for smooth movement and make the current object focused
   for (GameObject *&object : GameObjects::all()) {
@@ -159,17 +157,10 @@ void Game::update() {
     if (Mouse.clicked_object->swap) {
       for (GameObject *&object : GameObjects::except(Mouse.clicked_object->tags[0])) {
         if (object->interactive && object->swap) {
-          printf("[%s] target: %.2f, %.2f; [%s] object pos: %.2f, %.2f\n", Mouse.clicked_object->handle.c_str(), Mouse.clicked_object->transform.position.x, Mouse.clicked_object->transform.position.y, object->handle.c_str(), object->transform.position.x, object->transform.position.y);
-
           if (object->transform.position == Mouse.clicked_object->transform.position) {
-            printf("[%s] swapping with [%s]\n", Mouse.clicked_object->handle.c_str(), object->handle.c_str());
-
             object->old_transform.position = object->transform.position;
             object->translate_to_point(Mouse.clicked_object->old_transform.position);
 
-            printf("[%s] pos: %.2f, %.2f; [%s] object pos: %.2f, %.2f\n", Mouse.clicked_object->handle.c_str(), Mouse.clicked_object->transform.position.x, Mouse.clicked_object->transform.position.y, object->handle.c_str(), object->transform.position.x, object->transform.position.y);
-            printf("[%s] [collider] %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", object->handle.c_str(), object->bounding_box.left, object->bounding_box.right, object->bounding_box.top, object->bounding_box.bottom, object->transform.position.x, object->transform.position.y);
-            
             // Update the position of all the objects with the same tag as the object which got
             // displaced from its original spot (not the currently selected object)
             glm::vec3 delta = object->transform.position - object->old_transform.position;

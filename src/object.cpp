@@ -95,7 +95,7 @@ void GameObject::update_delta_transform(glm::vec3 old_position) {
 
 GameObject *GameObjects::create(
   std::string handle, 
-  Camera::OrthoCamera *camera, 
+  OrthoCamera *camera, 
   Texture texture, 
   glm::vec2 window_dimensions, 
   std::vector<std::string> tags,
@@ -126,7 +126,7 @@ GameObject *GameObjects::create(
 
 GameObject *GameObjects::create(
   std::string handle, 
-  Camera::OrthoCamera *camera, 
+  OrthoCamera *camera, 
   Texture texture, 
   glm::vec2 window_dimensions, 
   std::vector<std::string> tags,

@@ -62,7 +62,7 @@ namespace Characters {
     // Create a Player by providing all the required parameters
     Player *create(
       std::string handle, 
-      Camera::OrthoCamera *camera, 
+      OrthoCamera *camera, 
       Texture texture, 
       glm::vec2 window_dimensions, 
       glm::vec3 position = glm::vec3(0.0f),

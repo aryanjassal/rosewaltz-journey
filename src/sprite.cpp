@@ -1,6 +1,6 @@
 #include "sprite.h"
 
-SpriteRenderer::SpriteRenderer(Shader &shader, Camera::OrthoCamera *camera) {
+SpriteRenderer::SpriteRenderer(Shader &shader, OrthoCamera *camera) {
   this->shader = shader;
   this->camera = camera;
 
