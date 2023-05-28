@@ -49,16 +49,6 @@ namespace Characters {
     // Keep track of all the players created
     static std::map<std::string, Player> Players;
 
-    // Player *create(
-    //   std::string handle, 
-    //   Camera::OrthoCamera *camera, 
-    //   Texture texture, 
-    //   glm::vec2 window_dimensions, 
-    //   Transform transform = { glm::vec3(0.0f), glm::vec2(100.0f), 0.0f },
-    //   std::vector<std::string> tags = std::vector<std::string>(),
-    //   glm::vec2 origin = glm::vec2(0.0f)
-    // );
-
     // Create a Player by providing all the required parameters
     Player *create(
       std::string handle, 

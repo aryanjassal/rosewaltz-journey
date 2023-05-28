@@ -76,8 +76,8 @@ void Game::init() {
   glm::vec2 w_dimensions = glm::vec2(this->width, this->height);
   glm::vec2 grid = glm::vec2((float)width / 3.0f, (float)height / 2.0f);
 
-  // // Create the player
-  // Characters::Players::create("player", GameCamera, gigachad, w_dimensions, glm::vec3(100.0f, 100.0f, 0.0f), glm::vec2(100.0f), 0.0f, { "player" });
+  // Create the player
+  Characters::Players::create("player", GameCamera, gigachad, w_dimensions, glm::vec3(100.0f, 100.0f, 0.0f), glm::vec2(100.0f), 0.0f, { "player" });
 
   // Create GameObjects
   GameObjects::create("tile1", GameCamera, gigachad, w_dimensions, { "tile1", "tile" }, glm::vec3(0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
@@ -122,6 +122,7 @@ void Game::update() {
       for (GameObject *&f_object : GameObjects::filter(object->tags[0])) {
         f_object->snap = false;
         f_object->originate = true;
+        f_object->rigidbody = false;
         Mouse.focused_objects.push_back(f_object);
       }
     }
@@ -131,7 +132,7 @@ void Game::update() {
   }
 
   // If an object is selected, then move the object along with the mouse
-  if (Mouse.focused_objects != std::vector<GameObject *>() && Mouse.clicked_object != nullptr) {
+  if (Mouse.focused_objects != std::vector<GameObject *>()) {
     Mouse.clicked_object->originate = true;
     Mouse.clicked_object->translate_to_point(Mouse.position);
     for (GameObject *&object : Mouse.focused_objects) {
@@ -180,19 +181,18 @@ void Game::update() {
     for (GameObject *&object : Mouse.focused_objects) {
       if (object != Mouse.clicked_object) {
         object->originate = false;
+        object->rigidbody = true;
         object->update_snap_position();
         object->transform.position += delta;
       }
     }
   }
-  
 
-
-  // // Update all player entities
-  // for (Player *player : Characters::Players::all()) {
-  //   player->resolve_collisions();
-  //   player->resolve_vectors();
-  // }
+  // Update all player entities
+  for (Player *player : Characters::Players::all()) {
+    player->resolve_collisions();
+    player->resolve_vectors();
+  }
 
   // If the F key is pressed, toggle fullscreen
   if (this->Keyboard['F'].pressed) toggle_fullscreen();
@@ -244,10 +244,10 @@ void Game::render() {
     // printf("[%s] rendering self\n", object->handle.c_str());
   }
 
-  // // Render each Player
-  // for (Player *&player : Characters::Players::all()) {
-  //   player->render(Renderer);
-  // }
+  // Render each Player
+  for (Player *&player : Characters::Players::all()) {
+    player->render(Renderer);
+  }
 }
 
 void Game::set_window_hints() {
@@ -292,12 +292,14 @@ void Game::toggle_fullscreen() {
   // Get current window dimensions
   int width = this->width;
   int height = this->height;
+  int refresh = 60;
 
   // If the window mode is fullscreen, then actually apply the fullscreen window dimensions
   if (this->fullscreen) {
     const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
     width = mode->width;
     height = mode->height;
+    refresh = mode->refreshRate;
   }
 
   // Update the OpenGL viewport
@@ -311,5 +313,5 @@ void Game::toggle_fullscreen() {
   }
 
   // Toggle the window fullscreen state
-  glfwSetWindowMonitor(this->GameWindow, this->fullscreen ? glfwGetPrimaryMonitor() : nullptr, 0, 0, width, height, 0);
+  glfwSetWindowMonitor(this->GameWindow, this->fullscreen ? glfwGetPrimaryMonitor() : nullptr, 0, 0, width, height, refresh);
 }

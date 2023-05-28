@@ -21,6 +21,14 @@ typedef struct BoundingBox {
   float right;
 };
 
+// Directional enum to handle collision direction
+typedef enum Direction {
+  UP,
+  RIGHT,
+  DOWN,
+  LEFT
+};
+
 // This class handles all game objects, containing boilerplate code for
 // collision detection or motion or anything else an object might need.
 // For complex object interactions, usage of this namespace is recommended

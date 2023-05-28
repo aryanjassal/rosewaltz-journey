@@ -1,34 +1,9 @@
 #include "player.h"
 #include <limits>
 
-// Player *Characters::Players::create(
-//   std::string handle, 
-//   Camera::OrthoCamera *camera, 
-//   Texture texture, 
-//   glm::vec2 window_dimensions, 
-//   Transform transform,
-//   std::vector<std::string> tags,
-//   glm::vec2 origin
-// ) {
-//   Player player = Player();
-//   player.handle = handle;
-//   player.camera = camera;
-//   player.texture = texture;
-//   player.window_dimensions = window_dimensions;
-//   player.tags = tags;
-//   player.transform = transform;
-//   player.origin = origin;
-//   player.originate = false;
-//   player.interactive = false;
-//   player.update_position();
-//
-//   Characters::Players::Players[handle] = player;
-//   return &Characters::Players::Players[handle];
-// }
-
 Player *Characters::Players::create(
   std::string handle, 
-  Camera::OrthoCamera *camera, 
+  OrthoCamera *camera, 
   Texture texture, 
   glm::vec2 window_dimensions, 
   glm::vec3 position,
@@ -41,7 +16,6 @@ Player *Characters::Players::create(
   transform.position = position;
   transform.scale = scale;
   transform.rotation = rotation;
-  // Characters::Players::create(handle, camera, texture, window_dimensions, transform, tags, origin);
   
   Player player = Player();
   player.handle = handle;
@@ -82,7 +56,6 @@ void Player::resolve_collisions() {
   for (GameObject *&object : GameObjects::all()) {
     if (object->rigidbody) {
       if (object->check_collision(this->bounding_box)) {
-        // printf("[%s] collision with [%s] detected\n", this->handle.c_str(), object->handle.c_str());
         this->velocity = glm::vec2(1.0f, 0.0f);
         this->impulse = glm::vec2(0.0f, 5.0f);
       }
