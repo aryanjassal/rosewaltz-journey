@@ -15,12 +15,12 @@ void GameObject::translate_to_point(glm::vec2 point, bool convert) {
   // Update the transform
   this->transform.position = glm::vec3(point - origin, 0.0f);
 
+  // Set the delta transform to be used for offsetting similarly tagged objects
+  this->delta_transform.position = this->transform.position - glm::vec3(old_pos, 0.0f); 
+
   // Snap the object and update its bounding box
   if (this->snap) this->update_snap_position();
   else this->update_bounding_box();
-
-  // Set the delta transform to be used for offsetting similarly tagged objects
-  this->delta_transform.position = this->transform.position - glm::vec3(old_pos, 0.0f); 
 }
 
 void GameObject::update_position() {
@@ -62,6 +62,7 @@ void GameObject::update_bounding_box() {
 
 void GameObject::update_snap_position() {
   // If snapping is disabled in the object settings, then do nothing
+  // [REDUNDANT?]
   if (!this->snap) return;
 
   // Otherwise, update the position to snap to the nearest snap point

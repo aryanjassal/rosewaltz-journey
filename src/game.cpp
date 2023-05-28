@@ -71,19 +71,20 @@ void Game::init() {
   Texture windows = ResourceManager::Texture::load("textures/windows-11.png", true, "windows");
   Texture gigachad = ResourceManager::Texture::load("textures/gigachad.jpg", true, "gigachad");
   Texture tile_floor = ResourceManager::Texture::load("textures/tiles/tile-floor.png", true, "tile-floor");
-
-  // Set up the game objects
+  
+  // Set up the global variables to create GameObjects
   glm::vec2 w_dimensions = glm::vec2(this->width, this->height);
   glm::vec2 grid = glm::vec2((float)width / 3.0f, (float)height / 2.0f);
 
+  // Create the player
+  Characters::Players::create("player", GameCamera, gigachad, w_dimensions, glm::vec3(100.0f, 100.0f, 0.0f));
+
+  // Create GameObjects
   GameObjects::create("tile1", GameCamera, gigachad, w_dimensions, { "tile1", "tile" }, glm::vec3(0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
   GameObjects::create("tile1-floor", GameCamera, tile_floor, w_dimensions, { "tile1" }, glm::vec3(0.0f, (float)height / 2.0f - (float)height / 8.85, 0.0f), glm::vec2((float)width / 3.0f, (float)height / 8.85f), 0.0f);
 
   // GameObjects::create("tile2", GameCamera, windows, w_dimensions, { "tile2", "tile" }, glm::vec3(grid.x, 0.0f, 0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
   // GameObjects::create("tile2-floor", GameCamera, tile_floor, w_dimensions, { "tile2" }, glm::vec3(grid.x, grid.y - (float)height / 8.85, 0.0f), glm::vec2(grid.x, (float)height / 8.85f), 0.0f);
-
-  // Create the player
-  Characters::Players::create("player", GameCamera, gigachad, w_dimensions, glm::vec3(100.0f, 100.0f, 0.0f));
 
   for (GameObject *&object : GameObjects::all()) {
     object->interactive = false;
@@ -125,9 +126,8 @@ void Game::update() {
       }
     }
 
-    // Otherwise, simply update the position of (and rerun all the calculations on) each object
-    object->update_position();
-    if (object->tags.size() == 1) printf("[%s] [collider] %.2f < x < %.2f; %.2f < y < %.2f\n", object->handle.c_str(), object->bounding_box.left, object->bounding_box.right, object->bounding_box.top, object->bounding_box.bottom);
+    // Update the bounding box of each object
+    object->update_bounding_box();
   }
 
   // Update all player entities
