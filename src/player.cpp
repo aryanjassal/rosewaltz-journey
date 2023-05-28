@@ -80,7 +80,9 @@ void Player::resolve_collisions() {
   for (GameObject *&object : GameObjects::all()) {
     if (object->rigidbody) {
       if (object->check_collision(this->bounding_box)) {
-        printf("[%s] collision with [%s] detected\n", this->handle.c_str(), object->handle.c_str());
+        // printf("[%s] collision with [%s] detected\n", this->handle.c_str(), object->handle.c_str());
+        this->velocity = glm::vec2(1.0f, 0.0f);
+        this->impulse = glm::vec2(0.0f, 5.0f);
       }
     } 
   }
