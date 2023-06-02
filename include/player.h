@@ -29,6 +29,9 @@ class Player : public GameObject {
 
     // // Should the object have drag or not?
     // bool drag;
+  
+    // Is the object grounded?
+    bool grounded = false;
 
     // Empty construtor
     Player() { }

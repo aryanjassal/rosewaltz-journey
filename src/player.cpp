@@ -57,7 +57,9 @@ void Player::resolve_collisions() {
   // Otherwise, loop over each object and resolve each collision
   for (GameObject *&object : GameObjects::all()) {
     if (object->rigidbody) {
-      if (object->check_collision(this->bounding_box)) {
+      if (std::get<0>(object->check_collision(*this))) {
+        Direction dir = std::get<1>(object->check_collision(*this));
+        printf("%s\n", dir == UP ? "UP" : dir == DOWN ? "DOWN" : dir == LEFT ? "LEFT" : "RIGHT");
         this->velocity = glm::vec2(1.0f, -this->velocity.y);
         this->impulse = glm::vec2(0.0f, 1.0f);
       }

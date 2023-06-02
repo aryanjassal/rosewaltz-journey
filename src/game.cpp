@@ -70,6 +70,7 @@ void Game::init() {
   Texture nothing = ResourceManager::Texture::load("textures/nothing.png", true, "nothing");
   Texture windows = ResourceManager::Texture::load("textures/windows-11.png", true, "windows");
   Texture gigachad = ResourceManager::Texture::load("textures/gigachad.jpg", true, "gigachad");
+  Texture journey = ResourceManager::Texture::load("textures/journey.jpg", true, "journey");
   Texture tile_floor = ResourceManager::Texture::load("textures/tiles/tile-floor.png", true, "tile-floor");
   
   // Set up the global variables to create GameObjects
@@ -90,6 +91,11 @@ void Game::init() {
   GameObject *tile2_floor = GameObjects::create("tile2-floor", GameCamera, tile_floor, w_dimensions, { "tile2" }, glm::vec3(0.0f), glm::vec2(grid.x, ratio), 0.0f);
   tile2_floor->position_offset = glm::vec3(0.0f, grid.y - ratio, 0.0f);
   tile2_floor->transform.position = tile2->transform.position;
+
+  GameObject *tile3 = GameObjects::create("tile3", GameCamera, journey, w_dimensions, { "tile3", "tile" }, glm::vec3(grid.x * 2, 0.0f, 0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
+  GameObject *tile3_floor = GameObjects::create("tile3-floor", GameCamera, tile_floor, w_dimensions, { "tile3" }, glm::vec3(0.0f), glm::vec2(grid.x, ratio), 0.0f);
+  tile3_floor->position_offset = glm::vec3(0.0f, grid.y - ratio, 0.0f);
+  tile3_floor->transform.position = tile3->transform.position;
 
   for (GameObject *&object : GameObjects::all()) {
     object->interactive = false;

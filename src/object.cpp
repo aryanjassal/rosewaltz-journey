@@ -1,4 +1,5 @@
 #include "object.h"
+#include "glm/ext/quaternion_geometric.hpp"
 
 void GameObject::render(SpriteRenderer *renderer, glm::vec4 colour) {
   Transform n_transform = this->transform;
@@ -9,7 +10,6 @@ void GameObject::render(SpriteRenderer *renderer, glm::vec4 colour) {
 
 void GameObject::translate_to_point(glm::vec2 point, bool convert) {
   // Set some useful variables
-  glm::vec2 old_pos = this->transform.position;
   glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
 
   // Convert the mouse coordinates to camera-space
@@ -17,9 +17,6 @@ void GameObject::translate_to_point(glm::vec2 point, bool convert) {
 
   // Update the transform
   this->transform.position = glm::vec3(point - origin, 0.0f);
-
-  // Set the delta transform to be used for offsetting similarly tagged objects
-  this->update_delta_transform(glm::vec3(old_pos, 0.0f));
 
   // Snap the object and update its bounding box
   if (this->snap) this->update_snap_position();
@@ -42,11 +39,15 @@ bool GameObject::check_point_intersection(glm::vec2 point, bool convert) {
     && (this->bounding_box.bottom >= point.y));
 }
 
-bool GameObject::check_collision(BoundingBox bounding_box) {
-  return (bounding_box.right >= this->bounding_box.left
-    && bounding_box.left <= this->bounding_box.right
-    && bounding_box.bottom >= this->bounding_box.top
-    && bounding_box.top <= this->bounding_box.bottom);
+Collision GameObject::check_collision(GameObject object) {
+  if (object.bounding_box.right >= this->bounding_box.left
+    && object.bounding_box.left <= this->bounding_box.right
+    && object.bounding_box.bottom >= this->bounding_box.top
+    && object.bounding_box.top <= this->bounding_box.bottom
+  ) {
+    glm::vec2 difference = this->transform.position - object.transform.position;
+    return std::make_tuple(true, vector_direction(difference), difference);
+  }
 }
 
 void GameObject::update_bounding_box() {
@@ -93,10 +94,6 @@ void GameObject::update_snap_position() {
 
   // //DEBUG print the bounding box of the object along with its handle
   // printf("[%s] [snap] %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", this->handle.c_str(), this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, this->transform.position.x, this->transform.position.y);
-}
-
-void GameObject::update_delta_transform(glm::vec3 old_position) {
-  this->delta_transform.position = this->transform.position - old_position;
 }
 
 GameObject *GameObjects::create(
@@ -219,4 +216,26 @@ std::vector<GameObject *> GameObjects::except(std::string tag) {
     }
   }
   return filtered_objects;
+}
+
+Direction vector_direction(glm::vec2 target) {
+  glm::vec2 compass[] = {
+    glm::vec2(0.0f, 1.0f),	// up
+    glm::vec2(1.0f, 0.0f),	// right
+    glm::vec2(0.0f, -1.0f),	// down
+    glm::vec2(-1.0f, 0.0f)	// left
+  };
+
+  float max = 0.0f;
+  unsigned int match = -1;
+
+  for (int i = 0; i < 4; i++) {
+    float dot = glm::dot(glm::normalize(target), compass[i]);
+    if (dot > max) {
+      max = dot;
+      match = i;
+    }
+  }
+
+  return (Direction)match;
 }
