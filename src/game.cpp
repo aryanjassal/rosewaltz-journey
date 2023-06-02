@@ -75,16 +75,21 @@ void Game::init() {
   // Set up the global variables to create GameObjects
   glm::vec2 w_dimensions = glm::vec2(this->width, this->height);
   glm::vec2 grid = glm::vec2((float)width / 3.0f, (float)height / 2.0f);
+  float ratio = (float)height / 8.85f;
 
   // Create the player
   Characters::Players::create("player", GameCamera, gigachad, w_dimensions, glm::vec3(100.0f, 100.0f, 0.0f), glm::vec2(100.0f), 0.0f, { "player" });
 
   // Create GameObjects
-  GameObjects::create("tile1", GameCamera, gigachad, w_dimensions, { "tile1", "tile" }, glm::vec3(0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
-  GameObjects::create("tile1-floor", GameCamera, tile_floor, w_dimensions, { "tile1" }, glm::vec3(0.0f, (float)height / 2.0f - (float)height / 8.85, 0.0f), glm::vec2((float)width / 3.0f, (float)height / 8.85f), 0.0f);
+  GameObject *tile1 = GameObjects::create("tile1", GameCamera, gigachad, w_dimensions, { "tile1", "tile" }, glm::vec3(0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
+  GameObject *tile1_floor = GameObjects::create("tile1-floor", GameCamera, tile_floor, w_dimensions, { "tile1" }, glm::vec3(0.0f), glm::vec2(grid.x, ratio), 0.0f);
+  tile1_floor->position_offset = glm::vec3(0.0f, grid.y - ratio, 0.0f);
+  tile1_floor->transform.position = tile1->transform.position;
 
-  GameObjects::create("tile2", GameCamera, windows, w_dimensions, { "tile2", "tile" }, glm::vec3(grid.x, 0.0f, 0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
-  GameObjects::create("tile2-floor", GameCamera, tile_floor, w_dimensions, { "tile2" }, glm::vec3(grid.x, grid.y - (float)height / 8.85, 0.0f), glm::vec2(grid.x, (float)height / 8.85f), 0.0f);
+  GameObject *tile2 = GameObjects::create("tile2", GameCamera, windows, w_dimensions, { "tile2", "tile" }, glm::vec3(grid.x, 0.0f, 0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
+  GameObject *tile2_floor = GameObjects::create("tile2-floor", GameCamera, tile_floor, w_dimensions, { "tile2" }, glm::vec3(0.0f), glm::vec2(grid.x, ratio), 0.0f);
+  tile2_floor->position_offset = glm::vec3(0.0f, grid.y - ratio, 0.0f);
+  tile2_floor->transform.position = tile2->transform.position;
 
   for (GameObject *&object : GameObjects::all()) {
     object->interactive = false;
@@ -138,7 +143,7 @@ void Game::update() {
     for (GameObject *&object : Mouse.focused_objects) {
       if (object != Mouse.clicked_object) {
         object->originate = true;
-        object->transform.position += Mouse.clicked_object->delta_transform.position;
+        object->transform.position = Mouse.clicked_object->transform.position;
       }
     }
   }
@@ -164,12 +169,11 @@ void Game::update() {
 
             // Update the position of all the objects with the same tag as the object which got
             // displaced from its original spot (not the currently selected object)
-            glm::vec3 delta = object->transform.position - object->old_transform.position;
             for (GameObject *&f_object : GameObjects::filter(object->tags[0])) {
               if (f_object->handle == object->handle) continue;
               f_object->originate = false;
               f_object->update_snap_position();
-              f_object->transform.position += delta;
+              f_object->transform.position = object->transform.position;
             }
           }
         }
@@ -183,7 +187,7 @@ void Game::update() {
         object->originate = false;
         object->rigidbody = true;
         object->update_snap_position();
-        object->transform.position += delta;
+        object->transform.position = Mouse.clicked_object->transform.position;
       }
     }
   }
@@ -241,7 +245,6 @@ void Game::render() {
   for (GameObject *&object : GameObjects::all()) {
     if (object->tags[1] == "tile") object->render(Renderer, glm::vec4(1.0f, 1.0f, 1.0f, 0.5f));
     else object->render(Renderer);
-    // printf("[%s] rendering self\n", object->handle.c_str());
   }
 
   // Render each Player

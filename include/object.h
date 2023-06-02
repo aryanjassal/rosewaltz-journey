@@ -41,6 +41,10 @@ class GameObject {
     // Defines the transformations of the object
     Transform transform;
 
+    // The offset to be added to the transform
+    // Tip: This is typically used when paired up with another parent transform object
+    glm::vec3 position_offset = glm::vec3(0.0f);
+
     // Defines the old transform before the object was clicked
     Transform old_transform;
 

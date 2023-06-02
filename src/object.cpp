@@ -1,7 +1,10 @@
 #include "object.h"
 
 void GameObject::render(SpriteRenderer *renderer, glm::vec4 colour) {
-  if (this->active) renderer->render(this->texture, this->transform, colour);
+  Transform n_transform = this->transform;
+  if (this->position_offset != glm::vec3(0.0f)) n_transform.position += this->position_offset;
+
+  if (this->active) renderer->render(this->texture, n_transform, colour);
 }
 
 void GameObject::translate_to_point(glm::vec2 point, bool convert) {
@@ -17,7 +20,6 @@ void GameObject::translate_to_point(glm::vec2 point, bool convert) {
 
   // Set the delta transform to be used for offsetting similarly tagged objects
   this->update_delta_transform(glm::vec3(old_pos, 0.0f));
-  // this->delta_transform.position = this->transform.position - glm::vec3(old_pos, 0.0f); 
 
   // Snap the object and update its bounding box
   if (this->snap) this->update_snap_position();
@@ -51,11 +53,15 @@ void GameObject::update_bounding_box() {
   // Use the origin if originate is set, otherwise remove it from any calculations
   glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
 
+  // Use the offset transform to calculate the bounding boxes
+  Transform n_transform = this->transform;
+  if (this->position_offset != glm::vec3(0.0f)) n_transform.position += this->position_offset;
+
   // Update the bounding boxes using some super advanced math
-  this->bounding_box.right = this->transform.position.x + this->transform.scale.x + origin.x;
-  this->bounding_box.left = this->transform.position.x + origin.x;
-  this->bounding_box.bottom = this->transform.position.y + this->transform.scale.y + origin.y;
-  this->bounding_box.top = this->transform.position.y + origin.y;
+  this->bounding_box.right = n_transform.position.x + this->transform.scale.x + origin.x;
+  this->bounding_box.left = n_transform.position.x + origin.x;
+  this->bounding_box.bottom = n_transform.position.y + this->transform.scale.y + origin.y;
+  this->bounding_box.top = n_transform.position.y + origin.y;
   
   // // DEBUG print the bounding box of the object along with its handle
   // if (this->tags[0] != "player") printf("[%s] [collider] %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", this->handle.c_str(), this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, this->transform.position.x, this->transform.position.y);

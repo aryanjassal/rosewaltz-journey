@@ -44,6 +44,8 @@ void Player::resolve_vectors() {
   this->transform.position += glm::vec3(this->velocity.x, -this->velocity.y, this->transform.position.z);
   this->impulse = glm::vec2(0.0f);
 
+  // if (this->transform.position.x > this->window_dimensions.x || this->transform.position.y > this->window_dimensions.y) exit(0);
+
   // Update the bounding box of the player
   this->update_bounding_box();
 }
@@ -56,8 +58,8 @@ void Player::resolve_collisions() {
   for (GameObject *&object : GameObjects::all()) {
     if (object->rigidbody) {
       if (object->check_collision(this->bounding_box)) {
-        this->velocity = glm::vec2(1.0f, 0.0f);
-        this->impulse = glm::vec2(0.0f, 5.0f);
+        this->velocity = glm::vec2(1.0f, -this->velocity.y);
+        this->impulse = glm::vec2(0.0f, 1.0f);
       }
     } 
   }
