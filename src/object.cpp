@@ -1,6 +1,4 @@
 #include "object.h"
-#include "glm/ext/quaternion_geometric.hpp"
-#include <tuple>
 
 void GameObject::render(SpriteRenderer *renderer, glm::vec4 colour) {
   Transform n_transform = this->transform;
@@ -54,7 +52,8 @@ Collision GameObject::check_collision(GameObject *object) {
     glm::vec2 closest = other_center + clamped;
     glm::vec2 difference = closest - this_center;
 
-    Direction direction = (this->bounding_box.top <= object->bounding_box.bottom) ? DOWN : vector_direction(difference);
+    // Direction direction = (this->bounding_box.top <= object->bounding_box.bottom) ? DOWN : vector_direction(difference);
+    Direction direction = vector_direction(difference);
 
     return std::make_tuple(true, direction, difference + (this->transform.scale / glm::vec2(2.0f)));
   }

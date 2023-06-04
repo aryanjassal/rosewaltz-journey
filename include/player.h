@@ -27,6 +27,9 @@ class Player : public GameObject {
     // Is the object grounded?
     bool grounded = false;
 
+    // Which tile is the player inside?
+    GameObject *parent_tile;
+
     // Empty construtor
     Player() { }
 

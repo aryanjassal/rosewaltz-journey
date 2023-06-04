@@ -124,8 +124,11 @@ void Game::run() {
 void Game::update() {
   // Update all player entities
   for (Player *player : Characters::Players::all()) {
-    player->resolve_collisions();
-    player->resolve_vectors();
+    if (Mouse.clicked_object == nullptr) {
+      player->resolve_collisions();
+      player->resolve_vectors();
+    }
+    // printf("[%s] (%.2f, %.2f)\n", player->handle.c_str(), player->transform.position.x, player->transform.position.y);
   }
 
   // Loop over every game object and check if the object is interactive and if the mouse intersects with it
@@ -143,10 +146,14 @@ void Game::update() {
         f_object->rigidbody = false;
         Mouse.focused_objects.push_back(f_object);
       }
-    }
 
-    // for
-    // if (k && object->check_point_intersection(Characters::Players::ActivePlayer->transform.position)) Characters::Players::ActivePlayer->tags.push_back(object->tags[0]);
+      // if (object->check_point_intersection(Characters::Players::ActivePlayer->transform.position)) {
+      //   Characters::Players::ActivePlayer->parent_tile = object;
+      //   Characters::Players::ActivePlayer->old_transform.position = Characters::Players::ActivePlayer->transform.position;
+      //   Characters::Players::ActivePlayer->transform.position = object->transform.position;
+      //   Mouse.focused_objects.push_back(Characters::Players::ActivePlayer);
+      // }
+    }
 
     // Update the bounding box of each object
     object->update_bounding_box();
@@ -158,8 +165,12 @@ void Game::update() {
     Mouse.clicked_object->translate_to_point(Mouse.position);
     for (GameObject *&object : Mouse.focused_objects) {
       if (object != Mouse.clicked_object) {
-        object->originate = true;
-        object->transform.position = Mouse.clicked_object->transform.position;
+        if (object == Characters::Players::ActivePlayer) {
+          // object->transform.position = Mouse.clicked_object->transform.position + Characters::Players::ActivePlayer->old_transform.position;
+        } else {
+          object->originate = true;
+          object->transform.position = Mouse.clicked_object->transform.position;
+        }
       }
     }
   }
@@ -169,7 +180,6 @@ void Game::update() {
   if (Mouse.left_button_up && Mouse.focused_objects != std::vector<GameObject *>()) {
     Mouse.clicked_object->snap = true;
     Mouse.clicked_object->originate = false;
-    glm::vec3 old_pos = Mouse.clicked_object->transform.position;
     Mouse.clicked_object->update_snap_position();
 
     // If the object has swap enabled, then, if the target snap locaton is already occupied, snap
@@ -182,6 +192,8 @@ void Game::update() {
           if (object->transform.position == Mouse.clicked_object->transform.position) {
             object->old_transform.position = object->transform.position;
             object->translate_to_point(Mouse.clicked_object->old_transform.position);
+
+            // if (Characters::Players::ActivePlayer->parent_tile == object) Characters::Players::ActivePlayer->transform.position = object->transform.position + Characters::Players::ActivePlayer->old_transform.position;
 
             // Update the position of all the objects with the same tag as the object which got
             // displaced from its original spot (not the currently selected object)
@@ -199,10 +211,16 @@ void Game::update() {
     // Update all the GameObjects which share their first tag with the parent object
     for (GameObject *&object : Mouse.focused_objects) {
       if (object != Mouse.clicked_object) {
-        object->originate = false;
-        object->rigidbody = true;
-        object->update_snap_position();
-        object->transform.position = Mouse.clicked_object->transform.position;
+        if (object == Characters::Players::ActivePlayer) {
+          // object->transform.position = Mouse.clicked_object->transform.position + Characters::Players::ActivePlayer->old_transform.position;
+          // Characters::Players::ActivePlayer->old_transform.position = glm::vec3(0.0f);
+          // Characters::Players::ActivePlayer->position_offset = glm::vec3(0.0f);
+        } else {
+          object->originate = false;
+          object->rigidbody = true;
+          object->update_snap_position();
+          object->transform.position = Mouse.clicked_object->transform.position;
+        }
       }
     }
   }
@@ -260,6 +278,7 @@ void Game::render() {
   // Render each Player
   for (Player *&player : Characters::Players::all()) {
     player->render(Renderer);
+    // printf("[%s] rendering self\n", player->handle.c_str());
   }
 }
 

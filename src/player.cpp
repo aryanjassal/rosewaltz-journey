@@ -1,5 +1,4 @@
 #include "player.h"
-#include <limits>
 
 Player *Characters::Players::create(
   std::string handle, 
@@ -66,15 +65,17 @@ void Player::resolve_collisions() {
       if (std::get<0>(collision)) {
         this->grounded = true;
         Direction dir = std::get<1>(collision);
-        // printf("%s ", dir == UP ? "UP" : dir == DOWN ? "DOWN" : dir == LEFT ? "LEFT" : dir == RIGHT ? "RIGHT" : "NONE");
-        // printf("y-vel: %.2f (y-off: %.2f) pos: [%.2f, %.2f]\n", this->velocity.y, std::get<2>(collision).y, this->transform.position.x, this->transform.position.y);
+        printf("%s ", dir == UP ? "UP" : dir == DOWN ? "DOWN" : dir == LEFT ? "LEFT" : dir == RIGHT ? "RIGHT" : "NONE");
+        printf("y-vel: %.2f (y-off: %.2f) pos: [%.2f, %.2f]\n", this->velocity.y, std::get<2>(collision).y, this->transform.position.x, this->transform.position.y);
 
-        if (dir == DOWN) this->velocity.y = 0.0f;
-
-        if (dir == DOWN) this->transform.position.y -= std::get<2>(collision).y;
-        else if (dir == UP) this->transform.position.y += std::get<2>(collision).y;
-        else if (dir == LEFT) this->transform.position.x -= std::get<2>(collision).x;
-        else if (dir == RIGHT) this->transform.position.x += std::get<2>(collision).x;
+        if (dir == DOWN) {
+          this->transform.position.y -= std::get<2>(collision).y;
+        } else if (dir == UP) {
+          this->transform.position.y += std::get<2>(collision).y;
+        } else if (dir == LEFT || dir == RIGHT) {
+          this->transform.position.x -= std::get<2>(collision).x;
+          this->velocity *= glm::vec2(-1.0f);
+        }
       }
     } 
   }
