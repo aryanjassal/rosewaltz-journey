@@ -79,7 +79,8 @@ void Game::init() {
   float ratio = (float)height / 8.85f;
 
   // Create the player
-  Characters::Players::create("player", GameCamera, gigachad, w_dimensions, glm::vec3(100.0f, 100.0f, 0.0f), glm::vec2(100.0f), 0.0f, { "player" });
+  Player *player = Characters::Players::create("player", GameCamera, gigachad, w_dimensions, glm::vec3(100.0f, 100.0f, 0.0f), glm::vec2(100.0f), 0.0f, { "player" });
+  Characters::Players::ActivePlayer = player;
 
   // Create GameObjects
   GameObject *tile1 = GameObjects::create("tile1", GameCamera, gigachad, w_dimensions, { "tile1", "tile" }, glm::vec3(0.0f), grid, 0.0f, grid / glm::vec2(2.0f), grid);
@@ -121,6 +122,12 @@ void Game::run() {
 }
 
 void Game::update() {
+  // Update all player entities
+  for (Player *player : Characters::Players::all()) {
+    player->resolve_collisions();
+    player->resolve_vectors();
+  }
+
   // Loop over every game object and check if the object is interactive and if the mouse intersects with it
   // If it does, set the snap to zero for smooth movement and make the current object focused
   for (GameObject *&object : GameObjects::all()) {
@@ -137,6 +144,9 @@ void Game::update() {
         Mouse.focused_objects.push_back(f_object);
       }
     }
+
+    // for
+    // if (k && object->check_point_intersection(Characters::Players::ActivePlayer->transform.position)) Characters::Players::ActivePlayer->tags.push_back(object->tags[0]);
 
     // Update the bounding box of each object
     object->update_bounding_box();
@@ -187,7 +197,6 @@ void Game::update() {
     }
 
     // Update all the GameObjects which share their first tag with the parent object
-    glm::vec3 delta = Mouse.clicked_object->transform.position - old_pos;
     for (GameObject *&object : Mouse.focused_objects) {
       if (object != Mouse.clicked_object) {
         object->originate = false;
@@ -196,12 +205,6 @@ void Game::update() {
         object->transform.position = Mouse.clicked_object->transform.position;
       }
     }
-  }
-
-  // Update all player entities
-  for (Player *player : Characters::Players::all()) {
-    player->resolve_collisions();
-    player->resolve_vectors();
   }
 
   // If the F key is pressed, toggle fullscreen
@@ -241,11 +244,12 @@ void Game::render() {
   glClear(GL_COLOR_BUFFER_BIT);
 
   // Render the parallax background
-  glm::vec2 scale = glm::vec2(width + 100.0f, height + 100.0f);
+  float zoom = 100.0f;
+  glm::vec2 scale = glm::vec2(width + zoom, height + zoom);
   Renderer->render(ResourceManager::Texture::get("background-bg"), { glm::vec3(0.0f), scale, 0.0f });
-  Renderer->render(ResourceManager::Texture::get("background-far"), { glm::vec3((Mouse.position / glm::vec2(150.0f)) - glm::vec2(50.0f), 0.0f), scale, 0.0f });
-  Renderer->render(ResourceManager::Texture::get("background-mid"), { glm::vec3((Mouse.position / glm::vec2(100.0f)) - glm::vec2(50.0f), 0.0f), scale, 0.0f });
-  Renderer->render(ResourceManager::Texture::get("background-near"), { glm::vec3((Mouse.position / glm::vec2(50.0f)) - glm::vec2(50.0f), 0.0f), scale, 0.0f });
+  Renderer->render(ResourceManager::Texture::get("background-far"), { glm::vec3((Mouse.position / glm::vec2(150.0f)) - glm::vec2(zoom / 2.0f), 0.0f), scale, 0.0f });
+  Renderer->render(ResourceManager::Texture::get("background-mid"), { glm::vec3((Mouse.position / glm::vec2(100.0f)) - glm::vec2(zoom / 2.0f), 0.0f), scale, 0.0f });
+  Renderer->render(ResourceManager::Texture::get("background-near"), { glm::vec3((Mouse.position / glm::vec2(50.0f)) - glm::vec2(zoom / 2.0f), 0.0f), scale, 0.0f });
 
   // Render each GameObject
   for (GameObject *&object : GameObjects::all()) {

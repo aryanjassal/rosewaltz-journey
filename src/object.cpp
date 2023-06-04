@@ -1,5 +1,6 @@
 #include "object.h"
 #include "glm/ext/quaternion_geometric.hpp"
+#include <tuple>
 
 void GameObject::render(SpriteRenderer *renderer, glm::vec4 colour) {
   Transform n_transform = this->transform;
@@ -39,15 +40,26 @@ bool GameObject::check_point_intersection(glm::vec2 point, bool convert) {
     && (this->bounding_box.bottom >= point.y));
 }
 
-Collision GameObject::check_collision(GameObject object) {
-  if (object.bounding_box.right >= this->bounding_box.left
-    && object.bounding_box.left <= this->bounding_box.right
-    && object.bounding_box.bottom >= this->bounding_box.top
-    && object.bounding_box.top <= this->bounding_box.bottom
+Collision GameObject::check_collision(GameObject *object) {
+  if (object->bounding_box.right >= this->bounding_box.left
+    && object->bounding_box.left <= this->bounding_box.right
+    && object->bounding_box.bottom >= this->bounding_box.top
+    && object->bounding_box.top <= this->bounding_box.bottom
   ) {
-    glm::vec2 difference = this->transform.position - object.transform.position;
-    return std::make_tuple(true, vector_direction(difference), difference);
+    glm::vec2 this_center = glm::vec2(this->transform.position + this->position_offset) + (this->transform.scale / glm::vec2(2.0f));
+    glm::vec2 other_half_extent = object->transform.scale / glm::vec2(2.0f);
+    glm::vec2 other_center = glm::vec2(object->transform.position + object->position_offset) + other_half_extent;
+    
+    glm::vec2 clamped = glm::clamp(this->transform.scale, -other_half_extent, other_half_extent);
+    glm::vec2 closest = other_center + clamped;
+    glm::vec2 difference = closest - this_center;
+
+    Direction direction = (this->bounding_box.top <= object->bounding_box.bottom) ? DOWN : vector_direction(difference);
+
+    return std::make_tuple(true, direction, difference + (this->transform.scale / glm::vec2(2.0f)));
   }
+
+  return std::make_tuple(false, NONE, glm::vec2(0.0f));
 }
 
 void GameObject::update_bounding_box() {

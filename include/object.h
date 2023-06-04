@@ -27,7 +27,8 @@ typedef enum Direction {
   UP,
   RIGHT,
   DOWN,
-  LEFT
+  LEFT,
+  NONE
 };
 
 // Return the direction of the collsion based on the vectors
@@ -101,7 +102,7 @@ class GameObject {
     bool check_point_intersection(glm::vec2 point, bool convert = true);
 
     // Check collision between two bounding boxes
-    Collision check_collision(GameObject object);
+    Collision check_collision(GameObject *object);
 
     // Update the position by rerunning all calculations that would be run while updating position
     void update_position();

@@ -24,12 +24,6 @@ class Player : public GameObject {
     // The impulse force will apply for one frame only
     glm::vec2 impulse = glm::vec2(0.0f, 5.0f);
 
-    // // The drag coefficient that will reduce the velocity of the player by a set amount
-    // glm::vec2 drag_coefficient = glm::vec2(0.03f);
-
-    // // Should the object have drag or not?
-    // bool drag;
-  
     // Is the object grounded?
     bool grounded = false;
 
@@ -51,6 +45,9 @@ namespace Characters {
   namespace Players {
     // Keep track of all the players created
     static std::map<std::string, Player> Players;
+
+    // Assign a static, active player
+    static Player *ActivePlayer;
 
     // Create a Player by providing all the required parameters
     Player *create(
