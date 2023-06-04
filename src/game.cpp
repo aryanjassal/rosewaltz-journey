@@ -122,14 +122,6 @@ void Game::run() {
 }
 
 void Game::update() {
-  // Update all player entities
-  for (Player *player : Characters::Players::all()) {
-    if (Mouse.clicked_object == nullptr) {
-      player->resolve_collisions();
-      player->resolve_vectors();
-    }
-    // printf("[%s] (%.2f, %.2f)\n", player->handle.c_str(), player->transform.position.x, player->transform.position.y);
-  }
 
   // Loop over every game object and check if the object is interactive and if the mouse intersects with it
   // If it does, set the snap to zero for smooth movement and make the current object focused
@@ -223,6 +215,15 @@ void Game::update() {
         }
       }
     }
+  }
+
+  // Update all player entities
+  for (Player *player : Characters::Players::all()) {
+    if (Mouse.clicked_object == nullptr) {
+      player->resolve_collisions();
+      player->resolve_vectors();
+    }
+    // printf("[%s] (%.2f, %.2f)\n", player->handle.c_str(), player->transform.position.x, player->transform.position.y);
   }
 
   // If the F key is pressed, toggle fullscreen
