@@ -22,11 +22,11 @@ void GameObject::translate_to_point(glm::vec2 point, bool convert) {
   else this->update_bounding_box();
 }
 
-void GameObject::update_position() {
-  // This translates the object back to its position to recalculate everything else
-  // Useful for (re)calculating bounding boxes snap or something else
-  this->translate_to_point(this->transform.position, false);
-}
+// void GameObject::update_position() {
+//   // This translates the object back to its position to recalculate everything else
+//   // Useful for (re)calculating bounding boxes snap or something else
+//   this->translate_to_point(this->transform.position, false);
+// }
 
 bool GameObject::check_point_intersection(glm::vec2 point, bool convert) {
   // Convert the screen-space coordinate to camera-space coordinates
@@ -39,6 +39,8 @@ bool GameObject::check_point_intersection(glm::vec2 point, bool convert) {
 }
 
 Collision GameObject::check_collision(GameObject *object) {
+  // printf("[%s] [collision] %.2f < x < %.2f; %.2f < y < %.2f [%.2f < x < %.2f; %.2f < y < %.2f]\n", this->handle.c_str(), this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, object->bounding_box.left, object->bounding_box.right, object->bounding_box.top, object->bounding_box.bottom);
+
   if (object->bounding_box.right >= this->bounding_box.left
     && object->bounding_box.left <= this->bounding_box.right
     && object->bounding_box.bottom >= this->bounding_box.top
@@ -52,13 +54,22 @@ Collision GameObject::check_collision(GameObject *object) {
     glm::vec2 closest = other_center + clamped;
     glm::vec2 difference = closest - this_center;
 
-    // Direction direction = (this->bounding_box.top <= object->bounding_box.bottom) ? DOWN : vector_direction(difference);
     Direction direction = vector_direction(difference);
 
-    return std::make_tuple(true, direction, difference + (this->transform.scale / glm::vec2(2.0f)));
+    CollisionInfo vertical, horizontal;
+    vertical.collision = (object->bounding_box.bottom >= this->bounding_box.top && object->bounding_box.top <= this->bounding_box.bottom);
+    vertical.direction = vector_direction(glm::vec2(0.0f, difference.y));
+    vertical.mtv = difference.y + (this->transform.scale.y / 2.0f);
+
+    horizontal.collision = (object->bounding_box.right >= this->bounding_box.left && object->bounding_box.left <= this->bounding_box.right);
+    horizontal.direction = vector_direction(glm::vec2(difference.x, 0.0f));
+    horizontal.mtv = difference.x + (this->transform.scale.x / 2.0f);
+
+    return { true, vertical, horizontal };
   }
 
-  return std::make_tuple(false, NONE, glm::vec2(0.0f));
+  CollisionInfo vertical, horizontal;
+  return { false, vertical, horizontal };
 }
 
 void GameObject::update_bounding_box() {
@@ -131,7 +142,8 @@ GameObject *GameObjects::create(
       object.snap = true;
       object.update_snap_position();
     } else {
-      object.update_position();
+      // object.update_position();
+      object.translate_to_point(object.transform.position);
     }
 
     GameObjects::Objects[handle] = object;

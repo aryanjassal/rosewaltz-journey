@@ -3,7 +3,6 @@
 
 #include <map>
 #include <string>
-#include <tuple>
 #include <vector>
 #include <algorithm>
 #include <cmath>
@@ -35,7 +34,17 @@ typedef enum Direction {
 Direction vector_direction(glm::vec2 target);    
 
 // Define a tuple storing all the relevant information about a collision
-typedef std::tuple<bool, Direction, glm::vec2> Collision;
+typedef struct CollisionInfo {
+  bool collision = false;
+  Direction direction = NONE;
+  float mtv = 0.0f;
+};
+
+typedef struct Collision {
+  bool collision = false;
+  CollisionInfo vertical;
+  CollisionInfo horizontal;
+};
 
 // This class handles all game objects, containing boilerplate code for
 // collision detection or motion or anything else an object might need.
@@ -104,8 +113,8 @@ class GameObject {
     // Check collision between two bounding boxes
     Collision check_collision(GameObject *object);
 
-    // Update the position by rerunning all calculations that would be run while updating position
-    void update_position();
+    // // Update the position by rerunning all calculations that would be run while updating position
+    // void update_position();
   
     // Update the bounding box according to the new position of the object
     void update_bounding_box();

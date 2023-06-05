@@ -19,7 +19,7 @@ class Player : public GameObject {
     glm::vec2 velocity = glm::vec2(0.0f);
 
     // The acceleration will be added to the velocity each frame
-    glm::vec2 acceleration = glm::vec2(0.0f, -0.1f);
+    glm::vec2 acceleration = glm::vec2(0.0f, -0.3f);
 
     // The impulse force will apply for one frame only
     glm::vec2 impulse = glm::vec2(0.0f, 5.0f);
