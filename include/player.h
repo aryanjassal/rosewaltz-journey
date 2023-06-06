@@ -24,6 +24,9 @@ class Player : public GameObject {
     // The impulse force will apply for one frame only
     glm::vec2 impulse = glm::vec2(0.0f, 5.0f);
 
+    // The walk speed the player walks with
+    float walk_speed = 2.0f;
+
     // Is the object grounded?
     bool grounded = false;
 

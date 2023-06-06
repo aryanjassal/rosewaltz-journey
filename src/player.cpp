@@ -45,7 +45,7 @@ void Player::resolve_vectors() {
   } else this->velocity.y = 0.0f;
 
   // Flip the y-component of the velocity as it points upwards, which is incorrect in this context
-  this->transform.position += glm::vec3(this->velocity.x + 2.0f, this->grounded ? 0.0f : -this->velocity.y, this->transform.position.z);
+  this->transform.position += glm::vec3(this->velocity.x + this->walk_speed, this->grounded ? 0.0f : -this->velocity.y, this->transform.position.z);
   this->impulse = glm::vec2(0.0f);
 
   // Update the bounding box of the player
@@ -58,36 +58,56 @@ void Player::resolve_collisions() {
 
   this->grounded = false;
 
+  for (GameObject *&object : GameObjects::filter("border")) {
+    Collision collision = object->check_collision(this);
+    if (collision.collision && object->tags[0] == "border") {
+      this->walk_speed *= -1;
+      this->transform.position.x = std::clamp(this->transform.position.x, 0.0f, (float)this->camera->width - this->transform.scale.x);
+      // this->transform.position.x += collision.horizontal.mtv / 4.0f;
+      // printf("newpos: %.2f, %.2f\n", this->transform.position.x, this->transform.position.y);
+    }
+  }
+
   // Number of tiles the player is in contact with
   int t_touching = 0;
 
   // Otherwise, loop over each object and resolve each collision
-  for (GameObject *&object : GameObjects::all()) {
-    Collision collision = object->check_collision(this);
+  if (this->parent_tile != nullptr) 
+  {
+    for (GameObject *&object : GameObjects::filter(this->parent_tile->tags[0])) {
+      Collision collision = object->check_collision(this);
 
-    if (collision.collision) {
-      if (object->rigidbody) {
-        this->grounded = true;
-        Direction v_dir = collision.vertical.direction;
-        Direction h_dir = collision.horizontal.direction;
-        // printf("v_%s h_%s ", v_dir == UP ? "UP" : v_dir == DOWN ? "DOWN" : "NONE", h_dir == LEFT ? "LEFT" : h_dir == RIGHT ? "RIGHT" : "NONE");
-        // printf("y-vel: %.2f (y-off: %.2f) pos: [%.2f, %.2f]\n", this->velocity.y, collision.vertical.mtv, this->transform.position.x, this->transform.position.y);
+      if (collision.collision) {
+        if (object->rigidbody) {
+          this->grounded = true;
+          Direction v_dir = collision.vertical.direction;
+          Direction h_dir = collision.horizontal.direction;
+          // printf("v_%s h_%s ", v_dir == UP ? "UP" : v_dir == DOWN ? "DOWN" : "NONE", h_dir == LEFT ? "LEFT" : h_dir == RIGHT ? "RIGHT" : "NONE");
+          // printf("y-vel: %.2f (y-off: %.2f) pos: [%.2f, %.2f]\n", this->velocity.y, collision.vertical.mtv, this->transform.position.x, this->transform.position.y);
 
-        // Vertical collision handling
-        if (v_dir == DOWN) {
-          this->transform.position.y -= collision.vertical.mtv;
-        } else if (v_dir == UP) {
-          this->transform.position.y += collision.vertical.mtv;
+          // Vertical collision handling
+          if (v_dir == DOWN) {
+            this->transform.position.y -= collision.vertical.mtv;
+          }
+
+          // if (abs(collision.vertical.mtv) > 300.0f) {
+          //   printf("[%s] mtv too large\n", object->handle.c_str());
+          //   continue;
+          // }
+
+          else if (v_dir == UP) {
+            this->transform.position.y -= collision.vertical.mtv;
+          } 
+
+          // // Horizontal collision handling
+          // if (h_dir == LEFT || h_dir == RIGHT) {
+          //   this->velocity.x *= -1.0f;
+          // }
+        } else {
+          if (object->tags[1] == "tile") t_touching++;
         } 
-
-        // Horizontal collision handling
-        if (h_dir == LEFT || h_dir == RIGHT) {
-          this->velocity.x *= -1.0f;
-        }
-      } else {
-        if (object->tags[1] == "tile") t_touching++;
       } 
-    } 
+    }
   }
 
   if (t_touching >= 2) {
