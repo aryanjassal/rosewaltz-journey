@@ -30,11 +30,17 @@ class Player : public GameObject {
     // Is the object grounded?
     bool grounded = false;
 
+    // Can the player move?
+    bool movable = true;
+
     // Which tile is the player inside?
     GameObject *parent_tile;
 
     // Empty construtor
     Player() { }
+
+    // Update the player every frame
+    void update();
 
     // Resolve forces and vectors
     void resolve_vectors();

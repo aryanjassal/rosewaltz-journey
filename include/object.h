@@ -88,7 +88,8 @@ class GameObject {
     // Inactive object won't be rendered or have any calculations run on them.
     // Interactivity controls whether the mouse should be able to interact with the object or not. 
     // Ridigbody controls if the object will be involved in physics collisions or not.
-    bool snap, swap, originate, active, interactive, rigidbody;
+    // Locked controls wheather the tile can move at all or not. This includes swapping and everything.
+    bool snap, swap, originate, active, interactive, rigidbody, locked;
   
     // The window dimensions are needed to ensure correct bounding box calculation when resizing the viewport
     // and not the camera's matrices in order to keep the Objects' size consistent across screen sizes.

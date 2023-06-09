@@ -22,12 +22,6 @@ void GameObject::translate_to_point(glm::vec2 point, bool convert) {
   else this->update_bounding_box();
 }
 
-// void GameObject::update_position() {
-//   // This translates the object back to its position to recalculate everything else
-//   // Useful for (re)calculating bounding boxes snap or something else
-//   this->translate_to_point(this->transform.position, false);
-// }
-
 bool GameObject::check_point_intersection(glm::vec2 point, bool convert) {
   // Convert the screen-space coordinate to camera-space coordinates
   if (convert) point = (point / this->window_dimensions) * glm::vec2(this->camera->width, this->camera->height);
@@ -59,7 +53,7 @@ Collision GameObject::check_collision(GameObject *object) {
     CollisionInfo vertical, horizontal;
     vertical.collision = (object->bounding_box.bottom >= this->bounding_box.top && object->bounding_box.top <= this->bounding_box.bottom);
     vertical.direction = vector_direction(glm::vec2(0.0f, difference.y));
-    vertical.mtv = difference.y + (this->transform.scale.y / 2.0f);
+    vertical.mtv = difference.y + (difference.y > 0 ? (this->transform.scale.y / -2.0f) + object->transform.scale.y : (this->transform.scale.y / 2.0f));
 
     horizontal.collision = (object->bounding_box.right >= this->bounding_box.left && object->bounding_box.left <= this->bounding_box.right);
     horizontal.direction = vector_direction(glm::vec2(difference.x, 0.0f));
@@ -92,7 +86,6 @@ void GameObject::update_bounding_box() {
 
 void GameObject::update_snap_position() {
   // If snapping is disabled in the object settings, then do nothing
-  // [REDUNDANT?]
   if (!this->snap) return;
 
   // Otherwise, update the position to snap to the nearest snap point
@@ -136,6 +129,7 @@ GameObject *GameObjects::create(
     object.transform = transform;
     object.origin = origin;
     object.originate = false;
+    object.locked = false;
     object.bounding_box = { 0.0f, 0.0f, 0.0f, 0.0f };
     if (grid != glm::vec2(0.0f)) {
       object.grid = grid;
