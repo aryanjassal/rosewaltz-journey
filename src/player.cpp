@@ -1,28 +1,11 @@
 #include "player.h"
 
-Player *Characters::Players::create(
-  std::string handle, 
-  OrthoCamera *camera, 
-  Texture texture, 
-  glm::vec2 window_dimensions, 
-  glm::vec3 position,
-  glm::vec2 scale, 
-  float rotation,
-  std::vector<std::string> tags,
-  glm::vec2 origin
-) {
-  Transform transform;
-  transform.position = position;
-  transform.scale = scale;
-  transform.rotation = rotation;
-  
+Player *Characters::Players::create(const char *handle, Texture texture, Transform transform, std::vector<std::string> tags) {
   Player player = Player();
   player.handle = handle;
-  player.camera = camera;
   player.texture = texture;
   player.tags = tags;
   player.transform = transform;
-  player.origin = origin;
   player.rigidbody = true;
   player.active = true;
   player.swap = false;
@@ -34,9 +17,9 @@ Player *Characters::Players::create(
 }
 
 void Player::update() {
-  if (this->bounding_box.left <= 0.0f || this->bounding_box.right >= this->camera->width) {
+  if (this->bounding_box.left <= 0.0f || this->bounding_box.right >= GameObjects::Camera->width) {
     this->walk_speed *= -1;
-    this->transform.position.x = std::clamp(this->transform.position.x, 0.0f, (float)this->camera->width - this->transform.scale.x);
+    this->transform.position.x = std::clamp(this->transform.position.x, 0.0f, (float)GameObjects::Camera->width - this->transform.scale.x);
   }
   this->transform.position.z = 1.0f;
 }
@@ -80,7 +63,7 @@ void Player::resolve_collisions() {
           if (object->rigidbody) {
             this->grounded = true;
             Direction v_dir = collision.vertical.direction;
-            printf("%.2f\n", collision.vertical.mtv);
+            // printf("%.2f\n", collision.vertical.mtv);
             
             // Vertical collision handling
             if (v_dir == DOWN) {

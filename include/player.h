@@ -62,17 +62,7 @@ namespace Characters {
     static Player *ActivePlayer;
 
     // Create a Player by providing all the required parameters
-    Player *create(
-      std::string handle, 
-      OrthoCamera *camera, 
-      Texture texture, 
-      glm::vec2 window_dimensions, 
-      glm::vec3 position = glm::vec3(0.0f),
-      glm::vec2 scale = glm::vec2(100.0f), 
-      float rotation = 0.0f,
-      std::vector<std::string> tags = std::vector<std::string>(),
-      glm::vec2 origin = glm::vec2(0.0f)
-    );
+    Player *create(const char *handle, Texture texture, Transform transform = Transform(), std::vector<std::string> tags = std::vector<std::string>());
 
     std::vector<Player *> all();
   }

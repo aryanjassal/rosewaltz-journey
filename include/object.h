@@ -23,7 +23,7 @@
 class GameObject {
   public:
     // Defines a unique identifier for each GameObject
-    std::string handle;
+    const char *handle;
 
     // Defines the transformations of the object
     Transform transform;
@@ -35,9 +35,6 @@ class GameObject {
     // Defines the old transform before the object was clicked
     Transform old_transform;
 
-    // // Stores the change in transformation over the previous frame
-    // Transform delta_transform;
-
     // Defines a vector of tags that the GameObject has
     // The tags can help filter GameObjects or pair them up together
     std::vector<std::string> tags;
@@ -45,43 +42,36 @@ class GameObject {
     // Defines the texture the GameObject will render
     Texture texture;
 
-    // Stores the GameCamera that will be rendering the scene
-    OrthoCamera *camera;
-
     // Defines the origin of the object
-    glm::vec2 origin;
+    glm::vec2 origin = glm::vec2(0.0f);
 
     // Define the grid-snap of the object
-    glm::vec2 grid;
+    glm::vec2 grid = glm::vec2(0.0f);
 
     // Snap controls whether the object should snap to a predefined grid or not.
-    bool snap;
+    bool snap = false;
 
     // Swap controls whethe the object should swap with another object at the same position or not.
-    bool swap;
+    bool swap = false;
 
     // Originate controls whether the origin setting will be respected or not.
-    bool originate;
+    bool originate = false;
 
     // Inactive object won't be rendered or have any calculations run on them.
-    bool active;
+    bool active = true;
 
     // Interactivity controls whether the mouse should be able to interact with the object or not. 
-    bool interactive;
+    bool interactive = false;
 
     // Ridigbody controls if the object will be involved in physics collisions or not.
-    bool rigidbody;
+    bool rigidbody = false;
 
     // Locked controls whether the tile can move at all or not. This includes swapping and everything.
-    bool locked;
+    bool locked = false;
   
-    // The window dimensions are needed to ensure correct bounding box calculation when resizing the viewport
-    // and not the camera's matrices in order to keep the Objects' size consistent across screen sizes.
-    glm::vec2 window_dimensions;
-
     // Define a bounding box for the object.
     // This will be used in the collision detection and the collider used for mouse interaction
-    BoundingBox bounding_box;
+    BoundingBox bounding_box = BoundingBox();
 
     // Create an empty constructor for an object, as otherwise it won't play nice with std::map
     GameObject() { }
@@ -108,34 +98,16 @@ class GameObject {
 // This namespace handles generic functions related to dealing with GameObjects
 namespace GameObjects {
   // Store a list of all the GameObjects ever created
-  static std::map<std::string, GameObject> Objects;
+  static std::map<const char *, GameObject> Objects;
+  
+  extern SpriteRenderer *Renderer;
+  extern OrthoCamera *Camera;
 
   // Create a GameObject by providing all the required parameters
-  GameObject *create(
-    std::string handle, 
-    OrthoCamera *camera, 
-    Texture texture, 
-    glm::vec2 window_dimensions, 
-    std::vector<std::string> tags = std::vector<std::string>(),
-    Transform transform = { glm::vec3(0.0f), glm::vec2(100.0f), 0.0f },
-    glm::vec2 origin = glm::vec2(0.0f),
-    glm::vec2 grid = glm::vec2(0.0f)
-  );
-  GameObject *create(
-    std::string handle, 
-    OrthoCamera *camera, 
-    Texture texture, 
-    glm::vec2 window_dimensions, 
-    std::vector<std::string> tags = std::vector<std::string>(),
-    glm::vec3 position = glm::vec3(0.0f),
-    glm::vec2 scale = glm::vec2(100.0f), 
-    float rotation = 0.0f,
-    glm::vec2 origin = glm::vec2(0.0f),
-    glm::vec2 grid = glm::vec2(0.0f)
-  );
+  GameObject *create(const char *handle, Texture texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
 
   // Fetch the pointer to a GameObject from the list of GameObjects
-  GameObject *get(std::string handle);
+  GameObject *get(const char *handle);
 
   // Fetch a vector with a pointer to all active GameObjects
   std::vector<GameObject *> all();

@@ -1,30 +1,32 @@
 #include "object.h"
 
+OrthoCamera *GameObjects::Camera = new OrthoCamera(WindowSize.x, WindowSize.y, 1000.0f, -1000.0f);
+SpriteRenderer *GameObjects::Renderer = nullptr;
+
 void GameObject::render(SpriteRenderer *renderer, glm::vec4 colour) {
   Transform n_transform = this->transform;
-  if (this->position_offset != glm::vec3(0.0f)) n_transform.position += this->position_offset;
+  n_transform.position += this->position_offset;
 
   if (this->active) renderer->render(this->texture, n_transform, colour);
 }
 
 void GameObject::translate(glm::vec2 point) {
-  // Set some useful variables
   glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
 
   // Convert the mouse coordinates to camera-space
-  point = (point / this->window_dimensions) * glm::vec2(this->camera->width, this->camera->height);
+  // point = (point / WindowSize) * glm::vec2(GameObjects::Camera->width, GameObjects::Camera->height);
+  // point = glm::vec2((float)point.x / (float)WindowSize.x, (float)point.y / (float)WindowSize.y);
+  // printf("%.2f, %.2f\n", point.x, point.y);
 
-  // Update the transform
   this->transform.position = glm::vec3(point - origin, 0.0f);
 
-  // Snap the object and update its bounding box
   if (this->snap) this->update_snap_position();
   else this->update_bounding_box();
 }
 
 bool GameObject::check_point_intersection(glm::vec2 point) {
   // Convert the screen-space coordinate to camera-space coordinates
-  point = (point / this->window_dimensions) * glm::vec2(this->camera->width, this->camera->height);
+  // point = glm::vec2((float)point.x / (float)WindowSize.x, (float)point.y / (float)WindowSize.y) * glm::vec2(GameObjects::Camera->width, GameObjects::Camera->height);
 
   return ((this->bounding_box.left <= point.x) 
     && (this->bounding_box.right >= point.x) 
@@ -33,8 +35,6 @@ bool GameObject::check_point_intersection(glm::vec2 point) {
 }
 
 Collision GameObject::check_collision(GameObject *object) {
-  // printf("[%s] [collision] %.2f < x < %.2f; %.2f < y < %.2f [%.2f < x < %.2f; %.2f < y < %.2f]\n", this->handle.c_str(), this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, object->bounding_box.left, object->bounding_box.right, object->bounding_box.top, object->bounding_box.bottom);
-
   if (object->bounding_box.right >= this->bounding_box.left
     && object->bounding_box.left <= this->bounding_box.right
     && object->bounding_box.bottom >= this->bounding_box.top
@@ -71,7 +71,7 @@ void GameObject::update_bounding_box() {
 
   // Use the offset transform to calculate the bounding boxes
   Transform n_transform = this->transform;
-  if (this->position_offset != glm::vec3(0.0f)) n_transform.position += this->position_offset;
+  n_transform.position += this->position_offset;
 
   // Update the bounding boxes using some super advanced math
   this->bounding_box.right = n_transform.position.x + this->transform.scale.x + origin.x;
@@ -79,84 +79,42 @@ void GameObject::update_bounding_box() {
   this->bounding_box.bottom = n_transform.position.y + this->transform.scale.y + origin.y;
   this->bounding_box.top = n_transform.position.y + origin.y;
   
-  // // DEBUG print the bounding box of the object along with its handle
-  // if (this->tags[0] != "player") printf("[%s] [collider] %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", this->handle.c_str(), this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, this->transform.position.x, this->transform.position.y);
+  // if (this->tags[0] != "player") printf("[%s] [collider] %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", this->handle, this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, this->transform.position.x, this->transform.position.y);
 }
 
 void GameObject::update_snap_position() {
-  // If snapping is disabled in the object settings, then do nothing
-  if (!this->snap) return;
-
-  // Otherwise, update the position to snap to the nearest snap point
-  // glm::vec3 old_pos = this->transform.position;
   glm::vec2 origin = this->origin;
   glm::vec3 new_position;
   new_position.x = std::floor((this->transform.position.x + origin.x) / this->grid.x) * this->grid.x;
   new_position.y = std::floor((this->transform.position.y + origin.y) / this->grid.y) * this->grid.y;
 
   // If the new position is outside the dimensions, then just undo any translations and return it to its old position
-  if (new_position.x < 0 || new_position.x > this->camera->width - this->grid.x || new_position.y < 0 || new_position.y > this->camera->height - this->grid.y) {
+  if (new_position.x < 0 || new_position.x > GameObjects::Camera->width - this->grid.x || new_position.y < 0 || new_position.y > GameObjects::Camera->height - this->grid.y) {
     this->transform.position = this->old_transform.position;
     this->update_bounding_box();
     return;
   }
 
   // Otherwise, update the delta transform, the object's position, and it's bounding box
-  // this->delta_transform.position = this->transform.position - old_pos; 
   this->transform.position = new_position;
   this->update_bounding_box();
-
-  // //DEBUG print the bounding box of the object along with its handle
-  // printf("[%s] [snap] %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", this->handle.c_str(), this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, this->transform.position.x, this->transform.position.y);
 }
 
-GameObject *GameObjects::create(
-  std::string handle, 
-  OrthoCamera *camera, 
-  Texture texture, 
-  glm::vec2 window_dimensions, 
-  std::vector<std::string> tags,
-  Transform transform,
-  glm::vec2 origin,
-  glm::vec2 grid) {
-    GameObject object = GameObject();
-    object.handle = handle;
-    object.camera = camera;
-    object.texture = texture;
-    object.window_dimensions = window_dimensions;
-    object.tags = tags;
-    object.transform = transform;
-    object.origin = origin;
-    object.originate = false;
-    object.locked = false;
-    if (grid != glm::vec2(0.0f)) {
-      object.grid = grid;
-      object.snap = true;
-      object.update_snap_position();
-    } else {
-      object.translate(object.transform.position);
-    }
+GameObject *GameObjects::create(const char *handle, Texture texture, std::vector<std::string> tags, Transform transform) {
+  if (GameObjects::Renderer == nullptr) throw std::runtime_error("A SpriteRenderer must be set for GameObjects::Renderer\n");
+  if (GameObjects::Objects.find(handle) != GameObjects::Objects.end()) throw std::runtime_error("Another GameObject already exists with the same handle!\n");
 
-    GameObjects::Objects[handle] = object;
-    return &GameObjects::Objects[handle];
-}
+  GameObject object = GameObject();
+  object.handle = handle;
+  object.texture = texture;
+  object.tags = tags;
+  object.transform = transform;
+  object.originate = false;
+  object.locked = false;
+  object.update_bounding_box();
 
-GameObject *GameObjects::create(
-  std::string handle, 
-  OrthoCamera *camera, 
-  Texture texture, 
-  glm::vec2 window_dimensions, 
-  std::vector<std::string> tags,
-  glm::vec3 position,
-  glm::vec2 scale,
-  float rotation,
-  glm::vec2 origin,
-  glm::vec2 grid) {
-    Transform transform;
-    transform.position = position;
-    transform.scale = scale;
-    transform.rotation = rotation;
-    return GameObjects::create(handle, camera, texture, window_dimensions, tags, transform, origin, grid);
+  GameObjects::Objects[handle] = object;
+  return &GameObjects::Objects[handle];
 }
 
 std::vector<GameObject *> GameObjects::all() {
@@ -171,7 +129,7 @@ std::vector<GameObject *> GameObjects::all() {
   return all_objects;
 }
 
-GameObject *GameObjects::get(std::string handle) {
+GameObject *GameObjects::get(const char *handle) {
   return &GameObjects::Objects[handle];
 }
 
