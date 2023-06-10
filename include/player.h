@@ -33,9 +33,6 @@ class Player : public GameObject {
     // Can the player move?
     bool movable = true;
 
-    // Which tile is the player inside?
-    GameObject *parent_tile;
-
     // Empty construtor
     Player() { }
 

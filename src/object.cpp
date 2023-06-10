@@ -3,6 +3,9 @@
 OrthoCamera *GameObjects::Camera = new OrthoCamera(WindowSize.x, WindowSize.y, 1000.0f, -1000.0f);
 SpriteRenderer *GameObjects::Renderer = nullptr;
 
+// Counter to keep track of the next id for instantiated GameObjects
+static unsigned long instantiation_id = 0;
+
 void GameObject::render(SpriteRenderer *renderer, glm::vec4 colour) {
   Transform n_transform = this->transform;
   n_transform.position += this->position_offset;
@@ -100,9 +103,9 @@ void GameObject::update_snap_position() {
   this->update_bounding_box();
 }
 
-GameObject *GameObjects::create(const char *handle, Texture texture, std::vector<std::string> tags, Transform transform) {
+GameObject *GameObjects::ObjectPrefabs::create(const char *handle, Texture texture, std::vector<std::string> tags, Transform transform) {
   if (GameObjects::Renderer == nullptr) throw std::runtime_error("A SpriteRenderer must be set for GameObjects::Renderer\n");
-  if (GameObjects::Objects.find(handle) != GameObjects::Objects.end()) throw std::runtime_error("Another GameObject already exists with the same handle!\n");
+  if (GameObjects::Prefabs.find(handle) != GameObjects::Prefabs.end()) throw std::runtime_error("Another Prefab already exists with the same handle!\n");
 
   GameObject object = GameObject();
   object.handle = handle;
@@ -113,8 +116,69 @@ GameObject *GameObjects::create(const char *handle, Texture texture, std::vector
   object.locked = false;
   object.update_bounding_box();
 
-  GameObjects::Objects[handle] = object;
-  return &GameObjects::Objects[handle];
+  GameObjects::Prefabs[handle] = object;
+  return &GameObjects::Prefabs[handle];
+}
+
+GameObject *GameObjects::create(const char *handle, Texture texture, std::vector<std::string> tags, Transform transform) {
+  if (GameObjects::Renderer == nullptr) throw std::runtime_error("A SpriteRenderer must be set for GameObjects::Renderer\n");
+
+  GameObject object = GameObject();
+  object.handle = handle;
+  object.id = instantiation_id;
+  object.texture = texture;
+  object.tags = tags;
+  object.transform = transform;
+  object.originate = false;
+  object.locked = false;
+  object.update_bounding_box();
+
+  instantiation_id++;
+
+  GameObjects::Objects[object.id] = object;
+  return &GameObjects::Objects[object.id];
+}
+
+GameObject *GameObjects::instantiate(const char *prefab_handle) {
+  GameObject *prefab = GameObjects::ObjectPrefabs::get(prefab_handle);
+  prefab->id = instantiation_id;
+
+  instantiation_id++;
+
+  GameObjects::Objects[prefab->id] = *prefab;
+  return &GameObjects::Objects[prefab->id];
+}
+
+GameObject *GameObjects::instantiate(GameObject prefab) {
+  prefab.id = instantiation_id;
+
+  instantiation_id++;
+
+  GameObjects::Objects[prefab.id] = prefab;
+  return &GameObjects::Objects[prefab.id];
+}
+
+GameObject *GameObjects::instantiate(const char *prefab_handle, Transform transform) {
+  GameObject *prefab = GameObjects::ObjectPrefabs::get(prefab_handle);
+  prefab->transform = transform;
+  prefab->update_bounding_box();
+  prefab->id = instantiation_id;
+
+  instantiation_id++;
+
+  GameObjects::Objects[prefab->id] = *prefab;
+  return &GameObjects::Objects[prefab->id];
+}
+
+GameObject *GameObjects::instantiate(GameObject prefab, Transform transform) {
+  prefab.transform = transform;
+  prefab.update_bounding_box();
+  prefab.id = instantiation_id;
+
+  instantiation_id++;
+
+  GameObjects::Objects[prefab.id] = prefab;
+  return &GameObjects::Objects[prefab.id];
 }
 
 std::vector<GameObject *> GameObjects::all() {
@@ -129,8 +193,12 @@ std::vector<GameObject *> GameObjects::all() {
   return all_objects;
 }
 
-GameObject *GameObjects::get(const char *handle) {
-  return &GameObjects::Objects[handle];
+// GameObject *GameObjects::get(const char *handle) {
+//   return &GameObjects::Objects[handle];
+// }
+
+GameObject *GameObjects::ObjectPrefabs::get(const char *handle) {
+  return &GameObjects::Prefabs[handle];
 }
 
 std::vector<GameObject *> GameObjects::filter(std::vector<std::string> tags) {

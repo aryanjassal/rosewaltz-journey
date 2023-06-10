@@ -53,10 +53,10 @@ void Player::resolve_collisions() {
   int t_touching = 0;
 
   // Loop over each object and resolve each collision
-  if (this->parent_tile != nullptr) {
+  if (this->parent != nullptr) {
     for (GameObject *&object : GameObjects::all()) {
       Collision collision = object->check_collision(this);
-      if (object->tags[0] == this->parent_tile->tags[0]) {
+      if (object->parent == this->parent) {
         // Collision collision = object->check_collision(this);
 
         if (collision.collision) {

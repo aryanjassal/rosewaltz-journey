@@ -22,8 +22,11 @@
 // over using the default SpriteRenderer, as it will only take you so far.
 class GameObject {
   public:
-    // Defines a unique identifier for each GameObject
+    // Defines an name or handle for each GameObject
     const char *handle;
+
+    // Defines a unique identifier for each GameObject
+    unsigned long id;
 
     // Defines the transformations of the object
     Transform transform;
@@ -68,6 +71,9 @@ class GameObject {
 
     // Locked controls whether the tile can move at all or not. This includes swapping and everything.
     bool locked = false;
+
+    // Declare a parent object
+    GameObject *parent = nullptr;
   
     // Define a bounding box for the object.
     // This will be used in the collision detection and the collider used for mouse interaction
@@ -97,17 +103,29 @@ class GameObject {
 
 // This namespace handles generic functions related to dealing with GameObjects
 namespace GameObjects {
-  // Store a list of all the GameObjects ever created
-  static std::map<const char *, GameObject> Objects;
-  
+  // Store a list of all the GameObjects and Prefabs ever created
+  static std::map<unsigned long, GameObject> Objects;
+  static std::map<const char *, GameObject> Prefabs;
+
+  namespace ObjectPrefabs {
+    GameObject *create(const char *handle, Texture texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
+    GameObject *get(const char *handle);
+  }
+
   extern SpriteRenderer *Renderer;
   extern OrthoCamera *Camera;
 
   // Create a GameObject by providing all the required parameters
   GameObject *create(const char *handle, Texture texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
 
-  // Fetch the pointer to a GameObject from the list of GameObjects
-  GameObject *get(const char *handle);
+  // Instantiate an existing prefab with all the required settings already set
+  GameObject *instantiate(const char *prefab_handle);
+  GameObject *instantiate(GameObject prefab);
+  GameObject *instantiate(const char *prefab_handle, Transform transform);
+  GameObject *instantiate(GameObject prefab, Transform transform);
+
+  // // Fetch the pointer to a GameObject from the list of GameObjects
+  // GameObject *get(const char *handle);
 
   // Fetch a vector with a pointer to all active GameObjects
   std::vector<GameObject *> all();
