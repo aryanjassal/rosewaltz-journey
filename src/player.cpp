@@ -25,7 +25,6 @@ Player *Characters::Players::create(
   player.origin = origin;
   player.rigidbody = true;
   player.active = true;
-  player.bounding_box = { 0.0f, 0.0f, 0.0f, 0.0f };
   player.swap = false;
   player.interactive = false;
   player.update_bounding_box();
@@ -75,12 +74,13 @@ void Player::resolve_collisions() {
     for (GameObject *&object : GameObjects::all()) {
       Collision collision = object->check_collision(this);
       if (object->tags[0] == this->parent_tile->tags[0]) {
-        Collision collision = object->check_collision(this);
+        // Collision collision = object->check_collision(this);
 
         if (collision.collision) {
           if (object->rigidbody) {
             this->grounded = true;
             Direction v_dir = collision.vertical.direction;
+            printf("%.2f\n", collision.vertical.mtv);
             
             // Vertical collision handling
             if (v_dir == DOWN) {

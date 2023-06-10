@@ -4,17 +4,11 @@
 #include "shader.h"
 #include "texture.h"
 #include "camera.h"
+#include "utils.h"
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glad/gl.h"
-
-// Struct holding the transformations to be applied to the object
-typedef struct Transform {
-  glm::vec3 position = glm::vec3(0.0f);
-  glm::vec2 scale = glm::vec2(1.0f);
-  float rotation = 0.0f;
-};
 
 class SpriteRenderer {
   public:

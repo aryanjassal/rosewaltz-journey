@@ -5,6 +5,8 @@
 SpriteRenderer *Renderer;
 OrthoCamera *GameCamera;
 
+glm::vec2 TileSize; 
+
 Game::Game(unsigned int width, unsigned int height, std::string window_title, bool fullscreen) {
   // Set internal width and height
   this->width = width;
@@ -49,17 +51,17 @@ Game::~Game() {
 
 void Game::init() {
   // Set the clear colour of the scene background
-  // glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-  // Create a shader program, providing the vertex and fragment shaders
+  // Create a shader program, providing the default vertex and fragment shaders
   Shader sprite_shader = ResourceManager::Shader::load("src/shaders/default.vert", "src/shaders/default.frag", "default");
 
-  // Create the camera
+  // Instantiate the camera and the renderer
   GameCamera = new OrthoCamera(this->width, this->height, -1.0f, 1.0f);
-
-  // Create a sprite renderer instance
   Renderer = new SpriteRenderer(sprite_shader, GameCamera);
+
+  // Set the tile width and height settings
+  TileSize = glm::vec2(GameCamera->width / 3.0f, GameCamera->height / 2.0f);
 
   // Load the background layers
   Texture background_bg = ResourceManager::Texture::load("textures/background/background-bg.png", true, "background-bg");
@@ -151,7 +153,10 @@ void Game::update() {
           Mouse.focused_objects.push_back(f_object);
         }
 
-        if (object->check_point_intersection(Characters::Players::ActivePlayer->transform.position)) {
+        Characters::Players::ActivePlayer->position_offset = glm::vec3(std::fmod(Characters::Players::ActivePlayer->transform.position.x, TileSize.x), std::fmod(Characters::Players::ActivePlayer->transform.position.y, TileSize.y), 0.0f);
+        // printf("[player] pos: %.2f, %.2f, %.2f; off: %.2f, %.2f\n", Characters::Players::ActivePlayer->transform.position.x, Characters::Players::ActivePlayer->transform.position.y, Characters::Players::ActivePlayer->transform.position.z, std::fmod(Characters::Players::ActivePlayer->transform.position.x + Characters::Players::ActivePlayer->position_offset.x, TileSize.x), std::fmod(Characters::Players::ActivePlayer->transform.position.y + Characters::Players::ActivePlayer->position_offset.y, TileSize.y));
+
+        if (object->check_collision(Characters::Players::ActivePlayer).collision) {
           Characters::Players::ActivePlayer->parent_tile = object;
           Characters::Players::ActivePlayer->old_transform.position = Characters::Players::ActivePlayer->transform.position;
         }
@@ -162,7 +167,7 @@ void Game::update() {
   // For each GameObject, update it's bounding box
   bool parent_tile = false;
   for (GameObject *&object : GameObjects::all()) {
-    if (object->tags[1] == "tile" && object->check_point_intersection(Characters::Players::ActivePlayer->transform.position) && Mouse.clicked_object == nullptr) {
+    if (object->tags[1] == "tile" && object->check_collision(Characters::Players::ActivePlayer).collision && Mouse.clicked_object == nullptr) {
       Characters::Players::ActivePlayer->parent_tile = object;
       parent_tile = true;
     }
@@ -173,7 +178,7 @@ void Game::update() {
   // If an object is selected, then move the object along with the mouse
   if (Mouse.focused_objects != std::vector<GameObject *>()) {
     Mouse.clicked_object->originate = true;
-    Mouse.clicked_object->translate_to_point(Mouse.position);
+    Mouse.clicked_object->translate(Mouse.position);
     for (GameObject *&object : Mouse.focused_objects) {
       if (object != Mouse.clicked_object) {
         object->originate = true;
@@ -183,8 +188,7 @@ void Game::update() {
   }
 
   if (Mouse.clicked_object != nullptr && Mouse.clicked_object == Characters::Players::ActivePlayer->parent_tile) {
-    Characters::Players::ActivePlayer->position_offset = Mouse.clicked_object->transform.position;
-    Characters::Players::ActivePlayer->transform.position = Characters::Players::ActivePlayer->old_transform.position - Mouse.clicked_object->old_transform.position;
+    Characters::Players::ActivePlayer->transform.position = Mouse.clicked_object->transform.position;
   }
   
   // If we just released the left mouse button, then update the snap position of each currently
@@ -194,21 +198,27 @@ void Game::update() {
     Mouse.clicked_object->originate = false;
     Mouse.clicked_object->update_snap_position();
 
-    // Update the player's position
-    if (Mouse.clicked_object == Characters::Players::ActivePlayer->parent_tile) {
-      Characters::Players::ActivePlayer->transform.position += Mouse.clicked_object->transform.position;
-    }
+    // // Update the player's position
+    // if (Mouse.clicked_object == Characters::Players::ActivePlayer->parent_tile) {
+    //   Characters::Players::ActivePlayer->transform.position += Mouse.clicked_object->transform.position;
+    //   // Characters::Players::ActivePlayer->transform.position = Mouse.clicked_object->transform.position;
+    // }
 
     for (GameObject *&object : GameObjects::all()) {
       if (object->locked && object->transform.position == Mouse.clicked_object->transform.position) {
         Mouse.clicked_object->transform.position = Mouse.clicked_object->old_transform.position;
         Mouse.clicked_object->update_bounding_box();
+
+        // if (Characters::Players::ActivePlayer->parent_tile == Mouse.clicked_object) Characters::Players::ActivePlayer->transform.position = Characters::Players::ActivePlayer->parent_tile->transform.position + Characters::Players::ActivePlayer->position_offset;
+        // else Characters::Players::ActivePlayer->transform.position = Characters::Players::ActivePlayer->parent_tile->transform.position + Characters::Players::ActivePlayer->position_offset;
+
         // if (Characters::Players::ActivePlayer->parent_tile == Mouse.clicked_object) Characters::Players::ActivePlayer->transform.position = Characters::Players::ActivePlayer->old_transform.position - Mouse.clicked_object->old_transform.position;
-        if (Characters::Players::ActivePlayer->parent_tile == Mouse.clicked_object) Characters::Players::ActivePlayer->transform.position += Mouse.clicked_object->old_transform.position;
+
+        // if (Characters::Players::ActivePlayer->parent_tile == Mouse.clicked_object) Characters::Players::ActivePlayer->transform.position = Mouse.clicked_object->transform.position - object->transform.position;
 
         // if (Characters::Players::ActivePlayer->parent_tile == Mouse.clicked_object) {
-          // Characters::Players::ActivePlayer->position_offset = Mouse.clicked_object->transform.position;
-          // Characters::Players::ActivePlayer->translate_to_point(Characters::Players::ActivePlayer->transform.position);
+        //   Characters::Players::ActivePlayer->position_offset = Mouse.clicked_object->transform.position;
+        //   Characters::Players::ActivePlayer->translate_to_point(Characters::Players::ActivePlayer->transform.position);
         // }
         break;
       }
@@ -216,7 +226,7 @@ void Game::update() {
       if (object->tags[0] != Mouse.clicked_object->tags[0] && !object->locked) {
         if (object->swap && object->interactive && object->transform.position == Mouse.clicked_object->transform.position) {
           object->old_transform.position = object->transform.position;
-          object->translate_to_point(Mouse.clicked_object->old_transform.position);
+          object->translate(Mouse.clicked_object->old_transform.position);
 
           // Update the position of all the objects with the same tag as the object which got
           // displaced from its original spot (not the currently selected object)
@@ -241,12 +251,24 @@ void Game::update() {
       }
     }
 
-    // Reset the player's parent tile
+    // // Update the player's position
+    // if (Mouse.clicked_object == Characters::Players::ActivePlayer->parent_tile) {
+    //   Characters::Players::ActivePlayer->transform.position += Mouse.clicked_object->transform.position;
+    //   // Characters::Players::ActivePlayer->transform.position = Mouse.clicked_object->transform.position;
+    // } else {
+    //   // Characters::Players::ActivePlayer->transform.position += Characters::Players::ActivePlayer->parent_tile->transform.position;
+    //   Characters::Players::ActivePlayer->transform.position = Characters::Players::ActivePlayer->old_transform.position;
+    // }
+
+
+
+    // Reset the player's position offset and parent tile
+    Characters::Players::ActivePlayer->transform.position = Characters::Players::ActivePlayer->parent_tile->transform.position + Characters::Players::ActivePlayer->position_offset;
     Characters::Players::ActivePlayer->position_offset = glm::vec3(0.0f);
-    Characters::Players::ActivePlayer->parent_tile = nullptr;
+    // Characters::Players::ActivePlayer->parent_tile = nullptr;
   }
 
-  if (Characters::Players::ActivePlayer->parent_tile != nullptr) printf("[player] %.2f, %.2f, %.2f; parent tile: %s\n", Characters::Players::ActivePlayer->transform.position.x, Characters::Players::ActivePlayer->transform.position.y, Characters::Players::ActivePlayer->transform.position.z, Characters::Players::ActivePlayer->parent_tile->handle.c_str());
+  if (Characters::Players::ActivePlayer->parent_tile != nullptr) printf("[player] %.2f, %.2f, %.2f; offset: %.2f, %.2f; parent tile: %s\n", Characters::Players::ActivePlayer->transform.position.x, Characters::Players::ActivePlayer->transform.position.y, Characters::Players::ActivePlayer->transform.position.z, Characters::Players::ActivePlayer->position_offset.x, Characters::Players::ActivePlayer->position_offset.y, Characters::Players::ActivePlayer->parent_tile->handle.c_str());
   else printf("[player] %.2f, %.2f, %.2f; parent tile: none\n", Characters::Players::ActivePlayer->transform.position.x, Characters::Players::ActivePlayer->transform.position.y, Characters::Players::ActivePlayer->transform.position.z);
 
   // Update all player entities

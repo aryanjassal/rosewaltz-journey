@@ -7,12 +7,12 @@ void GameObject::render(SpriteRenderer *renderer, glm::vec4 colour) {
   if (this->active) renderer->render(this->texture, n_transform, colour);
 }
 
-void GameObject::translate_to_point(glm::vec2 point, bool convert) {
+void GameObject::translate(glm::vec2 point) {
   // Set some useful variables
   glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
 
   // Convert the mouse coordinates to camera-space
-  if (convert) point = (point / this->window_dimensions) * glm::vec2(this->camera->width, this->camera->height);
+  point = (point / this->window_dimensions) * glm::vec2(this->camera->width, this->camera->height);
 
   // Update the transform
   this->transform.position = glm::vec3(point - origin, 0.0f);
@@ -22,9 +22,9 @@ void GameObject::translate_to_point(glm::vec2 point, bool convert) {
   else this->update_bounding_box();
 }
 
-bool GameObject::check_point_intersection(glm::vec2 point, bool convert) {
+bool GameObject::check_point_intersection(glm::vec2 point) {
   // Convert the screen-space coordinate to camera-space coordinates
-  if (convert) point = (point / this->window_dimensions) * glm::vec2(this->camera->width, this->camera->height);
+  point = (point / this->window_dimensions) * glm::vec2(this->camera->width, this->camera->height);
 
   return ((this->bounding_box.left <= point.x) 
     && (this->bounding_box.right >= point.x) 
@@ -59,11 +59,10 @@ Collision GameObject::check_collision(GameObject *object) {
     horizontal.direction = vector_direction(glm::vec2(difference.x, 0.0f));
     horizontal.mtv = difference.x + (this->transform.scale.x / 2.0f);
 
-    return { true, vertical, horizontal };
+    return Collision(true, horizontal, vertical);
   }
 
-  CollisionInfo vertical, horizontal;
-  return { false, vertical, horizontal };
+  return Collision();
 }
 
 void GameObject::update_bounding_box() {
@@ -89,7 +88,7 @@ void GameObject::update_snap_position() {
   if (!this->snap) return;
 
   // Otherwise, update the position to snap to the nearest snap point
-  glm::vec3 old_pos = this->transform.position;
+  // glm::vec3 old_pos = this->transform.position;
   glm::vec2 origin = this->origin;
   glm::vec3 new_position;
   new_position.x = std::floor((this->transform.position.x + origin.x) / this->grid.x) * this->grid.x;
@@ -103,7 +102,7 @@ void GameObject::update_snap_position() {
   }
 
   // Otherwise, update the delta transform, the object's position, and it's bounding box
-  this->delta_transform.position = this->transform.position - old_pos; 
+  // this->delta_transform.position = this->transform.position - old_pos; 
   this->transform.position = new_position;
   this->update_bounding_box();
 
@@ -130,14 +129,12 @@ GameObject *GameObjects::create(
     object.origin = origin;
     object.originate = false;
     object.locked = false;
-    object.bounding_box = { 0.0f, 0.0f, 0.0f, 0.0f };
     if (grid != glm::vec2(0.0f)) {
       object.grid = grid;
       object.snap = true;
       object.update_snap_position();
     } else {
-      // object.update_position();
-      object.translate_to_point(object.transform.position);
+      object.translate(object.transform.position);
     }
 
     GameObjects::Objects[handle] = object;
@@ -233,26 +230,4 @@ std::vector<GameObject *> GameObjects::except(std::string tag) {
     }
   }
   return filtered_objects;
-}
-
-Direction vector_direction(glm::vec2 target) {
-  glm::vec2 compass[] = {
-    glm::vec2(0.0f, 1.0f),	// up
-    glm::vec2(1.0f, 0.0f),	// right
-    glm::vec2(0.0f, -1.0f),	// down
-    glm::vec2(-1.0f, 0.0f)	// left
-  };
-
-  float max = 0.0f;
-  unsigned int match = -1;
-
-  for (int i = 0; i < 4; i++) {
-    float dot = glm::dot(glm::normalize(target), compass[i]);
-    if (dot > max) {
-      max = dot;
-      match = i;
-    }
-  }
-
-  return (Direction)match;
 }

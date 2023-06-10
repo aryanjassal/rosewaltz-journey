@@ -12,39 +12,9 @@
 
 #include "texture.h"
 #include "sprite.h"
+#include "utils.h"
+#include "physics.h"
 
-// A struct to define the structure of information regarding the GameObject's bounding box
-typedef struct BoundingBox {
-  float top;
-  float bottom;
-  float left;
-  float right;
-};
-
-// Directional enum to handle collision direction
-typedef enum Direction {
-  UP,
-  RIGHT,
-  DOWN,
-  LEFT,
-  NONE
-};
-
-// Return the direction of the collsion based on the vectors
-Direction vector_direction(glm::vec2 target);    
-
-// Define a tuple storing all the relevant information about a collision
-typedef struct CollisionInfo {
-  bool collision = false;
-  Direction direction = NONE;
-  float mtv = 0.0f;
-};
-
-typedef struct Collision {
-  bool collision = false;
-  CollisionInfo vertical;
-  CollisionInfo horizontal;
-};
 
 // This class handles all game objects, containing boilerplate code for
 // collision detection or motion or anything else an object might need.
@@ -65,8 +35,8 @@ class GameObject {
     // Defines the old transform before the object was clicked
     Transform old_transform;
 
-    // Stores the change in transformation over the previous frame
-    Transform delta_transform;
+    // // Stores the change in transformation over the previous frame
+    // Transform delta_transform;
 
     // Defines a vector of tags that the GameObject has
     // The tags can help filter GameObjects or pair them up together
@@ -78,18 +48,32 @@ class GameObject {
     // Stores the GameCamera that will be rendering the scene
     OrthoCamera *camera;
 
-    // Defines the position, scale, origin, and the grid-snap of the object
-    // The origin of the object is a transform operation that will be executed before any other transformation
-    glm::vec2 origin, grid;
+    // Defines the origin of the object
+    glm::vec2 origin;
 
-    // Snap controls wheather the object should snap to a predefined grid or not.
-    // Swap controls wheathe the object should swap with another object at the same position or not.
-    // Originate controls wheather the origin setting will be respected or not.
+    // Define the grid-snap of the object
+    glm::vec2 grid;
+
+    // Snap controls whether the object should snap to a predefined grid or not.
+    bool snap;
+
+    // Swap controls whethe the object should swap with another object at the same position or not.
+    bool swap;
+
+    // Originate controls whether the origin setting will be respected or not.
+    bool originate;
+
     // Inactive object won't be rendered or have any calculations run on them.
+    bool active;
+
     // Interactivity controls whether the mouse should be able to interact with the object or not. 
+    bool interactive;
+
     // Ridigbody controls if the object will be involved in physics collisions or not.
-    // Locked controls wheather the tile can move at all or not. This includes swapping and everything.
-    bool snap, swap, originate, active, interactive, rigidbody, locked;
+    bool rigidbody;
+
+    // Locked controls whether the tile can move at all or not. This includes swapping and everything.
+    bool locked;
   
     // The window dimensions are needed to ensure correct bounding box calculation when resizing the viewport
     // and not the camera's matrices in order to keep the Objects' size consistent across screen sizes.
@@ -106,17 +90,14 @@ class GameObject {
     void render(SpriteRenderer *renderer, glm::vec4 colour = glm::vec4(1.0f));
 
     // Translate the object to a given point
-    void translate_to_point(glm::vec2 point, bool convert = true);
+    void translate(glm::vec2 point);
 
     // Check if the object is intersecting with a point
-    bool check_point_intersection(glm::vec2 point, bool convert = true);
+    bool check_point_intersection(glm::vec2 point);
 
     // Check collision between two bounding boxes
     Collision check_collision(GameObject *object);
 
-    // // Update the position by rerunning all calculations that would be run while updating position
-    // void update_position();
-  
     // Update the bounding box according to the new position of the object
     void update_bounding_box();
 

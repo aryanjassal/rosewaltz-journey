@@ -17,6 +17,7 @@
 #include "resource_manager.h"
 #include "object.h"
 #include "player.h"
+#include "utils.h"
 
 class Game {
   public:
