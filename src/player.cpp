@@ -40,6 +40,8 @@ void Player::resolve_vectors() {
 }
 
 void Player::resolve_collisions() {
+  if (!this->rigidbody) return;
+
   // Set the grounded to false, so if no collisions is detected, then the grounded will be false by default
   this->grounded = false;
 
