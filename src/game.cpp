@@ -136,8 +136,8 @@ void Game::update() {
   for (GameObject *&object : GameObjects::all()) {
     if (Mouse.left_button_down) {
       if (object->interactive && !Characters::Players::ActivePlayer->locked && object->check_point_intersection(Mouse.position)) {
-        // object->old_transform = object->transform;
-        // object->translate(Mouse.position);
+        object->old_transform = object->transform;
+        object->snap = false;
         Mouse.clicked_object = object;
 
         if (object->check_collision(Characters::Players::ActivePlayer).collision) {
@@ -147,9 +147,9 @@ void Game::update() {
 
         for (GameObject *&child : object->children) {
           if (child == Characters::Players::ActivePlayer) continue;
-          // child->snap = false;
-          // child->originate = true;
-          // child->rigidbody = false;
+          child->snap = false;
+          child->originate = true;
+          child->rigidbody = false;
           Mouse.focused_objects.push_back(child);
         }
       }
@@ -163,14 +163,42 @@ void Game::update() {
     // Always update each object's bounding box
     object->update_bounding_box();
   }
+
   // If no object has been clicked, then the parent of the object will be whatever tile the player is colliding with.
   // Otherwise, the parent will not be updated.
   if (Mouse.clicked_object == nullptr) Characters::Players::ActivePlayer->set_parent(p_parent);
 
-  // // [DEBUG]
-  // if (Characters::Players::ActivePlayer->parent != nullptr) printf("parent: %s[%i]\r", Characters::Players::ActivePlayer->parent->handle, Characters::Players::ActivePlayer->parent->id);
-  // else printf("parent: nothing\r");
-  // fflush(stdout);
+  
+  // If an object has been selected, then move it and all its children with the mouse
+  if (Mouse.focused_objects != std::vector<GameObject *>()) {
+    Mouse.clicked_object->originate = true;
+    Mouse.clicked_object->translate(Mouse.position);
+
+    for (GameObject *&child : Mouse.focused_objects) {
+      child->originate = true;
+      child->translate(child->parent->transform.position);
+    }
+  }
+
+
+  if (Mouse.left_button_up) {
+    for (GameObject *object : GameObjects::all()) {
+      object->originate = false;
+      if (object->handle == "tile-floor") object->rigidbody = true;
+      if (object->handle == "tile") {
+        object->snap = true;
+        object->update_snap_position();
+      }
+      else object->translate(object->parent->transform.position);
+    }
+  }
+
+
+
+
+
+
+
 
   // // If an object is selected, then move the object along with the mouse
   // if (Mouse.focused_objects != std::vector<GameObject *>()) {
