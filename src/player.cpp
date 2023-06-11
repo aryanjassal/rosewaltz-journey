@@ -14,9 +14,11 @@ Player *Characters::Players::create(const char *handle, Texture texture, Transfo
 }
 
 void Player::update() {
-  if (this->bounding_box.left <= 0.0f || this->bounding_box.right >= GameObjects::Camera->width) {
-    this->walk_speed *= -1;
-    this->transform.position.x = std::clamp(this->transform.position.x, 0.0f, (float)GameObjects::Camera->width - this->transform.scale.x);
+  if (this->rigidbody) {
+    if (this->bounding_box.left <= 0.0f || this->bounding_box.right >= GameObjects::Camera->width) {
+      this->walk_speed *= -1;
+      this->transform.position.x = std::clamp(this->transform.position.x, 0.0f, (float)GameObjects::Camera->width - this->transform.scale.x);
+    }
   }
   this->transform.position.z = 1.0f;
 }
@@ -60,7 +62,7 @@ void Player::resolve_collisions() {
             this->grounded = true;
             this->transform.position.y -= c.vertical.mtv;
           } else if (c.vertical.collision && c.vertical.direction == UP) {
-            printf("[player] UP collision detected\n");
+            // printf("[player] UP collision detected  \n");
           }
         }
       } 
@@ -73,12 +75,12 @@ void Player::resolve_collisions() {
 
     if (t_touching >= 2) {
       this->locked = true;
-      printf("[player] touching multiple tiles    \r");
+      // printf("[player] touching multiple tiles      \r");
     } else {
-      printf("[player] parent: %s [%i]            \r", this->parent->handle, this->parent->id);
+      // printf("[player] parent: %s [%i]              \r", this->parent->handle, this->parent->id);
       this->locked = false;
     }
-    fflush(stdout);
+    // fflush(stdout);
   } else {
     // this->locked = false;
   }
