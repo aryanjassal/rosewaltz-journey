@@ -77,6 +77,7 @@ void Game::init() {
   Texture windows = ResourceManager::Texture::load("textures/windows-11.png", true, "windows");
   Texture gigachad = ResourceManager::Texture::load("textures/gigachad.jpg", true, "gigachad");
   Texture journey = ResourceManager::Texture::load("textures/journey.jpg", true, "journey");
+  Texture cross = ResourceManager::Texture::load("textures/cross.png", true, "cross");
   Texture floor = ResourceManager::Texture::load("textures/tiles/tile-floor.png", true, "tile-floor");
   
   // Set up the global variables to create GameObjects
@@ -94,22 +95,26 @@ void Game::init() {
   tile->interactive = true;
   tile->swap = true;
 
-  GameObject *tile_floor = GameObjects::ObjectPrefabs::create("tile-floor", floor, { "tile" }, Transform(glm::vec3(0.0f), glm::vec2(grid.x, ratio)));
+  GameObject *tile_floor = GameObjects::ObjectPrefabs::create("tile-floor", floor, { "tile-floor" }, Transform(glm::vec3(0.0f), glm::vec2(grid.x, ratio)));
   tile_floor->rigidbody = true;
   tile_floor->position_offset = glm::vec3(0.0f, grid.y - ratio, 0.0f);
 
-  // GameObject *immovable = GameObjects::ObjectPrefabs::create("immovable", windows, { "immovable", "tile" }, Transform(glm::vec3(0.0f), grid));
-  // immovable->origin = grid / glm::vec2(2.0f); 
-  // immovable->grid = grid;
-  // immovable->locked = true;
+  GameObject *immovable = GameObjects::ObjectPrefabs::create("immovable", cross, { "tile", "locked" }, Transform(glm::vec3(0.0f), grid));
+  immovable->origin = grid / glm::vec2(2.0f); 
+  immovable->grid = grid;
+  immovable->swap = true;
+  immovable->locked = true;
 
   // Create GameObjects
   for (int i = 0; i < 3; i++) {
     GameObject *t = GameObjects::instantiate("tile", Transform(glm::vec3(grid.x * i, grid.y, 0.0f), grid));
     t->texture = (i == 0) ? gigachad : (i == 1) ? windows : journey;
+
     GameObject *f = GameObjects::instantiate("tile-floor");
     f->set_parent(t);
     f->translate(t->transform.position);
+    
+    GameObject *im = GameObjects::instantiate("immovable", Transform(glm::vec3(grid.x * i, 0.0f, 0.0f), grid));
   }
 }
 
@@ -121,7 +126,6 @@ void Game::run() {
 }
 
 void Game::update() {
-
   GameObject *p_parent = nullptr;
   for (GameObject *&object : GameObjects::all()) {
     if (Mouse.left_button_down) {
@@ -180,12 +184,22 @@ void Game::update() {
     Mouse.clicked_object->update_snap_position();
 
     if (Mouse.clicked_object->swap) {
-      // if (Mouse.clicked_object != Characters::Players::ActivePlayer->parent) Characters::Players::ActivePlayer->position_offset = glm::vec3(std::fmod(Characters::Players::ActivePlayer->transform.position.x, TileSize.x), std::fmod(Characters::Players::ActivePlayer->transform.position.y, TileSize.y), 0.0f);
       for (GameObject *&object : GameObjects::all()) {
         if (object == Mouse.clicked_object) continue;
         if (object->swap && (int)object->transform.position.x == (int)Mouse.clicked_object->transform.position.x && (int)object->transform.position.y == (int)Mouse.clicked_object->transform.position.y) {
+          if (object->locked) {
+            Mouse.clicked_object->translate(Mouse.clicked_object->old_transform.position);
+            for (GameObject *child : Mouse.clicked_object->children) {
+              if (child == Characters::Players::ActivePlayer) {
+                Characters::Players::ActivePlayer->translate(object->transform.position + glm::vec3(std::fmod(Characters::Players::ActivePlayer->transform.position.x, TileSize.x), std::fmod(Characters::Players::ActivePlayer->transform.position.y, TileSize.y), 0.0f));
+              } else {
+                child->translate(object->transform.position);
+              }
+            }
+            break;
+          }
+
           object->translate(Mouse.clicked_object->old_transform.position);
-          // if (object->id == Characters::Players::ActivePlayer->parent->id) Characters::Players::ActivePlayer->position_offset = glm::vec3(std::fmod(Characters::Players::ActivePlayer->transform.position.x, TileSize.x), std::fmod(Characters::Players::ActivePlayer->transform.position.y, TileSize.y), 0.0f);
           for (GameObject *&child : object->children) {
             if (child == Characters::Players::ActivePlayer) {
               Characters::Players::ActivePlayer->translate(object->transform.position + glm::vec3(std::fmod(Characters::Players::ActivePlayer->transform.position.x, TileSize.x), std::fmod(Characters::Players::ActivePlayer->transform.position.y, TileSize.y), 0.0f));
@@ -290,7 +304,7 @@ void Game::render() {
 
   // Render each GameObject
   for (GameObject *&object : GameObjects::all()) {
-    if (object->handle == "tile") object->render(Renderer, glm::vec4(1.0f, 1.0f, 1.0f, 0.5f));
+    if (object->tags[0] == "tile") object->render(Renderer, glm::vec4(1.0f, 1.0f, 1.0f, 0.5f));
     else object->render(Renderer);
   }
 
