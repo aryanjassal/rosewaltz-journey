@@ -23,7 +23,7 @@
 class GameObject {
   public:
     // Defines an name or handle for each GameObject
-    const char *handle;
+    std::string handle;
 
     // Defines a unique identifier for each GameObject
     unsigned long id;
@@ -116,18 +116,18 @@ class GameObject {
 namespace GameObjects {
   // Store a list of all the GameObjects and Prefabs ever created
   static std::map<unsigned long, GameObject> Objects;
-  static std::map<const char *, GameObject> Prefabs;
+  static std::map<std::string, GameObject> Prefabs;
 
   namespace ObjectPrefabs {
-    GameObject *create(const char *handle, Texture texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
-    GameObject *get(const char *handle);
+    GameObject *create(std::string handle, Texture texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
+    GameObject *get(std::string handle);
   }
 
   extern SpriteRenderer *Renderer;
   extern OrthoCamera *Camera;
 
   // Create a GameObject by providing all the required parameters
-  GameObject *create(const char *handle, Texture texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
+  GameObject *create(std::string handle, Texture texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
 
   // Instantiate an existing prefab with all the required settings already set
   GameObject *instantiate(const char *prefab_handle);

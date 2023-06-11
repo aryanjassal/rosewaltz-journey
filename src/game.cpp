@@ -89,7 +89,7 @@ void Game::init() {
   Characters::Players::ActivePlayer = player;
 
   // Create ObjectPrefabs
-  GameObject *tile = GameObjects::ObjectPrefabs::create("tile", gigachad, { "tile" }, Transform(glm::vec3(0.0f), grid));
+  GameObject *tile = GameObjects::ObjectPrefabs::create("tile", nothing, { "tile" }, Transform(glm::vec3(0.0f), grid));
   tile->origin = grid / glm::vec2(2.0f); 
   tile->grid = grid;
   tile->interactive = true;

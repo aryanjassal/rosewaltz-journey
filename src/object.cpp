@@ -134,7 +134,7 @@ void GameObject::unset_child(GameObject *child) {
   }
 }
 
-GameObject *GameObjects::ObjectPrefabs::create(const char *handle, Texture texture, std::vector<std::string> tags, Transform transform) {
+GameObject *GameObjects::ObjectPrefabs::create(std::string handle, Texture texture, std::vector<std::string> tags, Transform transform) {
   if (GameObjects::Renderer == nullptr) throw std::runtime_error("A SpriteRenderer must be set for GameObjects::Renderer\n");
   if (GameObjects::Prefabs.find(handle) != GameObjects::Prefabs.end()) throw std::runtime_error("Another Prefab already exists with the same handle!\n");
 
@@ -151,7 +151,7 @@ GameObject *GameObjects::ObjectPrefabs::create(const char *handle, Texture textu
   return &GameObjects::Prefabs[handle];
 }
 
-GameObject *GameObjects::create(const char *handle, Texture texture, std::vector<std::string> tags, Transform transform) {
+GameObject *GameObjects::create(std::string handle, Texture texture, std::vector<std::string> tags, Transform transform) {
   if (GameObjects::Renderer == nullptr) throw std::runtime_error("A SpriteRenderer must be set for GameObjects::Renderer\n");
 
   GameObject object = GameObject();
@@ -228,7 +228,7 @@ std::vector<GameObject *> GameObjects::all() {
 //   return &GameObjects::Objects[handle];
 // }
 
-GameObject *GameObjects::ObjectPrefabs::get(const char *handle) {
+GameObject *GameObjects::ObjectPrefabs::get(std::string handle) {
   return &GameObjects::Prefabs[handle];
 }
 

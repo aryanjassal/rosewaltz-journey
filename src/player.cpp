@@ -67,8 +67,7 @@ void Player::resolve_collisions() {
         }
       } 
 
-      // if (object->handle == "tile") {
-      if (c.collision && object->id % 2 == 0) {
+      if (c.collision && !object->rigidbody && object->handle == "tile") {
         t_touching++;
       }
     }
@@ -77,12 +76,10 @@ void Player::resolve_collisions() {
       this->locked = true;
       // printf("[player] touching multiple tiles      \r");
     } else {
-      // printf("[player] parent: %s [%i]              \r", this->parent->handle, this->parent->id);
+      // printf("[player] parent: %s [%i]              \r", this->parent->handle.c_str(), this->parent->id);
       this->locked = false;
     }
     // fflush(stdout);
-  } else {
-    // this->locked = false;
   }
 }
 
