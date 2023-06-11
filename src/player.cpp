@@ -28,13 +28,14 @@ void Player::resolve_vectors() {
   this->velocity.x += this->acceleration.x;
   this->velocity.x += this->impulse.x;
 
-  if (!this->grounded) {
+  if (this->grounded) this->velocity.y = 0.0f;
+  // if (this->grounded) {
     this->velocity.y += this->acceleration.y;
     this->velocity.y += this->impulse.y;
-  } else this->velocity.y = 0.0f;
+  // } else this->velocity.y = 0.0f;
 
   // Flip the y-component of the velocity as it points upwards, which is incorrect in this context
-  this->transform.position += glm::vec3(this->velocity.x + this->walk_speed, this->grounded ? 0.0f : -this->velocity.y, 0.0f);
+  this->transform.position += glm::vec3(this->velocity.x + this->walk_speed, -this->velocity.y, 0.0f);
   this->impulse = glm::vec2(0.0f);
 
   // Update the bounding box of the player

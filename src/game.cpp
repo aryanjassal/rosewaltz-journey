@@ -246,10 +246,10 @@ void Game::update() {
   // Update all player entities
   for (Player *player : Characters::Players::all()) {
     player->update();
-    player->resolve_collisions();
     if (Mouse.clicked_object == nullptr) {
       player->resolve_vectors();
     }
+    player->resolve_collisions();
   }
 
   // if (this->Keyboard['F'].pressed) toggle_fullscreen();
@@ -258,7 +258,7 @@ void Game::update() {
   float factor = (Characters::Players::ActivePlayer->walk_speed / std::fabs(Characters::Players::ActivePlayer->walk_speed));
   if (this->Keyboard[GLFW_KEY_UP].pressed) Characters::Players::ActivePlayer->walk_speed += 2.0f * (abs(factor) == 1) ? factor : 1.0f;
   if (this->Keyboard[GLFW_KEY_DOWN].pressed) Characters::Players::ActivePlayer->walk_speed -= 2.0f * (abs(factor) == 1) ? factor : 1.0f;;
-  if (this->Keyboard['I'].pressed) Characters::Players::ActivePlayer->acceleration.y *= 1.0f;
+  if (this->Keyboard['I'].pressed) Characters::Players::ActivePlayer->acceleration.y *= -1.0f;
   if (this->Keyboard['U'].pressed) Characters::Players::ActivePlayer->walk_speed *= -1.0f;
 
 
