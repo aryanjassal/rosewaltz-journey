@@ -88,7 +88,7 @@ void Game::init() {
   Characters::Players::ActivePlayer = player;
 
   // Create ObjectPrefabs
-  GameObject *tile = GameObjects::ObjectPrefabs::create("tile", nothing, { "tile" }, Transform(glm::vec3(0.0f), grid));
+  GameObject *tile = GameObjects::ObjectPrefabs::create("tile", gigachad, { "tile" }, Transform(glm::vec3(0.0f), grid));
   tile->origin = grid / glm::vec2(2.0f); 
   tile->grid = grid;
   tile->interactive = true;
@@ -99,44 +99,11 @@ void Game::init() {
 
   // Create GameObjects
   for (int i = 0; i < 3; i++) {
-    GameObject *t = GameObjects::instantiate(*tile, Transform(glm::vec3(grid.x * i, grid.y, 0.0f), grid));
-    GameObject *f = GameObjects::instantiate(*tile_floor);
-    f->parent = t;
+    GameObject *t = GameObjects::instantiate("tile", Transform(glm::vec3(grid.x * i, grid.y, 0.0f), grid));
+    GameObject *f = GameObjects::instantiate("tile-floor");
+    f->set_parent(t);
     f->translate(t->transform.position);
   }
-
-  // GameObject *tile1 = GameObjects::create("tile1", gigachad, { "tile1", "tile" }, Transform(glm::vec3(0.0f, grid.y, 0.0f), grid));
-  // tile1->origin = grid / glm::vec2(2.0f); 
-  // tile1->grid = grid;
-  // GameObject *tile1_floor = GameObjects::create("tile1-floor", floor, { "tile1" }, Transform(glm::vec3(0.0f), glm::vec2(grid.x, ratio)));
-  // tile1_floor->position_offset = glm::vec3(0.0f, grid.y - ratio, 0.0f);
-  // tile1_floor->translate(tile1->transform.position);
-  //
-  // GameObject *tile2 = GameObjects::create("tile2", windows, { "tile2", "tile" }, Transform(glm::vec3(grid.x, grid.y, 0.0f), grid));
-  // tile2->origin = grid / glm::vec2(2.0f);
-  // tile2->grid = grid;
-  // GameObject *tile2_floor = GameObjects::create("tile2-floor", floor, { "tile2" }, Transform(glm::vec3(0.0f), glm::vec2(grid.x, ratio)));
-  // tile2_floor->position_offset = glm::vec3(0.0f, grid.y - ratio, 0.0f);
-  // tile2_floor->translate(tile2->transform.position);
-  //
-  // GameObject *tile3 = GameObjects::create("tile3", journey, { "tile3", "tile" }, Transform(glm::vec3(grid.x * 2, grid.y, 0.0f), grid));
-  // tile3->origin = grid / glm::vec2(2.0f);
-  // tile3->grid = grid;
-  // GameObject *tile3_floor = GameObjects::create("tile3-floor", floor, { "tile3" }, Transform(glm::vec3(0.0f), glm::vec2(grid.x, ratio)));
-  // tile3_floor->position_offset = glm::vec3(0.0f, grid.y - ratio, 0.0f);
-  // tile3_floor->translate(tile3->transform.position);
-
-  // for (GameObject *&object : GameObjects::all()) {
-  //   object->interactive = false;
-  //   object->rigidbody = true;
-  //   object->update_bounding_box();
-  // }
-  //
-  // for (GameObject *&object : GameObjects::filter("tile")) {
-  //   object->interactive = true;
-  //   object->swap = true;
-  //   object->rigidbody = false;
-  // }
 
   // GameObject *immovable1 = GameObjects::create("immovable1", gigachad, { "immovable", "tile" }, Transform(glm::vec3(0.0f), grid));
   // immovable1->origin = grid / glm::vec2(2.0f);
@@ -150,59 +117,60 @@ void Game::init() {
   //   object->locked = true;
   //   object->rigidbody = false;
   // }
+  
+  for (GameObject *&o : GameObjects::all()) {
+    printf("[exists] id: %i, '%s'\n", o->id, o->handle);
+  }
 }
 
 void Game::run() {
-  // Main events loop
   while(!glfwWindowShouldClose(this->GameWindow)) {
     this->update();
     this->render();
-
-    // Swap the buffers to actually render what we are drawing to the screen
-    glfwSwapBuffers(this->GameWindow);
   }
 }
 
 void Game::update() {
 
-  // if (Mouse.left_button_down) {
-  //   // Loop over every game object and check if the object is interactive and if the mouse intersects with it
-  //   // If it does, set the snap to zero for smooth movement and make the current object focused
-  //   for (GameObject *&object : GameObjects::all()) {
-  //     // If the left mouse button was just pressed, then add that object and the objects with the same first tag
-  //     // as the clicked object to the focused objects. No need to do this each frame while left click is being
-  //     // held down
-  //     if (object->interactive && object->check_point_intersection(Mouse.position) && Characters::Players::ActivePlayer->movable) {
-  //       object->old_transform.position = object->transform.position;
-  //       Mouse.clicked_object = object;
-  //       for (GameObject *&f_object : GameObjects::filter(object->tags[0])) {
-  //         f_object->snap = false;
-  //         f_object->originate = true;
-  //         f_object->rigidbody = false;
-  //         Mouse.focused_objects.push_back(f_object);
-  //       }
-  //
-  //       Characters::Players::ActivePlayer->position_offset = glm::vec3(std::fmod(Characters::Players::ActivePlayer->transform.position.x, TileSize.x), std::fmod(Characters::Players::ActivePlayer->transform.position.y, TileSize.y), 0.0f);
-  //       // printf("[player] pos: %.2f, %.2f, %.2f; off: %.2f, %.2f\n", Characters::Players::ActivePlayer->transform.position.x, Characters::Players::ActivePlayer->transform.position.y, Characters::Players::ActivePlayer->transform.position.z, std::fmod(Characters::Players::ActivePlayer->transform.position.x + Characters::Players::ActivePlayer->position_offset.x, TileSize.x), std::fmod(Characters::Players::ActivePlayer->transform.position.y + Characters::Players::ActivePlayer->position_offset.y, TileSize.y));
-  //
-  //       if (object->check_collision(Characters::Players::ActivePlayer).collision) {
-  //         Characters::Players::ActivePlayer->parent_tile = object;
-  //         Characters::Players::ActivePlayer->old_transform.position = Characters::Players::ActivePlayer->transform.position;
-  //       }
-  //     }
-  //   }
-  // }
-
-  // For each GameObject, update it's bounding box
-  bool parent_tile = false;
+  GameObject *p_parent = nullptr;
   for (GameObject *&object : GameObjects::all()) {
-    if (object->handle == "tile" && object->check_collision(Characters::Players::ActivePlayer).collision && Mouse.clicked_object == nullptr) {
-      Characters::Players::ActivePlayer->parent = object;
-      parent_tile = true;
+    if (Mouse.left_button_down) {
+      if (object->interactive && !Characters::Players::ActivePlayer->locked && object->check_point_intersection(Mouse.position)) {
+        // object->old_transform = object->transform;
+        // object->translate(Mouse.position);
+        Mouse.clicked_object = object;
+
+        if (object->check_collision(Characters::Players::ActivePlayer).collision) {
+          Characters::Players::ActivePlayer->old_transform = Characters::Players::ActivePlayer->transform;
+          Characters::Players::ActivePlayer->set_parent(object);
+        }
+
+        for (GameObject *&child : object->children) {
+          if (child == Characters::Players::ActivePlayer) continue;
+          // child->snap = false;
+          // child->originate = true;
+          // child->rigidbody = false;
+          Mouse.focused_objects.push_back(child);
+        }
+      }
     }
+
+    // If the tile is a background tile, is colliding with the player, and no tile is selected by the mouse, then set the tile as the player's parent tile
+    if (Mouse.clicked_object == nullptr && object->handle == "tile" && object->check_collision(Characters::Players::ActivePlayer).collision) {
+      p_parent = object;
+    }
+
+    // Always update each object's bounding box
     object->update_bounding_box();
   }
-  if (!parent_tile && Mouse.clicked_object == nullptr) Characters::Players::ActivePlayer->parent = nullptr;
+  // If no object has been clicked, then the parent of the object will be whatever tile the player is colliding with.
+  // Otherwise, the parent will not be updated.
+  if (Mouse.clicked_object == nullptr) Characters::Players::ActivePlayer->set_parent(p_parent);
+
+  // // [DEBUG]
+  // if (Characters::Players::ActivePlayer->parent != nullptr) printf("parent: %s[%i]\r", Characters::Players::ActivePlayer->parent->handle, Characters::Players::ActivePlayer->parent->id);
+  // else printf("parent: nothing\r");
+  // fflush(stdout);
 
   // // If an object is selected, then move the object along with the mouse
   // if (Mouse.focused_objects != std::vector<GameObject *>()) {
@@ -314,8 +282,9 @@ void Game::update() {
   // Debug keybinds
   // if (this->Keyboard[GLFW_KEY_UP].pressed) Characters::Players::ActivePlayer->walk_speed *= 2.0f;
   // if (this->Keyboard[GLFW_KEY_DOWN].pressed) Characters::Players::ActivePlayer->walk_speed /= 2.0f;
-  if (this->Keyboard[GLFW_KEY_UP].pressed) Characters::Players::ActivePlayer->walk_speed += 2.0f * (Characters::Players::ActivePlayer->walk_speed / std::fabs(Characters::Players::ActivePlayer->walk_speed));
-  if (this->Keyboard[GLFW_KEY_DOWN].pressed) Characters::Players::ActivePlayer->walk_speed -= 2.0f * (Characters::Players::ActivePlayer->walk_speed / std::fabs(Characters::Players::ActivePlayer->walk_speed));
+  float factor = (Characters::Players::ActivePlayer->walk_speed / std::fabs(Characters::Players::ActivePlayer->walk_speed));
+  if (this->Keyboard[GLFW_KEY_UP].pressed) Characters::Players::ActivePlayer->walk_speed += 2.0f * (abs(factor) == 1) ? factor : 1.0f;
+  if (this->Keyboard[GLFW_KEY_DOWN].pressed) Characters::Players::ActivePlayer->walk_speed -= 2.0f * (abs(factor) == 1) ? factor : 1.0f;;
   if (this->Keyboard['I'].pressed) Characters::Players::ActivePlayer->acceleration.y *= 1.0f;
   if (this->Keyboard['U'].pressed) Characters::Players::ActivePlayer->walk_speed *= -1.0f;
 
@@ -369,6 +338,9 @@ void Game::render() {
 
   // Render the current active Player
   Characters::Players::ActivePlayer->render(Renderer);
+
+  // Actually display the updated images to the screen
+  glfwSwapBuffers(this->GameWindow);
 }
 
 void Game::set_window_hints() {

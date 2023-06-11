@@ -30,9 +30,6 @@ class Player : public GameObject {
     // Is the object grounded?
     bool grounded = false;
 
-    // Can the player move?
-    bool movable = true;
-
     // Empty construtor
     Player() { }
 

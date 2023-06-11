@@ -103,6 +103,37 @@ void GameObject::update_snap_position() {
   this->update_bounding_box();
 }
 
+void GameObject::set_parent(GameObject *parent) {
+  if (parent != nullptr) {
+    this->unset_parent();
+    this->parent = parent;
+    parent->children.push_back(this);
+  }
+}
+
+void GameObject::unset_parent() {
+  if (this->parent != nullptr) {
+    if (std::find(this->parent->children.begin(), this->parent->children.end(), this) != this->parent->children.end()) {
+      this->parent->children.erase(std::find(this->parent->children.begin(), this->parent->children.end(), this));
+    }
+    this->parent = nullptr;
+  }
+}
+
+void GameObject::set_child(GameObject *child) {
+  if (child != nullptr) {
+    child->parent = this;
+    this->children.push_back(child);
+  }
+}
+
+void GameObject::unset_child(GameObject *child) {
+  if (child != nullptr) {
+    this->children.erase(std::find(this->children.begin(), this->children.end(), child));
+    child->parent = nullptr;
+  }
+}
+
 GameObject *GameObjects::ObjectPrefabs::create(const char *handle, Texture texture, std::vector<std::string> tags, Transform transform) {
   if (GameObjects::Renderer == nullptr) throw std::runtime_error("A SpriteRenderer must be set for GameObjects::Renderer\n");
   if (GameObjects::Prefabs.find(handle) != GameObjects::Prefabs.end()) throw std::runtime_error("Another Prefab already exists with the same handle!\n");

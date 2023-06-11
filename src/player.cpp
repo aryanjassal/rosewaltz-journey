@@ -7,9 +7,6 @@ Player *Characters::Players::create(const char *handle, Texture texture, Transfo
   player.tags = tags;
   player.transform = transform;
   player.rigidbody = true;
-  player.active = true;
-  player.swap = false;
-  player.interactive = false;
   player.update_bounding_box();
 
   Characters::Players::Players[handle] = player;
@@ -43,50 +40,45 @@ void Player::resolve_vectors() {
 }
 
 void Player::resolve_collisions() {
-  // If the player is not a rigidbody, then no collisions can happen
-  if (!this->rigidbody) return;
-
   // Set the grounded to false, so if no collisions is detected, then the grounded will be false by default
   this->grounded = false;
 
-  // Number of tiles the player is in contact with
-  int t_touching = 0;
-
-  // Loop over each object and resolve each collision
+  // Only do collisions if a parent tile is set. If no parent tile exist, then the player is not colliding
+  // with any tiles, and running collisions is redundant
   if (this->parent != nullptr) {
+    int t_touching = 0;
     for (GameObject *&object : GameObjects::all()) {
-      Collision collision = object->check_collision(this);
-      if (object->parent == this->parent) {
-        // Collision collision = object->check_collision(this);
+      // The collision is being checked here as it is needed for the lock-unlock calculation
+      Collision c = object->check_collision(this);
 
-        if (collision.collision) {
-          if (object->rigidbody) {
+      // If the object is a rigidbody, then execute the collision checking
+      if (object->rigidbody) {
+        if (c.collision) {
+          if (c.vertical.collision && c.vertical.direction == DOWN) {
             this->grounded = true;
-            Direction v_dir = collision.vertical.direction;
-            // printf("%.2f\n", collision.vertical.mtv);
-            
-            // Vertical collision handling
-            if (v_dir == DOWN) {
-              this->transform.position.y -= collision.vertical.mtv;
-            } else if (v_dir == UP) {
-              this->transform.position.y -= collision.vertical.mtv - this->transform.scale.y - this->transform.scale.y;
-            } 
+            this->transform.position.y -= c.vertical.mtv;
+          } else if (c.vertical.collision && c.vertical.direction == UP) {
+            printf("[player] UP collision detected\n");
           }
-        } 
+        }
+      } 
+
+      // if (object->handle == "tile") {
+      if (c.collision && object->id % 2 == 0) {
+        t_touching++;
       }
-
-      // if the player is touching a tile, then increment the t_touching variable 
-      if (collision.collision && object->tags[1] == "tile") t_touching++;
     }
-  }
 
-  // If the player is touching more than two tiles, then set a flag on the player
-  if (t_touching >= 2) {
-    // printf("[%s] touching more than one tiles\n", this->handle.c_str());
-    this->movable = false;
+    if (t_touching >= 2) {
+      this->locked = true;
+      printf("[player] touching multiple tiles    \r");
+    } else {
+      printf("[player] parent: %s [%i]            \r", this->parent->handle, this->parent->id);
+      this->locked = false;
+    }
+    fflush(stdout);
   } else {
-    this->movable = true;
-    // printf("[%s] touching one or less tiles\n", this->handle.c_str());
+    // this->locked = false;
   }
 }
 

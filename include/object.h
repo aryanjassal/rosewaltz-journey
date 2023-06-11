@@ -74,6 +74,9 @@ class GameObject {
 
     // Declare a parent object
     GameObject *parent = nullptr;
+
+    // Declare the child objects
+    std::vector<GameObject *> children = std::vector<GameObject *>();
   
     // Define a bounding box for the object.
     // This will be used in the collision detection and the collider used for mouse interaction
@@ -87,6 +90,14 @@ class GameObject {
 
     // Translate the object to a given point
     void translate(glm::vec2 point);
+
+    // Set or unset this object's parent
+    void set_parent(GameObject *parent);
+    void unset_parent();
+
+    // Set or unset this object's child
+    void set_child(GameObject *child);
+    void unset_child(GameObject *child);
 
     // Check if the object is intersecting with a point
     bool check_point_intersection(glm::vec2 point);
