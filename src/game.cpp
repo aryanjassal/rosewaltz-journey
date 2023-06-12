@@ -79,6 +79,7 @@ void Game::init() {
   Texture journey = ResourceManager::Texture::load("textures/journey.jpg", true, "journey");
   Texture cross = ResourceManager::Texture::load("textures/cross.png", true, "cross");
   Texture floor = ResourceManager::Texture::load("textures/tiles/tile-floor.png", true, "tile-floor");
+  Texture goal = ResourceManager::Texture::load("textures/tiles/treasure.png", true, "goal");
   
   // Set up the global variables to create GameObjects
   glm::vec2 grid = glm::vec2((float)width / 3.0f, (float)height / 2.0f);
@@ -98,6 +99,7 @@ void Game::init() {
   GameObject *tile_floor = GameObjects::ObjectPrefabs::create("tile-floor", floor, { "tile-floor" }, Transform(glm::vec3(0.0f), glm::vec2(grid.x, ratio)));
   tile_floor->rigidbody = true;
   tile_floor->position_offset = glm::vec3(0.0f, grid.y - ratio, 0.0f);
+  tile_floor->set_parent(tile);
 
   GameObject *immovable = GameObjects::ObjectPrefabs::create("immovable", cross, { "tile", "locked" }, Transform(glm::vec3(0.0f), grid));
   immovable->origin = grid / glm::vec2(2.0f); 
@@ -110,9 +112,9 @@ void Game::init() {
     GameObject *t = GameObjects::instantiate("tile", Transform(glm::vec3(grid.x * i, grid.y, 0.0f), grid));
     t->texture = (i == 0) ? gigachad : (i == 1) ? windows : journey;
 
-    GameObject *f = GameObjects::instantiate("tile-floor");
-    f->set_parent(t);
-    f->translate(t->transform.position);
+    // GameObject *f = GameObjects::instantiate("tile-floor");
+    // f->set_parent(t);
+    // f->translate(t->transform.position);
     
     GameObject *im = GameObjects::instantiate("immovable", Transform(glm::vec3(grid.x * i, 0.0f, 0.0f), grid));
   }
@@ -236,18 +238,6 @@ void Game::update() {
       Characters::Players::ActivePlayer->translate(Characters::Players::ActivePlayer->parent->transform.position + position_offset);
     }
   }
-
-
-
-
-
-
-
-
-
-
-
-
 
   // Update all player entities
   for (Player *player : Characters::Players::all()) {
