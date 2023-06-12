@@ -108,6 +108,8 @@ void GameObject::set_parent(GameObject *parent) {
     this->unset_parent();
     this->parent = parent;
     parent->children.push_back(this);
+  } else {
+    this->unset_parent();
   }
 }
 
@@ -197,12 +199,12 @@ GameObject *GameObjects::instantiate(const char *prefab_handle, Transform transf
 
   instantiation_id++;
 
-  for (GameObject *&child : prefab->children) {
-    GameObject *c = GameObjects::instantiate(*child);
-    c->set_parent(prefab);
-    c->translate(prefab->transform.position);
-    printf("child of '[%i] %s': [%i] %s\n", prefab->id, prefab->handle.c_str(), c->id, c->handle.c_str());
-  }
+  // for (GameObject *&child : prefab->children) {
+  //   GameObject *c = GameObjects::instantiate(*child);
+  //   c->set_parent(prefab);
+  //   c->translate(prefab->transform.position);
+  //   printf("child of '[%i] %s': [%i] %s\n", prefab->id, prefab->handle.c_str(), c->id, c->handle.c_str());
+  // }
 
   GameObjects::Objects[prefab->id] = *prefab;
   return &GameObjects::Objects[prefab->id];
