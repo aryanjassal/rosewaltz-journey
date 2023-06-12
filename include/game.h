@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <map>
 #include <stdexcept>
+#include <chrono>
+#include <unistd.h>
 
 #include "glm/glm.hpp"
 
@@ -56,11 +58,9 @@ class Game {
     void run();
 
     // This function contains code to render stuff on the screen
-    // Tip: this function should be run as fast as possible
     void render();
 
     // This function contains code to update variables like input events, etc.
-    // Tip: this function should only run once every frame (use delta time)
     void update();
 
     // Set GLFW callbacks

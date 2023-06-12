@@ -19,13 +19,13 @@ class Player : public GameObject {
     glm::vec2 velocity = glm::vec2(0.0f);
 
     // The acceleration will be added to the velocity each frame
-    glm::vec2 acceleration = glm::vec2(0.0f, -0.3f);
+    glm::vec2 acceleration = glm::vec2(0.0f, -10.0f);
 
     // The impulse force will apply for one frame only
     glm::vec2 impulse = glm::vec2(0.0f, 5.0f);
 
     // The walk speed the player walks with
-    float walk_speed = 2.0f;
+    float walk_speed = 100.0f;
 
     // Is the object grounded?
     bool grounded = false;

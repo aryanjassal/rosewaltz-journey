@@ -24,18 +24,19 @@ void Player::update() {
 }
 
 void Player::resolve_vectors() {
+  // If the object is grounded, nullify the y-velocity.
+  // This is done to allow inversing gravity even when the player is grounded.
+  if (this->grounded) this->velocity.y = 0.0f;
+
   // Apply impulse acceleration and regular acceleration to the object
   this->velocity.x += this->acceleration.x;
   this->velocity.x += this->impulse.x;
 
-  if (this->grounded) this->velocity.y = 0.0f;
-  // if (this->grounded) {
-    this->velocity.y += this->acceleration.y;
-    this->velocity.y += this->impulse.y;
-  // } else this->velocity.y = 0.0f;
+  this->velocity.y += this->acceleration.y;
+  this->velocity.y += this->impulse.y;
 
   // Flip the y-component of the velocity as it points upwards, which is incorrect in this context
-  this->transform.position += glm::vec3(this->velocity.x + this->walk_speed, -this->velocity.y, 0.0f);
+  this->transform.position += glm::vec3((this->velocity.x + this->walk_speed) * Time::delta, -this->velocity.y * Time::delta, 0.0f);
   this->impulse = glm::vec2(0.0f);
 
   // Update the bounding box of the player

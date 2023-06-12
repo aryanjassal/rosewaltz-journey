@@ -1,6 +1,8 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
+#include <chrono>
+
 #include "glm/glm.hpp"
 
 // Declare commonly used global variables
@@ -19,5 +21,9 @@ typedef struct Transform {
   glm::vec2 scale;
   float rotation;
 };
+
+namespace Time {
+  extern double delta;
+}
 
 #endif

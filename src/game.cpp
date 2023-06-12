@@ -85,7 +85,7 @@ void Game::init() {
   float ratio = (float)height / 8.85f;
 
   // Create the player
-  Player *player = Characters::Players::create("player", gigachad, Transform(glm::vec3(100.0f, 100.0f, 0.0f), glm::vec2(100.0f)), { "player" });
+  Player *player = Characters::Players::create("player", gigachad, Transform(glm::vec3(100.0f, 450.0f, 0.0f), glm::vec2(100.0f)), { "player" });
   Characters::Players::ActivePlayer = player;
 
   // Create ObjectPrefabs
@@ -119,9 +119,15 @@ void Game::init() {
 }
 
 void Game::run() {
+  std::chrono::high_resolution_clock::time_point start_point, end_point;
   while(!glfwWindowShouldClose(this->GameWindow)) {
+    Time::delta = std::chrono::duration_cast<std::chrono::milliseconds>(end_point - start_point).count() / 1000.0f;
+    // printf("[delta] %.6f\n", Time::delta);
+
+    start_point = std::chrono::high_resolution_clock::now();
     this->update();
     this->render();
+    end_point = std::chrono::high_resolution_clock::now();
   }
 }
 
@@ -256,8 +262,9 @@ void Game::update() {
 
   // Debug keybinds
   float factor = (Characters::Players::ActivePlayer->walk_speed / std::fabs(Characters::Players::ActivePlayer->walk_speed));
-  if (this->Keyboard[GLFW_KEY_UP].pressed) Characters::Players::ActivePlayer->walk_speed += 2.0f * (abs(factor) == 1) ? factor : 1.0f;
-  if (this->Keyboard[GLFW_KEY_DOWN].pressed) Characters::Players::ActivePlayer->walk_speed -= 2.0f * (abs(factor) == 1) ? factor : 1.0f;;
+  factor = (std::fabs(factor) == 1.0f) ? factor : 1.0f;
+  if (this->Keyboard[GLFW_KEY_UP].pressed) Characters::Players::ActivePlayer->walk_speed += 100.0f * factor;
+  if (this->Keyboard[GLFW_KEY_DOWN].pressed) Characters::Players::ActivePlayer->walk_speed -= 100.0f * factor;
   if (this->Keyboard['I'].pressed) Characters::Players::ActivePlayer->acceleration.y *= -1.0f;
   if (this->Keyboard['U'].pressed) Characters::Players::ActivePlayer->walk_speed *= -1.0f;
 
