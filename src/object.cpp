@@ -196,9 +196,7 @@ GameObject *GameObjects::instantiate(const char *prefab_handle, Transform transf
   prefab->transform = transform;
   prefab->update_bounding_box();
   prefab->id = instantiation_id;
-
   instantiation_id++;
-
 
   GameObjects::Objects[prefab->id] = *prefab;
 
@@ -206,7 +204,6 @@ GameObject *GameObjects::instantiate(const char *prefab_handle, Transform transf
     GameObject *c = GameObjects::instantiate(*child);
     c->set_parent(&GameObjects::Objects[prefab->id]);
     c->translate(prefab->transform.position);
-    printf("child of '[%i] %s': [%i] %s\n", prefab->id, prefab->handle.c_str(), c->id, c->handle.c_str());
   }
 
   return &GameObjects::Objects[prefab->id];
@@ -216,7 +213,6 @@ GameObject *GameObjects::instantiate(GameObject prefab, Transform transform) {
   prefab.transform = transform;
   prefab.update_bounding_box();
   prefab.id = instantiation_id;
-
   instantiation_id++;
 
   GameObjects::Objects[prefab.id] = prefab;

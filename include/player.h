@@ -7,10 +7,12 @@
 #include <cmath>
 #include <limits>
 #include <stdio.h>
+#include <algorithm>
 
 #include "camera.h"
 #include "sprite.h"
 #include "object.h"
+#include "resource_manager.h"
 
 // Create a Player class to handle any and all player-related code 
 class Player : public GameObject {

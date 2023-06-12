@@ -79,10 +79,10 @@ void Game::init() {
   Texture journey = ResourceManager::Texture::load("textures/journey.jpg", true, "journey");
   Texture cross = ResourceManager::Texture::load("textures/cross.png", true, "cross");
   Texture floor = ResourceManager::Texture::load("textures/tiles/tile-floor.png", true, "tile-floor");
-  Texture goal = ResourceManager::Texture::load("textures/tiles/treasure.png", true, "goal");
+  Texture treasure = ResourceManager::Texture::load("textures/tiles/treasure.png", true, "treasure");
+  Texture treasure_open = ResourceManager::Texture::load("textures/tiles/treasure-open.png", true, "treasure-open");
   
   // Set up the global variables to create GameObjects
-  glm::vec2 grid = glm::vec2((float)width / 3.0f, (float)height / 2.0f);
   float ratio = (float)height / 8.85f;
 
   // Create the player
@@ -90,29 +90,40 @@ void Game::init() {
   Characters::Players::ActivePlayer = player;
 
   // Create ObjectPrefabs
-  GameObject *tile = GameObjects::ObjectPrefabs::create("tile", nothing, { "tile" }, Transform(glm::vec3(0.0f), grid));
-  tile->origin = grid / glm::vec2(2.0f); 
-  tile->grid = grid;
+  GameObject *tile = GameObjects::ObjectPrefabs::create("tile", nothing, { "tile" }, Transform(glm::vec3(0.0f), TileSize));
+  tile->origin = TileSize / glm::vec2(2.0f); 
+  tile->grid = TileSize;
   tile->interactive = true;
   tile->swap = true;
 
-  GameObject *tile_floor = GameObjects::ObjectPrefabs::create("tile-floor", floor, { "tile-floor" }, Transform(glm::vec3(0.0f), glm::vec2(grid.x, ratio)));
+  GameObject *tile_floor = GameObjects::ObjectPrefabs::create("tile-floor", floor, { "tile-floor" }, Transform(glm::vec3(0.0f), glm::vec2(TileSize.x, ratio)));
   tile_floor->rigidbody = true;
-  tile_floor->position_offset = glm::vec3(0.0f, grid.y - ratio, 0.0f);
+  tile_floor->position_offset = glm::vec3(0.0f, TileSize.y - ratio, 0.0f);
   tile_floor->set_parent(tile);
 
-  GameObject *immovable = GameObjects::ObjectPrefabs::create("immovable", cross, { "tile", "locked" }, Transform(glm::vec3(0.0f), grid));
-  immovable->origin = grid / glm::vec2(2.0f); 
-  immovable->grid = grid;
+  GameObject *goal = GameObjects::ObjectPrefabs::create("goal", treasure, { "goal" });
+  // goal->origin = goal->transform.scale - glm::vec2(2.0f);
+  // goal->originate = true;
+  goal->position_offset = glm::vec3((TileSize.x / 2.0f) - (goal->transform.scale.x / 2.0f), TileSize.y - ratio - goal->transform.scale.y, 0.0f);
+
+  GameObject *immovable = GameObjects::ObjectPrefabs::create("immovable", cross, { "tile", "locked" }, Transform(glm::vec3(0.0f), TileSize));
+  immovable->origin = TileSize / glm::vec2(2.0f); 
+  immovable->grid = TileSize;
   immovable->swap = true;
   immovable->locked = true;
 
   // Create GameObjects
   for (int i = 0; i < 3; i++) {
-    GameObject *t = GameObjects::instantiate("tile", Transform(glm::vec3(grid.x * i, grid.y, 0.0f), grid));
+    GameObject *t = GameObjects::instantiate("tile", Transform(glm::vec3(TileSize.x * i, TileSize.y, 0.0f), TileSize));
     t->texture = (i == 0) ? gigachad : (i == 1) ? windows : journey;
 
-    // GameObject *im = GameObjects::instantiate("immovable", Transform(glm::vec3(grid.x * i, 0.0f, 0.0f), grid));
+    if (i == 2) {
+      GameObject *g = GameObjects::instantiate("goal");
+      g->set_parent(t);
+      g->translate(t->transform.position);
+    }
+
+    // GameObject *im = GameObjects::instantiate("immovable", Transform(glm::vec3(grid.x * i, 0.0f, 0.0f), TileSize));
   }
 }
 
@@ -156,7 +167,7 @@ void Game::update() {
     }
 
     // If the tile is a background tile, is colliding with the player, and no tile is selected by the mouse, then set the tile as the player's parent tile
-    if (Mouse.clicked_object == nullptr && object->handle == "tile" && object->check_collision(Characters::Players::ActivePlayer).collision) {
+    if (Mouse.clicked_object == nullptr && object->tags[0] == "tile" && object->check_collision(Characters::Players::ActivePlayer).collision) {
       p_parent = object;
     }
 
@@ -218,7 +229,7 @@ void Game::update() {
 
     // Update the position of all tiled objects
     for (GameObject *&object : Mouse.focused_objects) {
-      if (object->handle == "tile-floor") {
+      if (object->handle != "tile" || object->handle != "player") {
         object->originate = false;
         object->rigidbody = true;
         object->translate(object->parent->transform.position);
