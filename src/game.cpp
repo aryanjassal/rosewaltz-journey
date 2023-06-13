@@ -57,6 +57,7 @@ void Game::init() {
 
   // Instantiate the camera and the renderer
   GameCamera = new OrthoCamera(this->width, this->height, -1.0f, 1.0f);
+  WindowSize = glm::vec2(this->width, this->height);
   Renderer = new SpriteRenderer(sprite_shader, GameCamera);
 
   // Assign the camera and the renderer as global renderers for the GameObject
@@ -142,7 +143,7 @@ void Game::update() {
   GameObject *p_parent = nullptr;
   for (GameObject *&object : GameObjects::all()) {
     if (Mouse.left_button_down && Characters::Players::ActivePlayer->parent != nullptr) {
-      if (object->interactive && !Characters::Players::ActivePlayer->locked && object->check_point_intersection(Mouse.position)) {
+      if (object->interactive && !Characters::Players::ActivePlayer->locked && object->check_point_intersection(screen_to_world(Mouse.position))) {
         object->old_transform = object->transform;
         object->snap = false;
         Mouse.clicked_object = object;
@@ -176,12 +177,11 @@ void Game::update() {
   // If no object has been clicked, then the parent of the object will be whatever tile the player is colliding with.
   // Otherwise, the parent will not be updated.
   if (Mouse.clicked_object == nullptr) Characters::Players::ActivePlayer->set_parent(p_parent);
-
   
   // If an object has been selected, then move it and all its children with the mouse
   if (Mouse.focused_objects != std::vector<GameObject *>()) {
     Mouse.clicked_object->originate = true;
-    Mouse.clicked_object->translate(Mouse.position);
+    Mouse.clicked_object->translate(screen_to_world(Mouse.position));
 
     // for (GameObject *&child : Mouse.focused_objects) {
     for (GameObject *&child : Mouse.clicked_object->children) {
@@ -189,7 +189,6 @@ void Game::update() {
       child->translate(child->parent->transform.position);
     }
   }
-
 
   if (Mouse.left_button_up && Mouse.clicked_object != nullptr) {
     Mouse.clicked_object->snap = true;
@@ -260,7 +259,7 @@ void Game::update() {
     }
   }
 
-  // if (this->Keyboard['F'].pressed) toggle_fullscreen();
+  if (this->Keyboard['F'].pressed) toggle_fullscreen();
 
   // Debug keybinds
   float factor = (Characters::Players::ActivePlayer->walk_speed / std::fabs(Characters::Players::ActivePlayer->walk_speed));

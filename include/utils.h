@@ -4,6 +4,7 @@
 #include <chrono>
 
 #include "glm/glm.hpp"
+#include "camera.h"
 
 // Declare commonly used global variables
 extern glm::vec2 WindowSize;
@@ -25,5 +26,9 @@ typedef struct Transform {
 namespace Time {
   extern double delta;
 }
+
+// Convert the screen coordinates to the world coordinates
+glm::vec2 screen_to_world(glm::vec2 screen_point);
+glm::vec3 screen_to_world(glm::vec3 screen_point);
 
 #endif
