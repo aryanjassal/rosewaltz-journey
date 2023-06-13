@@ -82,7 +82,7 @@ void GameObject::update_bounding_box() {
   this->bounding_box.bottom = n_transform.position.y + this->transform.scale.y + origin.y;
   this->bounding_box.top = n_transform.position.y + origin.y;
   
-  // if (this->tags[0] != "player") printf("[%s] [collider] %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", this->handle, this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, this->transform.position.x, this->transform.position.y);
+  // if (this->handle == "goal") printf("[%s] [collider] %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", this->handle.c_str(), this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, this->transform.position.x + this->position_offset.x, this->transform.position.y + this->position_offset.y);
 }
 
 void GameObject::update_snap_position() {

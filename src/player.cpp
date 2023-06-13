@@ -71,7 +71,6 @@ void Player::resolve_collisions() {
 
       if (c.collision && !object->rigidbody) {
         if (object->handle == "goal") {
-          // printf("GOAL\n");
           object->texture = ResourceManager::Texture::get("treasure-open");
         } else if (object->tags[0] == "tile") {
           t_touching++;

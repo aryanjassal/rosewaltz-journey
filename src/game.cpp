@@ -102,8 +102,6 @@ void Game::init() {
   tile_floor->set_parent(tile);
 
   GameObject *goal = GameObjects::ObjectPrefabs::create("goal", treasure, { "goal" });
-  // goal->origin = goal->transform.scale - glm::vec2(2.0f);
-  // goal->originate = true;
   goal->position_offset = glm::vec3((TileSize.x / 2.0f) - (goal->transform.scale.x / 2.0f), TileSize.y - ratio - goal->transform.scale.y, 0.0f);
 
   GameObject *immovable = GameObjects::ObjectPrefabs::create("immovable", cross, { "tile", "locked" }, Transform(glm::vec3(0.0f), TileSize));
@@ -123,7 +121,7 @@ void Game::init() {
       g->translate(t->transform.position);
     }
 
-    // GameObject *im = GameObjects::instantiate("immovable", Transform(glm::vec3(grid.x * i, 0.0f, 0.0f), TileSize));
+    GameObject *im = GameObjects::instantiate("immovable", Transform(glm::vec3(TileSize.x * i, 0.0f, 0.0f), TileSize));
   }
 }
 
@@ -230,8 +228,10 @@ void Game::update() {
     // Update the position of all tiled objects
     for (GameObject *&object : Mouse.focused_objects) {
       if (object->handle != "tile" || object->handle != "player") {
-        object->originate = false;
-        object->rigidbody = true;
+        if (object->handle != "goal") {
+          object->originate = false;
+          object->rigidbody = true;
+        }
         object->translate(object->parent->transform.position);
       }
     }
@@ -253,9 +253,11 @@ void Game::update() {
   for (Player *player : Characters::Players::all()) {
     if (Mouse.clicked_object == nullptr) {
       player->resolve_vectors();
+      player->update();
+      player->resolve_collisions();
+    } else {
+      player->update();
     }
-    player->update();
-    player->resolve_collisions();
   }
 
   // if (this->Keyboard['F'].pressed) toggle_fullscreen();
