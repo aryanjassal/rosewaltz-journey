@@ -24,6 +24,7 @@ class Shader {
     void activate();
 
     // Modify a uniform in the shader
+    void set_bool       (const char *handle, bool value);
     void set_float      (const char *handle, float value);
     void set_integer    (const char *handle, int value);
     void set_vector_2f  (const char *handle, float x, float y);

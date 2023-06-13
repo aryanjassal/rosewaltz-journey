@@ -98,6 +98,10 @@ void Shader::set_matrix_4f(const char *handle, const glm::mat4 &value) {
   glUniformMatrix4fv(glGetUniformLocation(this->id, handle), 1, false, glm::value_ptr(value));
 }
 
+void Shader::set_bool(const char *handle, bool value) {
+  glUniform1i(glGetUniformLocation(this->id, handle), value ? 1 : 0);
+}
+
 // Check if the shaders compile
 void Shader::compile_errors(unsigned int shader, const char *type) {
   GLint has_compiled;

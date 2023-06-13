@@ -66,7 +66,7 @@ SpriteRenderer::~SpriteRenderer() {
   glDeleteBuffers(1, &this->ebo);
 }
 
-void SpriteRenderer::render(Texture texture, Transform transform, glm::vec4 colour) {
+void SpriteRenderer::render(Texture texture, Transform transform, glm::vec4 colour, bool highlight) {
   // Create a model transformation matrix and apply any origin transformations, if any
   glm::mat4 model_transform = glm::mat4(1.0f);
 
@@ -90,6 +90,7 @@ void SpriteRenderer::render(Texture texture, Transform transform, glm::vec4 colo
 
   // Prepare the texture
   this->shader.set_vector_4f("colour", colour);
+  this->shader.set_bool("highlight", highlight);
   glActiveTexture(GL_TEXTURE0);
   texture.bind();
 

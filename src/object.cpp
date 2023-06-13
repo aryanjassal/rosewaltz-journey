@@ -6,11 +6,11 @@ SpriteRenderer *GameObjects::Renderer = nullptr;
 // Counter to keep track of the next id for instantiated GameObjects
 static unsigned long instantiation_id = 0;
 
-void GameObject::render(SpriteRenderer *renderer, glm::vec4 colour) {
+void GameObject::render(glm::vec4 colour, bool highlight) {
   Transform n_transform = this->transform;
   n_transform.position += this->position_offset;
 
-  if (this->active) renderer->render(this->texture, n_transform, colour);
+  if (this->active) GameObjects::Renderer->render(this->texture, n_transform, colour, highlight);
 }
 
 void GameObject::translate(glm::vec2 point) {

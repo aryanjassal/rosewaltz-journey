@@ -11,6 +11,7 @@ out vec2 texture_coordinate;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform bool highlight;
 
 void main() {
   // Calculate the OpenGL vertex position

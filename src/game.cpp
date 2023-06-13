@@ -34,6 +34,10 @@ Game::Game(unsigned int width, unsigned int height, std::string window_title, bo
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+  // glDepthFunc(GL_NOTEQUAL);
+  // glDepthRange(-100.0f, 100.0f);
+  // glEnable(GL_DEPTH_FUNC);
+
   // Initialise the game
   this->init();
 }
@@ -56,7 +60,7 @@ void Game::init() {
   Shader sprite_shader = ResourceManager::Shader::load("src/shaders/default.vert", "src/shaders/default.frag", "default");
 
   // Instantiate the camera and the renderer
-  GameCamera = new OrthoCamera(this->width, this->height, -1.0f, 1.0f);
+  GameCamera = new OrthoCamera(this->width, this->height, -100.0f, 100.0f);
   WindowSize = glm::vec2(this->width, this->height);
   Renderer = new SpriteRenderer(sprite_shader, GameCamera);
 
@@ -87,7 +91,7 @@ void Game::init() {
   float ratio = (float)height / 8.85f;
 
   // Create the player
-  Player *player = Characters::Players::create("player", gigachad, Transform(glm::vec3(100.0f, 450.0f, 0.0f), glm::vec2(100.0f)), { "player" });
+  Player *player = Characters::Players::create("player", gigachad, Transform(glm::vec3(100.0f, 450.0f, 1.0f), glm::vec2(100.0f)), { "player" });
   Characters::Players::ActivePlayer = player;
 
   // Create ObjectPrefabs
@@ -99,13 +103,13 @@ void Game::init() {
 
   GameObject *tile_floor = GameObjects::ObjectPrefabs::create("tile-floor", floor, { "tile-floor" }, Transform(glm::vec3(0.0f), glm::vec2(TileSize.x, ratio)));
   tile_floor->rigidbody = true;
-  tile_floor->position_offset = glm::vec3(0.0f, TileSize.y - ratio, 0.0f);
+  tile_floor->position_offset = glm::vec3(0.0f, TileSize.y - ratio, 1.0f);
   tile_floor->set_parent(tile);
 
   GameObject *goal = GameObjects::ObjectPrefabs::create("goal", treasure, { "goal" });
-  goal->position_offset = glm::vec3((TileSize.x / 2.0f) - (goal->transform.scale.x / 2.0f), TileSize.y - ratio - goal->transform.scale.y, 0.0f);
+  goal->position_offset = glm::vec3((TileSize.x / 2.0f) - (goal->transform.scale.x / 2.0f), TileSize.y - ratio - goal->transform.scale.y, 1.0f);
 
-  GameObject *immovable = GameObjects::ObjectPrefabs::create("immovable", cross, { "tile", "locked" }, Transform(glm::vec3(0.0f), TileSize));
+  GameObject *immovable = GameObjects::ObjectPrefabs::create("immovable", nothing, { "tile", "locked" }, Transform(glm::vec3(0.0f), TileSize));
   immovable->origin = TileSize / glm::vec2(2.0f); 
   immovable->grid = TileSize;
   immovable->swap = true;
@@ -113,8 +117,8 @@ void Game::init() {
 
   // Create GameObjects
   for (int i = 0; i < 3; i++) {
-    GameObject *t = GameObjects::instantiate("tile", Transform(glm::vec3(TileSize.x * i, TileSize.y, 0.0f), TileSize));
-    t->texture = (i == 0) ? gigachad : (i == 1) ? windows : journey;
+    GameObject *t = GameObjects::instantiate("tile", Transform(glm::vec3(TileSize.x * i, TileSize.y, 1.0f), TileSize));
+    // t->texture = (i == 0) ? gigachad : (i == 1) ? windows : journey;
 
     if (i == 2) {
       GameObject *g = GameObjects::instantiate("goal");
@@ -122,7 +126,7 @@ void Game::init() {
       g->translate(t->transform.position);
     }
 
-    GameObject *im = GameObjects::instantiate("immovable", Transform(glm::vec3(TileSize.x * i, 0.0f, 0.0f), TileSize));
+    GameObject *im = GameObjects::instantiate("immovable", Transform(glm::vec3(TileSize.x * i, 0.0f, 1.0f), TileSize));
   }
 }
 
@@ -130,7 +134,6 @@ void Game::run() {
   std::chrono::high_resolution_clock::time_point start_point, end_point;
   while(!glfwWindowShouldClose(this->GameWindow)) {
     Time::delta = std::chrono::duration_cast<std::chrono::milliseconds>(end_point - start_point).count() / 1000.0f;
-    // printf("[delta] %.6f\n", Time::delta);
 
     start_point = std::chrono::high_resolution_clock::now();
     this->update();
@@ -183,10 +186,9 @@ void Game::update() {
     Mouse.clicked_object->originate = true;
     Mouse.clicked_object->translate(screen_to_world(Mouse.position));
 
-    // for (GameObject *&child : Mouse.focused_objects) {
     for (GameObject *&child : Mouse.clicked_object->children) {
       child->originate = true;
-      child->translate(child->parent->transform.position);
+      child->translate(glm::vec2(child->parent->transform.position));
     }
   }
 
@@ -203,7 +205,7 @@ void Game::update() {
             Mouse.clicked_object->translate(Mouse.clicked_object->old_transform.position);
             for (GameObject *child : Mouse.clicked_object->children) {
               if (child == Characters::Players::ActivePlayer) {
-                Characters::Players::ActivePlayer->translate(object->transform.position + glm::vec3(std::fmod(Characters::Players::ActivePlayer->transform.position.x, TileSize.x), std::fmod(Characters::Players::ActivePlayer->transform.position.y, TileSize.y), 0.0f));
+                Characters::Players::ActivePlayer->translate(object->transform.position + glm::vec3(std::fmod(Characters::Players::ActivePlayer->transform.position.x, TileSize.x), std::fmod(Characters::Players::ActivePlayer->transform.position.y, TileSize.y), Characters::Players::ActivePlayer->transform.position.z));
               } else {
                 child->translate(object->transform.position);
               }
@@ -214,7 +216,7 @@ void Game::update() {
           object->translate(Mouse.clicked_object->old_transform.position);
           for (GameObject *&child : object->children) {
             if (child == Characters::Players::ActivePlayer) {
-              Characters::Players::ActivePlayer->translate(object->transform.position + glm::vec3(std::fmod(Characters::Players::ActivePlayer->transform.position.x, TileSize.x), std::fmod(Characters::Players::ActivePlayer->transform.position.y, TileSize.y), 0.0f));
+              Characters::Players::ActivePlayer->translate(object->transform.position + glm::vec3(std::fmod(Characters::Players::ActivePlayer->transform.position.x, TileSize.x), std::fmod(Characters::Players::ActivePlayer->transform.position.y, TileSize.y), Characters::Players::ActivePlayer->transform.position.z));
             } else {
               child->translate(object->transform.position);
             }
@@ -300,24 +302,35 @@ void Game::update() {
 
 void Game::render() {
   // Clear the screen (paints it to the predefined clear colour)
-  glClear(GL_COLOR_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   // Render the parallax background
   const float zoom = 100.0f;
+  const float z_index = 1.0f;
   glm::vec2 scale = glm::vec2(width + zoom, height + zoom);
-  Renderer->render(ResourceManager::Texture::get("background-bg"), { glm::vec3(0.0f, 0.0f, -1.0f), scale, 0.0f });
-  Renderer->render(ResourceManager::Texture::get("background-far"), { glm::vec3((Mouse.position / glm::vec2(150.0f)) - glm::vec2(zoom / 2.0f), -1.0f), scale, 0.0f });
-  Renderer->render(ResourceManager::Texture::get("background-mid"), { glm::vec3((Mouse.position / glm::vec2(100.0f)) - glm::vec2(zoom / 2.0f), -1.0f), scale, 0.0f });
-  Renderer->render(ResourceManager::Texture::get("background-near"), { glm::vec3((Mouse.position / glm::vec2(50.0f)) - glm::vec2(zoom / 2.0f), -1.0f), scale, 0.0f });
+  Renderer->render(ResourceManager::Texture::get("background-bg"), Transform(glm::vec3(0.0f, 0.0f, z_index), scale));
+  Renderer->render(ResourceManager::Texture::get("background-far"), Transform(glm::vec3((Mouse.position / glm::vec2(150.0f)) - glm::vec2(zoom / 2.0f), z_index), scale));
+  Renderer->render(ResourceManager::Texture::get("background-mid"), Transform(glm::vec3((Mouse.position / glm::vec2(100.0f)) - glm::vec2(zoom / 2.0f), z_index), scale));
+  Renderer->render(ResourceManager::Texture::get("background-near"), Transform(glm::vec3((Mouse.position / glm::vec2(50.0f)) - glm::vec2(zoom / 2.0f), z_index), scale));
 
   // Render each GameObject
   for (GameObject *&object : GameObjects::all()) {
-    if (object->tags[0] == "tile") object->render(Renderer, glm::vec4(1.0f, 1.0f, 1.0f, 0.5f));
-    else object->render(Renderer);
+    if (std::find(Mouse.focused_objects.begin(), Mouse.focused_objects.end(), object) == Mouse.focused_objects.end() && object != Mouse.clicked_object) {
+      if (object->tags[0] == "tile") object->render(glm::vec4(1.0f, 1.0f, 1.0f, 0.5f));
+      else object->render();
+    }
+  }
+
+  if (Mouse.clicked_object != nullptr) {
+    for (GameObject *&object : Mouse.focused_objects) {
+      object->render();
+    }
+
+    Mouse.clicked_object->render(glm::vec4(1.0f, 1.0f, 1.0f, 0.5f), true);
   }
 
   // Render the current active Player
-  Characters::Players::ActivePlayer->render(Renderer);
+  Characters::Players::ActivePlayer->render();
 
   // Actually display the updated images to the screen
   glfwSwapBuffers(this->GameWindow);
