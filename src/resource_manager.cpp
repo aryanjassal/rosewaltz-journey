@@ -3,6 +3,66 @@
 //TODO: For deallocation, also remove the reference to their handle and everything from the map, as even
 //TODO: the memory has been freed, there are some pointers still referencing what it used to be.
 
+std::map<std::string, ::Shader> Shaders;
+std::map<std::string, ::Texture> Textures;
+std::map<char, Character> ResourceManager::Font::Characters;
+
+void ResourceManager::Font::load(const char *path, std::string font_name, unsigned int num_chars) {
+  FT_Face face;
+  if (FT_New_Face(Fonts::lib, path, 0, &face)) {
+    printf("%s\n", "ERROR::FREETYPE: Failed to load font");  
+  }
+
+  FT_Set_Pixel_Sizes(face, 0, 48);
+
+  // Disable byte-alignment restriction
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);   
+
+  for (unsigned char c = 0; c < num_chars; c++) {
+    // Load character glyph 
+    if (FT_Load_Char(face, c, FT_LOAD_RENDER))
+    {
+      printf("%s\n", "ERROR::FREETYTPE: Failed to load Glyph");
+      continue;
+    }
+
+    // Generate texture
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(
+      GL_TEXTURE_2D,
+      0,
+      GL_RED,
+      face->glyph->bitmap.width,
+      face->glyph->bitmap.rows,
+      0,
+      GL_RED,
+      GL_UNSIGNED_BYTE,
+      face->glyph->bitmap.buffer
+    );
+
+    // Set texture options
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Now store character for later use
+    Character character = {
+      texture, 
+      glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
+      glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+      face->glyph->advance.x
+    };
+
+    Characters[c] = character;
+  }
+
+  FT_Done_Face(face);
+  FT_Done_FreeType(Fonts::lib);
+}
+
 ::Shader ResourceManager::Shader::load(const char *vertex_shader_path, const char *fragment_shader_path, const char *geometry_shader_path, std::string handle) {
   std::string vertex_shader_code, fragment_shader_code, geometry_shader_code;
 

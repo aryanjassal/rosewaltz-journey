@@ -3,113 +3,9 @@
     "arguments": [
       "/usr/bin/g++",
       "-w",
-      "-I",
-      "include",
-      "-c",
-      "-o",
-      "out/glad/gl.o",
-      "src/glad/gl.c"
-    ],
-    "directory": "/home/aryanj/Projects/rosewaltz-journey",
-    "file": "/home/aryanj/Projects/rosewaltz-journey/src/glad/gl.c",
-    "output": "/home/aryanj/Projects/rosewaltz-journey/out/glad/gl.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-w",
-      "-I",
-      "include",
-      "-c",
-      "-o",
-      "out/stb/stb_image.o",
-      "src/stb/stb_image.cpp"
-    ],
-    "directory": "/home/aryanj/Projects/rosewaltz-journey",
-    "file": "/home/aryanj/Projects/rosewaltz-journey/src/stb/stb_image.cpp",
-    "output": "/home/aryanj/Projects/rosewaltz-journey/out/stb/stb_image.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-w",
-      "-I",
-      "include",
-      "-c",
-      "-o",
-      "out/object.o",
-      "src/object.cpp"
-    ],
-    "directory": "/home/aryanj/Projects/rosewaltz-journey",
-    "file": "/home/aryanj/Projects/rosewaltz-journey/src/object.cpp",
-    "output": "/home/aryanj/Projects/rosewaltz-journey/out/object.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-w",
-      "-I",
-      "include",
-      "-c",
-      "-o",
-      "out/camera.o",
-      "src/camera.cpp"
-    ],
-    "directory": "/home/aryanj/Projects/rosewaltz-journey",
-    "file": "/home/aryanj/Projects/rosewaltz-journey/src/camera.cpp",
-    "output": "/home/aryanj/Projects/rosewaltz-journey/out/camera.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-w",
-      "-I",
-      "include",
-      "-c",
-      "-o",
-      "out/sprite.o",
-      "src/sprite.cpp"
-    ],
-    "directory": "/home/aryanj/Projects/rosewaltz-journey",
-    "file": "/home/aryanj/Projects/rosewaltz-journey/src/sprite.cpp",
-    "output": "/home/aryanj/Projects/rosewaltz-journey/out/sprite.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-w",
-      "-I",
-      "include",
-      "-c",
-      "-o",
-      "out/resource_manager.o",
-      "src/resource_manager.cpp"
-    ],
-    "directory": "/home/aryanj/Projects/rosewaltz-journey",
-    "file": "/home/aryanj/Projects/rosewaltz-journey/src/resource_manager.cpp",
-    "output": "/home/aryanj/Projects/rosewaltz-journey/out/resource_manager.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-w",
-      "-I",
-      "include",
-      "-c",
-      "-o",
-      "out/texture.o",
-      "src/texture.cpp"
-    ],
-    "directory": "/home/aryanj/Projects/rosewaltz-journey",
-    "file": "/home/aryanj/Projects/rosewaltz-journey/src/texture.cpp",
-    "output": "/home/aryanj/Projects/rosewaltz-journey/out/texture.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-w",
-      "-I",
-      "include",
+      "-Iinclude",
+      "-g",
+      "-I/usr/include/freetype2",
       "-c",
       "-o",
       "out/game.o",
@@ -118,35 +14,5 @@
     "directory": "/home/aryanj/Projects/rosewaltz-journey",
     "file": "/home/aryanj/Projects/rosewaltz-journey/src/game.cpp",
     "output": "/home/aryanj/Projects/rosewaltz-journey/out/game.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-w",
-      "-I",
-      "include",
-      "-c",
-      "-o",
-      "out/main.o",
-      "src/main.cpp"
-    ],
-    "directory": "/home/aryanj/Projects/rosewaltz-journey",
-    "file": "/home/aryanj/Projects/rosewaltz-journey/src/main.cpp",
-    "output": "/home/aryanj/Projects/rosewaltz-journey/out/main.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-w",
-      "-I",
-      "include",
-      "-c",
-      "-o",
-      "out/shader.o",
-      "src/shader.cpp"
-    ],
-    "directory": "/home/aryanj/Projects/rosewaltz-journey",
-    "file": "/home/aryanj/Projects/rosewaltz-journey/src/shader.cpp",
-    "output": "/home/aryanj/Projects/rosewaltz-journey/out/shader.o"
   }
 ]

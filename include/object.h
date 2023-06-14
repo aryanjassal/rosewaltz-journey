@@ -114,17 +114,15 @@ class GameObject {
 
 // This namespace handles generic functions related to dealing with GameObjects
 namespace GameObjects {
-  // Store a list of all the GameObjects and Prefabs ever created
-  static std::map<unsigned long, GameObject> Objects;
-  static std::map<std::string, GameObject> Prefabs;
+  // Externally declare the main Renderer and the Camera
+  extern SpriteRenderer *Renderer;
+  extern OrthoCamera *Camera;
 
+  // This namespace handles creating and dealing with Prefabs
   namespace ObjectPrefabs {
     GameObject *create(std::string handle, Texture texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
     GameObject *get(std::string handle);
   }
-
-  extern SpriteRenderer *Renderer;
-  extern OrthoCamera *Camera;
 
   // Create a GameObject by providing all the required parameters
   GameObject *create(std::string handle, Texture texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());

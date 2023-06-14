@@ -1,7 +1,7 @@
 #ifndef __GAME_H__
 #define __GAME_H__
 
-#include <glad/gl.h>
+#include "glad/gl.h"
 #include <GLFW/glfw3.h>
 
 #include <stdio.h>
@@ -20,6 +20,7 @@
 #include "object.h"
 #include "player.h"
 #include "utils.h"
+#include "font.h"
 
 class Game {
   public:

@@ -25,15 +25,15 @@ MKDIR := @mkdir -p
 
 # The flags to be passed to the C compiler (the $CC)
 # -w -> supresses all warnings
-COMPILER_FLAGS := -w -I $(INC_DIR) -g
+COMPILER_FLAGS := -w -I$(INC_DIR) -g -I/usr/include/freetype2
 
 # The libraries that our executable is being linked against
-LIBRARIES := -L $(LIB_DIR) -lGL -lglfw3 -lX11 -lm
+LIBRARIES := -L$(LIB_DIR) -lfreetype -lGL -lglfw3 -lX11 -lm
 
 # Some miscallenous commands which will prove useful later (if ever)
 CP := @cp
 ECHO := @echo
-RM := @rm -r
+RM := @rm -rf -- 
 
 # The default target that compiles the entire project
 all: compile run

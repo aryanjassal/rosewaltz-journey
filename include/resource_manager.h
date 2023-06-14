@@ -6,6 +6,7 @@
 
 #include "shader.h"
 #include "texture.h"
+#include "font.h"
 
 #include <map>
 #include <string>
@@ -17,9 +18,6 @@
 // and resources during runtime. Each resource is stored for future use using
 // a unique string handle.
 namespace ResourceManager {
-  static std::map<std::string, ::Shader>  Shaders;
-  static std::map<std::string, ::Texture> Textures;
-  
   // Manages all shaders used by the program
   namespace Shader {
     // Loads the vertex and fragment shader files to create a new shader in the resource manager
@@ -54,6 +52,16 @@ namespace ResourceManager {
 
     // Delete any hogged memory by removing image data no longer required
     void deallocate(unsigned char *image_data);
+  }
+
+  // Manages loading and deallocating font files.
+  namespace Font {
+    // The current active list of characters
+    extern std::map<char, Character> Characters;
+
+    // Load a new font.
+    // NOTE: Only one font is supported. Loading another font will overwrite existing font.
+    void load(const char *file_path, std::string font_name, unsigned int num_chars);
   }
 
   // Deallocates all resources being managed by the program, freeing up memory.

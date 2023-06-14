@@ -1,7 +1,12 @@
 #include "object.h"
 
+// Publically store the active Camera and the Renderer
 OrthoCamera *GameObjects::Camera = new OrthoCamera(WindowSize.x, WindowSize.y, 1000.0f, -1000.0f);
 SpriteRenderer *GameObjects::Renderer = nullptr;
+
+// Store a list of all the GameObjects and Prefabs ever created
+std::map<unsigned long, GameObject> Objects;
+std::map<std::string, GameObject> Prefabs;
 
 // Counter to keep track of the next id for instantiated GameObjects
 static unsigned long instantiation_id = 0;
@@ -9,7 +14,7 @@ static unsigned long instantiation_id = 0;
 void GameObject::render(glm::vec4 colour, int focus) {
   Transform n_transform = this->transform;
   n_transform.position += this->position_offset;
-  if (this->tags[0] == "tile") n_transform.scale += glm::vec2(2.0f);
+  // if (this->tags[0] == "tile") n_transform.scale += glm::vec2(2.0f);
 
   if (this->active) GameObjects::Renderer->render(this->texture, n_transform, colour, focus);
 }
@@ -130,7 +135,7 @@ void GameObject::unset_child(GameObject *child) {
 
 GameObject *GameObjects::ObjectPrefabs::create(std::string handle, Texture texture, std::vector<std::string> tags, Transform transform) {
   if (GameObjects::Renderer == nullptr) throw std::runtime_error("A SpriteRenderer must be set for GameObjects::Renderer\n");
-  if (GameObjects::Prefabs.find(handle) != GameObjects::Prefabs.end()) throw std::runtime_error("Another Prefab already exists with the same handle!\n");
+  if (Prefabs.find(handle) != Prefabs.end()) throw std::runtime_error("Another Prefab already exists with the same handle!\n");
 
   GameObject object = GameObject();
   object.handle = handle;
@@ -140,8 +145,8 @@ GameObject *GameObjects::ObjectPrefabs::create(std::string handle, Texture textu
   object.active = false;
   object.update_bounding_box();
 
-  GameObjects::Prefabs[handle] = object;
-  return &GameObjects::Prefabs[handle];
+  Prefabs[handle] = object;
+  return &Prefabs[handle];
 }
 
 GameObject *GameObjects::create(std::string handle, Texture texture, std::vector<std::string> tags, Transform transform) {
@@ -157,8 +162,8 @@ GameObject *GameObjects::create(std::string handle, Texture texture, std::vector
 
   instantiation_id++;
 
-  GameObjects::Objects[object.id] = object;
-  return &GameObjects::Objects[object.id];
+  Objects[object.id] = object;
+  return &Objects[object.id];
 }
 
 GameObject *GameObjects::instantiate(const char *prefab_handle) {
@@ -168,8 +173,8 @@ GameObject *GameObjects::instantiate(const char *prefab_handle) {
 
   instantiation_id++;
 
-  GameObjects::Objects[prefab->id] = *prefab;
-  return &GameObjects::Objects[prefab->id];
+  Objects[prefab->id] = *prefab;
+  return &Objects[prefab->id];
 }
 
 GameObject *GameObjects::instantiate(GameObject prefab) {
@@ -178,8 +183,8 @@ GameObject *GameObjects::instantiate(GameObject prefab) {
 
   instantiation_id++;
 
-  GameObjects::Objects[prefab.id] = prefab;
-  return &GameObjects::Objects[prefab.id];
+  Objects[prefab.id] = prefab;
+  return &Objects[prefab.id];
 }
 
 GameObject *GameObjects::instantiate(const char *prefab_handle, Transform transform) {
@@ -190,15 +195,15 @@ GameObject *GameObjects::instantiate(const char *prefab_handle, Transform transf
   prefab->id = instantiation_id;
   instantiation_id++;
 
-  GameObjects::Objects[prefab->id] = *prefab;
+  Objects[prefab->id] = *prefab;
 
   for (GameObject *&child : prefab->children) {
     GameObject *c = GameObjects::instantiate(*child);
-    c->set_parent(&GameObjects::Objects[prefab->id]);
+    c->set_parent(&Objects[prefab->id]);
     c->translate(prefab->transform.position);
   }
 
-  return &GameObjects::Objects[prefab->id];
+  return &Objects[prefab->id];
 }
 
 GameObject *GameObjects::instantiate(GameObject prefab, Transform transform) {
@@ -208,15 +213,15 @@ GameObject *GameObjects::instantiate(GameObject prefab, Transform transform) {
   prefab.id = instantiation_id;
   instantiation_id++;
 
-  GameObjects::Objects[prefab.id] = prefab;
-  return &GameObjects::Objects[prefab.id];
+  Objects[prefab.id] = prefab;
+  return &Objects[prefab.id];
 }
 
 std::vector<GameObject *> GameObjects::all() {
   std::vector<GameObject *> all_objects;
 
   // Get all objects if they are active
-  for (auto &pair : GameObjects::Objects) {
+  for (auto &pair : Objects) {
     if (pair.second.active) {
       all_objects.push_back(&pair.second);
     }
@@ -229,7 +234,7 @@ std::vector<GameObject *> GameObjects::all() {
 // }
 
 GameObject *GameObjects::ObjectPrefabs::get(std::string handle) {
-  return &GameObjects::Prefabs[handle];
+  return &Prefabs[handle];
 }
 
 std::vector<GameObject *> GameObjects::filter(std::vector<std::string> tags) {
@@ -238,7 +243,7 @@ std::vector<GameObject *> GameObjects::filter(std::vector<std::string> tags) {
   // For each object, if the object is active, then check if it has all the tags
   // if it doesn't, then just skip that object. Otherwise, add that object to the
   // output vector
-  for (auto &pair : GameObjects::Objects) {
+  for (auto &pair : Objects) {
     if (pair.second.active) {
       bool contains_tags = true;
       for (std::string tag : tags) {
@@ -259,7 +264,7 @@ std::vector<GameObject *> GameObjects::filter(std::string tag) {
 
   // For each object, if the object is active, check all its tags and if
   // it has the same tag as the one required, then add it to the output vector
-  for (auto &pair : GameObjects::Objects) {
+  for (auto &pair : Objects) {
     if (pair.second.active)
       for (std::string o_tag : pair.second.tags)
         if (tag == o_tag)
@@ -274,7 +279,7 @@ std::vector<GameObject *> GameObjects::except(std::string tag) {
   // For each GameObject, if it is active, check all its tags against the filter tag.
   // If the tag isn't in linked with the object, then just ignore that object. Otherwise, 
   // add that object to the output vector
-  for (auto &pair : GameObjects::Objects) {
+  for (auto &pair : Objects) {
     if (pair.second.active) {
       bool found = true;
       for (std::string o_tag : pair.second.tags) {
