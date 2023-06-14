@@ -20,7 +20,7 @@ class SpriteRenderer {
 
     // Actually render the sprite to the screen.
     // Note that only an orthographic camera is supported for now.
-    void render(Texture texture, Transform transform, glm::vec4 colour = glm::vec4(1.0f), bool highlight = false); 
+    void render(Texture texture, Transform transform, glm::vec4 colour = glm::vec4(1.0f), int focus = 0); 
 
   private:
     Shader shader;

@@ -6,21 +6,16 @@ SpriteRenderer *GameObjects::Renderer = nullptr;
 // Counter to keep track of the next id for instantiated GameObjects
 static unsigned long instantiation_id = 0;
 
-void GameObject::render(glm::vec4 colour, bool highlight) {
+void GameObject::render(glm::vec4 colour, int focus) {
   Transform n_transform = this->transform;
   n_transform.position += this->position_offset;
+  if (this->tags[0] == "tile") n_transform.scale += glm::vec2(2.0f);
 
-  if (this->active) GameObjects::Renderer->render(this->texture, n_transform, colour, highlight);
+  if (this->active) GameObjects::Renderer->render(this->texture, n_transform, colour, focus);
 }
 
 void GameObject::translate(glm::vec2 point) {
   glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
-
-  // Convert the mouse coordinates to camera-space
-  // point = (point / WindowSize) * glm::vec2(GameObjects::Camera->width, GameObjects::Camera->height);
-  // point = glm::vec2((float)point.x / (float)WindowSize.x, (float)point.y / (float)WindowSize.y);
-  // printf("%.2f, %.2f\n", point.x, point.y);
-
   this->transform.position = glm::vec3(point - origin, 0.0f);
 
   if (this->snap) this->update_snap_position();
@@ -28,9 +23,6 @@ void GameObject::translate(glm::vec2 point) {
 }
 
 bool GameObject::check_point_intersection(glm::vec2 point) {
-  // Convert the screen-space coordinate to camera-space coordinates
-  // point = glm::vec2((float)point.x / (float)WindowSize.x, (float)point.y / (float)WindowSize.y) * glm::vec2(GameObjects::Camera->width, GameObjects::Camera->height);
-
   return ((this->bounding_box.left <= point.x) 
     && (this->bounding_box.right >= point.x) 
     && (this->bounding_box.top <= point.y) 
@@ -145,8 +137,7 @@ GameObject *GameObjects::ObjectPrefabs::create(std::string handle, Texture textu
   object.texture = texture;
   object.tags = tags;
   object.transform = transform;
-  object.originate = false;
-  object.locked = false;
+  object.active = false;
   object.update_bounding_box();
 
   GameObjects::Prefabs[handle] = object;
@@ -162,8 +153,6 @@ GameObject *GameObjects::create(std::string handle, Texture texture, std::vector
   object.texture = texture;
   object.tags = tags;
   object.transform = transform;
-  object.originate = false;
-  object.locked = false;
   object.update_bounding_box();
 
   instantiation_id++;
@@ -175,6 +164,7 @@ GameObject *GameObjects::create(std::string handle, Texture texture, std::vector
 GameObject *GameObjects::instantiate(const char *prefab_handle) {
   GameObject *prefab = GameObjects::ObjectPrefabs::get(prefab_handle);
   prefab->id = instantiation_id;
+  prefab->active = true;
 
   instantiation_id++;
 
@@ -184,6 +174,7 @@ GameObject *GameObjects::instantiate(const char *prefab_handle) {
 
 GameObject *GameObjects::instantiate(GameObject prefab) {
   prefab.id = instantiation_id;
+  prefab.active = true;
 
   instantiation_id++;
 
@@ -193,6 +184,7 @@ GameObject *GameObjects::instantiate(GameObject prefab) {
 
 GameObject *GameObjects::instantiate(const char *prefab_handle, Transform transform) {
   GameObject *prefab = GameObjects::ObjectPrefabs::get(prefab_handle);
+  prefab->active = true;
   prefab->transform = transform;
   prefab->update_bounding_box();
   prefab->id = instantiation_id;
@@ -210,6 +202,7 @@ GameObject *GameObjects::instantiate(const char *prefab_handle, Transform transf
 }
 
 GameObject *GameObjects::instantiate(GameObject prefab, Transform transform) {
+  prefab.active = true;
   prefab.transform = transform;
   prefab.update_bounding_box();
   prefab.id = instantiation_id;

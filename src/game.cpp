@@ -128,6 +128,10 @@ void Game::init() {
 
     GameObject *im = GameObjects::instantiate("immovable", Transform(glm::vec3(TileSize.x * i, 0.0f, 1.0f), TileSize));
   }
+
+  // for (auto &object : GameObjects::all()) {
+  //   printf("[exists] (%i) [%.2f, %.2f] %s\n", object->id, object->transform.position.x, object->transform.position.y, object->handle.c_str());
+  // }
 }
 
 void Game::run() {
@@ -145,7 +149,7 @@ void Game::run() {
 void Game::update() {
   GameObject *p_parent = nullptr;
   for (GameObject *&object : GameObjects::all()) {
-    if (Mouse.left_button_down && Characters::Players::ActivePlayer->parent != nullptr) {
+    if (Mouse.left_button_down && !Mouse.left_button_up && Characters::Players::ActivePlayer->parent != nullptr) {
       if (object->interactive && !Characters::Players::ActivePlayer->locked && object->check_point_intersection(screen_to_world(Mouse.position))) {
         object->old_transform = object->transform;
         object->snap = false;
@@ -169,7 +173,7 @@ void Game::update() {
     }
 
     // If the tile is a background tile, is colliding with the player, and no tile is selected by the mouse, then set the tile as the player's parent tile
-    if (Mouse.clicked_object == nullptr && object->tags[0] == "tile" && object->check_collision(Characters::Players::ActivePlayer).collision) {
+    if (!Mouse.left_button_down && Mouse.clicked_object == nullptr && object->tags[0] == "tile" && object->check_collision(Characters::Players::ActivePlayer).collision) {
       p_parent = object;
     }
 
@@ -192,7 +196,7 @@ void Game::update() {
     }
   }
 
-  if (Mouse.left_button_up && Mouse.clicked_object != nullptr) {
+  if (Mouse.left_button_up && !Mouse.left_button_down && !Mouse.left_button && Mouse.clicked_object != nullptr) {
     Mouse.clicked_object->snap = true;
     Mouse.clicked_object->originate = false;
     Mouse.clicked_object->update_snap_position();
@@ -313,24 +317,31 @@ void Game::render() {
   Renderer->render(ResourceManager::Texture::get("background-mid"), Transform(glm::vec3((Mouse.position / glm::vec2(100.0f)) - glm::vec2(zoom / 2.0f), z_index), scale));
   Renderer->render(ResourceManager::Texture::get("background-near"), Transform(glm::vec3((Mouse.position / glm::vec2(50.0f)) - glm::vec2(zoom / 2.0f), z_index), scale));
 
-  // Render each GameObject
+  // Render everything except the tile GameObject
   for (GameObject *&object : GameObjects::all()) {
-    if (std::find(Mouse.focused_objects.begin(), Mouse.focused_objects.end(), object) == Mouse.focused_objects.end() && object != Mouse.clicked_object) {
-      if (object->tags[0] == "tile") object->render(glm::vec4(1.0f, 1.0f, 1.0f, 0.5f));
-      else object->render();
+    if (object->tags[0] != "tile" && std::find(Mouse.focused_objects.begin(), Mouse.focused_objects.end(), object) == Mouse.focused_objects.end() && object != Mouse.clicked_object) {
+      object->render();
     }
   }
 
-  if (Mouse.clicked_object != nullptr) {
-    for (GameObject *&object : Mouse.focused_objects) {
-      object->render();
+  // Render each tile GameObject
+  for (GameObject *&object : GameObjects::all()) {
+    if (object->tags[0] == "tile") {
+      object->render(glm::vec4(1.0f), (object->tags[1] == "locked") ? 0 : -1);
     }
-
-    Mouse.clicked_object->render(glm::vec4(1.0f, 1.0f, 1.0f, 0.5f), true);
   }
 
   // Render the current active Player
   Characters::Players::ActivePlayer->render();
+
+  // Render the selected object to render them in the front
+  if (Mouse.clicked_object != nullptr && Mouse.focused_objects != std::vector<GameObject *>()) {
+    for (GameObject *&object : Mouse.focused_objects) {
+      object->render();
+    }
+
+    Mouse.clicked_object->render(glm::vec4(1.0f, 1.0f, 1.0f, 0.5f), 1);
+  }
 
   // Actually display the updated images to the screen
   glfwSwapBuffers(this->GameWindow);

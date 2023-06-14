@@ -9,17 +9,17 @@ in vec2 texture_coordinate;
 // The texture and the colour uniform
 uniform sampler2D sprite;
 uniform vec4 colour;
-uniform bool highlight;
+uniform int focus;
 
 void main() {
   // Set the default pixel colour
-  pixel = vec4(0);
+  pixel = colour * texture(sprite, texture_coordinate);
 
   // Display the texture
-  if (highlight && (texture_coordinate.x <= 0.01f || texture_coordinate.x >= 0.99f || texture_coordinate.y <= 0.01f || texture_coordinate.y >= 0.99f)) {
-    pixel += vec4(1.0f, 1.0f, 1.0f, 0.75f);
+  if (texture_coordinate.x <= 0.005f || texture_coordinate.x >= 0.995f || texture_coordinate.y <= 0.005f || texture_coordinate.y >= 0.995f) {
+    if (focus == 1) { pixel += vec4(0.796f, 0.482f, 0.494f, 1.0f); }
+    else if (focus == -1) { pixel += vec4(0.4f, 0.4f, 0.4f, 1.0f); }
   }
-  
-  // Finally set the pixel colour
-  pixel += colour * texture(sprite, texture_coordinate);
+
+  // if (focus == 1) pixel = vec4(1.0f);
 }

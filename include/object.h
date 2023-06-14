@@ -86,7 +86,7 @@ class GameObject {
     GameObject() { }
 
     // Actually render the GameObject using a SpriteRenderer
-    void render(glm::vec4 colour = glm::vec4(1.0f), bool highlight = false);
+    void render(glm::vec4 colour = glm::vec4(1.0f), int focus = 0);
 
     // Translate the object to a given point
     void translate(glm::vec2 point);
