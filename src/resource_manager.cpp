@@ -8,7 +8,7 @@ std::map<std::string, ::Texture> Textures;
 
 // std::map<char, Character> ResourceManager::Font::Characters;
 
-void ResourceManager::Font::load(const char *path, std::string font_name, unsigned int num_chars) {
+void ResourceManager::Font::load(const char *path, std::string font_name, unsigned int num_chars, short filtering) {
   // Declare the freetype library and fontface variables
   FT_Library freetype;
 
@@ -43,8 +43,8 @@ void ResourceManager::Font::load(const char *path, std::string font_name, unsign
     // Set the texture options
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (filtering == FILTER_NEAREST) ? GL_NEAREST : GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filtering == FILTER_NEAREST) ? GL_NEAREST : GL_LINEAR);
 
     // Now store character for later use
     Character character = {

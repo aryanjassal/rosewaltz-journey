@@ -166,7 +166,7 @@ GameObject *GameObjects::create(std::string handle, Texture texture, std::vector
   return &Objects[object.id];
 }
 
-GameObject *GameObjects::instantiate(const char *prefab_handle) {
+GameObject *GameObjects::instantiate(std::string prefab_handle) {
   GameObject *prefab = GameObjects::ObjectPrefabs::get(prefab_handle);
   prefab->id = instantiation_id;
   prefab->active = true;
@@ -187,7 +187,7 @@ GameObject *GameObjects::instantiate(GameObject prefab) {
   return &Objects[prefab.id];
 }
 
-GameObject *GameObjects::instantiate(const char *prefab_handle, Transform transform) {
+GameObject *GameObjects::instantiate(std::string prefab_handle, Transform transform) {
   GameObject *prefab = GameObjects::ObjectPrefabs::get(prefab_handle);
   prefab->active = true;
   prefab->transform = transform;
@@ -229,9 +229,12 @@ std::vector<GameObject *> GameObjects::all() {
   return all_objects;
 }
 
-// GameObject *GameObjects::get(const char *handle) {
-//   return &GameObjects::Objects[handle];
-// }
+GameObject *GameObjects::get(std::string handle) {
+  for (GameObject *&object : GameObjects::all()) {
+    if (object->handle == handle)
+      return &Objects[object->id];
+  }
+}
 
 GameObject *GameObjects::ObjectPrefabs::get(std::string handle) {
   return &Prefabs[handle];

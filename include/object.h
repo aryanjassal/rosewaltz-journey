@@ -128,13 +128,13 @@ namespace GameObjects {
   GameObject *create(std::string handle, Texture texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
 
   // Instantiate an existing prefab with all the required settings already set
-  GameObject *instantiate(const char *prefab_handle);
+  GameObject *instantiate(std::string prefab_handle);
   GameObject *instantiate(GameObject prefab);
-  GameObject *instantiate(const char *prefab_handle, Transform transform);
+  GameObject *instantiate(std::string prefab_handle, Transform transform);
   GameObject *instantiate(GameObject prefab, Transform transform);
 
-  // // Fetch the pointer to a GameObject from the list of GameObjects
-  // GameObject *get(const char *handle);
+  // Fetch the pointer to a GameObject from the list of GameObjects
+  GameObject *get(std::string handle);
 
   // Fetch a vector with a pointer to all active GameObjects
   std::vector<GameObject *> all();

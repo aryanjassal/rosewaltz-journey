@@ -32,6 +32,9 @@ class Player : public GameObject {
     // Is the object grounded?
     bool grounded = false;
 
+    // Did the player win?
+    bool won = false;
+
     // Empty construtor
     Player() { }
 

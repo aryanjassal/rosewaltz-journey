@@ -1,67 +1,13 @@
 #include "game.h"
 
-// //TEMP
-// void RenderText(std::string text, float x, float y, float scale, glm::vec3 color)
-// {
-//   unsigned int VAO, VBO;
-//   glGenVertexArrays(1, &VAO);
-//   glGenBuffers(1, &VBO);
-//   glBindVertexArray(VAO);
-//   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-//   glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
-//   glEnableVertexAttribArray(0);
-//   glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-//   glBindBuffer(GL_ARRAY_BUFFER, 0);
-//   glBindVertexArray(0);
-//     // activate corresponding render state	
-//     // s.Use();
-//     // glUniform3f(glGetUniformLocation(s.Program, "textColor"), color.x, color.y, color.z);
-//     glActiveTexture(GL_TEXTURE0);
-//     glBindVertexArray(VAO);
-//
-//     // iterate through all characters
-//     std::string::const_iterator c;
-//     for (c = text.begin(); c != text.end(); c++)
-//     {
-//         Character ch = ResourceManager::Font::Characters[*c];
-//
-//         float xpos = x + ch.bearing.x * scale;
-//         float ypos = y - (ch.size.y - ch.bearing.y) * scale;
-//
-//         float w = ch.size.x * scale;
-//         float h = ch.size.y * scale;
-//         // update VBO for each character
-//         float vertices[6][4] = {
-//             { xpos,     ypos + h,   0.0f, 0.0f },            
-//             { xpos,     ypos,       0.0f, 1.0f },
-//             { xpos + w, ypos,       1.0f, 1.0f },
-//
-//             { xpos,     ypos + h,   0.0f, 0.0f },
-//             { xpos + w, ypos,       1.0f, 1.0f },
-//             { xpos + w, ypos + h,   1.0f, 0.0f }           
-//         };
-//         // render glyph texture over quad
-//         glBindTexture(GL_TEXTURE_2D, ch.texture_id);
-//         // update content of VBO memory
-//         glBindBuffer(GL_ARRAY_BUFFER, VBO);
-//         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); 
-//         glBindBuffer(GL_ARRAY_BUFFER, 0);
-//         // render quad
-//         glDrawArrays(GL_TRIANGLES, 0, 6);
-//         // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
-//         x += (ch.advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
-//     }
-//     glBindVertexArray(0);
-//     glBindTexture(GL_TEXTURE_2D, 0);
-// }
-
-
 // Set up pointers to global objects for the game
 SpriteRenderer *Renderer;
 OrthoCamera *GameCamera;
 
+// Forward-declare the tile size constant
 glm::vec2 TileSize; 
 
+// Game constructor
 Game::Game(unsigned int width, unsigned int height, std::string window_title, bool fullscreen) {
   // Set internal width and height
   this->width = width;
@@ -94,6 +40,7 @@ Game::Game(unsigned int width, unsigned int height, std::string window_title, bo
   this->init();
 }
 
+// Game deconstructor
 Game::~Game() {
   // Properly remove all the resources in resource manager's list
   ResourceManager::deallocate();
@@ -104,6 +51,7 @@ Game::~Game() {
   glfwTerminate();
 }
 
+// Initialise the game by loading in and initialising all the required assets
 void Game::init() {
   // Set the clear colour of the scene background
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -119,7 +67,7 @@ void Game::init() {
   Renderer = new SpriteRenderer(sprite_shader, GameCamera);
 
   // Initialise the font renderer
-  ResourceManager::Font::load("fonts/monocraft.ttf", "monocraft", 128);
+  ResourceManager::Font::load("fonts/monocraft.ttf", "monocraft", 128, FILTER_NEAREST);
 
   // Assign the camera and the renderer as global renderers for the GameObject
   GameObjects::Camera = GameCamera;
@@ -143,6 +91,8 @@ void Game::init() {
   Texture floor = ResourceManager::Texture::load("textures/tiles/tile-floor.png", true, "tile-floor");
   Texture treasure = ResourceManager::Texture::load("textures/tiles/treasure.png", true, "treasure");
   Texture treasure_open = ResourceManager::Texture::load("textures/tiles/treasure-open.png", true, "treasure-open");
+
+  Texture tf = ResourceManager::Texture::load("textures/tiles/solo-tile-floor.png", true, "tf");
   
   // Set up the global variables to create GameObjects
   float ratio = (float)height / 8.85f;
@@ -163,6 +113,10 @@ void Game::init() {
   tile_floor->position_offset = glm::vec3(0.0f, TileSize.y - ratio, 1.0f);
   tile_floor->set_parent(tile);
 
+  GameObject *ttf = GameObjects::ObjectPrefabs::create("tf", tf, { "tf" }, Transform());
+  ttf->rigidbody = true;
+  ttf->position_offset = glm::vec3(0.0f, TileSize.y - ratio - 100.0f, 1.0f);
+
   GameObject *goal = GameObjects::ObjectPrefabs::create("goal", treasure, { "goal" });
   goal->position_offset = glm::vec3((TileSize.x / 2.0f) - (goal->transform.scale.x / 2.0f), TileSize.y - ratio - goal->transform.scale.y, 1.0f);
 
@@ -176,6 +130,13 @@ void Game::init() {
   for (int i = 0; i < 3; i++) {
     GameObject *t = GameObjects::instantiate("tile", Transform(glm::vec3(TileSize.x * i, TileSize.y, 1.0f), TileSize));
     // t->texture = (i == 0) ? gigachad : (i == 1) ? windows : journey;
+
+    if (i == 1 || i == 2) {
+      GameObject *o = GameObjects::instantiate("tf");
+      // o->rigidbody = true;
+      o->set_parent(t);
+      o->translate(t->transform.position);
+    }
 
     if (i == 2) {
       GameObject *g = GameObjects::instantiate("goal");
@@ -191,6 +152,13 @@ void Game::init() {
   // }
 }
 
+bool Game::state(std::string state) {
+  if (this->GameState.find(state) != this->GameState.end())
+    return this->GameState[state];
+  else
+    return false;
+}
+
 void Game::run() {
   std::chrono::high_resolution_clock::time_point start_point, end_point;
   while(!glfwWindowShouldClose(this->GameWindow)) {
@@ -204,67 +172,79 @@ void Game::run() {
 }
 
 void Game::update() {
-  GameObject *p_parent = nullptr;
-  for (GameObject *&object : GameObjects::all()) {
-    if (Mouse.left_button_down && !Mouse.left_button_up && Characters::Players::ActivePlayer->parent != nullptr) {
-      if (object->interactive && !Characters::Players::ActivePlayer->locked && object->check_point_intersection(screen_to_world(Mouse.position))) {
-        object->old_transform = object->transform;
-        object->snap = false;
-        Mouse.clicked_object = object;
+  if (!this->state("game-over")) {
+    GameObject *p_parent = nullptr;
+    for (GameObject *&object : GameObjects::all()) {
+      if (Mouse.left_button_down && !Mouse.left_button_up && Characters::Players::ActivePlayer->parent != nullptr) {
+        if (object->interactive && !Characters::Players::ActivePlayer->locked && object->check_point_intersection(screen_to_world(Mouse.position))) {
+          object->old_transform = object->transform;
+          object->snap = false;
+          Mouse.clicked_object = object;
 
-        if (object->check_collision(Characters::Players::ActivePlayer).collision) {
-          Characters::Players::ActivePlayer->old_transform = Characters::Players::ActivePlayer->transform;
-          Characters::Players::ActivePlayer->position_offset = glm::vec3(std::fmod(Characters::Players::ActivePlayer->transform.position.x, TileSize.x), std::fmod(Characters::Players::ActivePlayer->transform.position.y, TileSize.y), 0.0f);
-          Characters::Players::ActivePlayer->rigidbody = false;
-          Characters::Players::ActivePlayer->set_parent(object);
-        }
+          if (object->check_collision(Characters::Players::ActivePlayer).collision) {
+            Characters::Players::ActivePlayer->old_transform = Characters::Players::ActivePlayer->transform;
+            Characters::Players::ActivePlayer->position_offset = glm::vec3(std::fmod(Characters::Players::ActivePlayer->transform.position.x, TileSize.x), std::fmod(Characters::Players::ActivePlayer->transform.position.y, TileSize.y), 0.0f);
+            Characters::Players::ActivePlayer->rigidbody = false;
+            Characters::Players::ActivePlayer->set_parent(object);
+          }
 
-        for (GameObject *&child : object->children) {
-          if (child == Characters::Players::ActivePlayer) continue;
-          child->snap = false;
-          child->originate = true;
-          child->rigidbody = false;
-          Mouse.focused_objects.push_back(child);
+          for (GameObject *&child : object->children) {
+            if (child == Characters::Players::ActivePlayer) continue;
+            child->snap = false;
+            child->originate = true;
+            child->rigidbody = false;
+            Mouse.focused_objects.push_back(child);
+          }
         }
+      }
+
+      // If the tile is a background tile, is colliding with the player, and no tile is selected by the mouse, then set the tile as the player's parent tile
+      if (!Mouse.left_button_down && Mouse.clicked_object == nullptr && object->tags[0] == "tile" && object->check_collision(Characters::Players::ActivePlayer).collision) {
+        p_parent = object;
+      }
+
+      // Always update each object's bounding box
+      object->update_bounding_box();
+    }
+
+    // If no object has been clicked, then the parent of the object will be whatever tile the player is colliding with.
+    // Otherwise, the parent will not be updated.
+    if (Mouse.clicked_object == nullptr) Characters::Players::ActivePlayer->set_parent(p_parent);
+    
+    // If an object has been selected, then move it and all its children with the mouse
+    if (Mouse.focused_objects != std::vector<GameObject *>()) {
+      Mouse.clicked_object->originate = true;
+      Mouse.clicked_object->translate(screen_to_world(Mouse.position));
+
+      for (GameObject *&child : Mouse.clicked_object->children) {
+        child->originate = true;
+        child->translate(glm::vec2(child->parent->transform.position));
       }
     }
 
-    // If the tile is a background tile, is colliding with the player, and no tile is selected by the mouse, then set the tile as the player's parent tile
-    if (!Mouse.left_button_down && Mouse.clicked_object == nullptr && object->tags[0] == "tile" && object->check_collision(Characters::Players::ActivePlayer).collision) {
-      p_parent = object;
-    }
+    if (Mouse.left_button_up && !Mouse.left_button_down && !Mouse.left_button && Mouse.clicked_object != nullptr) {
+      Mouse.clicked_object->snap = true;
+      Mouse.clicked_object->originate = false;
+      Mouse.clicked_object->update_snap_position();
 
-    // Always update each object's bounding box
-    object->update_bounding_box();
-  }
+      if (Mouse.clicked_object->swap) {
+        for (GameObject *&object : GameObjects::all()) {
+          if (object == Mouse.clicked_object) continue;
+          if (object->swap && (int)object->transform.position.x == (int)Mouse.clicked_object->transform.position.x && (int)object->transform.position.y == (int)Mouse.clicked_object->transform.position.y) {
+            if (object->locked) {
+              Mouse.clicked_object->translate(Mouse.clicked_object->old_transform.position);
+              for (GameObject *child : Mouse.clicked_object->children) {
+                if (child == Characters::Players::ActivePlayer) {
+                  Characters::Players::ActivePlayer->translate(object->transform.position + glm::vec3(std::fmod(Characters::Players::ActivePlayer->transform.position.x, TileSize.x), std::fmod(Characters::Players::ActivePlayer->transform.position.y, TileSize.y), Characters::Players::ActivePlayer->transform.position.z));
+                } else {
+                  child->translate(object->transform.position);
+                }
+              }
+              break;
+            }
 
-  // If no object has been clicked, then the parent of the object will be whatever tile the player is colliding with.
-  // Otherwise, the parent will not be updated.
-  if (Mouse.clicked_object == nullptr) Characters::Players::ActivePlayer->set_parent(p_parent);
-  
-  // If an object has been selected, then move it and all its children with the mouse
-  if (Mouse.focused_objects != std::vector<GameObject *>()) {
-    Mouse.clicked_object->originate = true;
-    Mouse.clicked_object->translate(screen_to_world(Mouse.position));
-
-    for (GameObject *&child : Mouse.clicked_object->children) {
-      child->originate = true;
-      child->translate(glm::vec2(child->parent->transform.position));
-    }
-  }
-
-  if (Mouse.left_button_up && !Mouse.left_button_down && !Mouse.left_button && Mouse.clicked_object != nullptr) {
-    Mouse.clicked_object->snap = true;
-    Mouse.clicked_object->originate = false;
-    Mouse.clicked_object->update_snap_position();
-
-    if (Mouse.clicked_object->swap) {
-      for (GameObject *&object : GameObjects::all()) {
-        if (object == Mouse.clicked_object) continue;
-        if (object->swap && (int)object->transform.position.x == (int)Mouse.clicked_object->transform.position.x && (int)object->transform.position.y == (int)Mouse.clicked_object->transform.position.y) {
-          if (object->locked) {
-            Mouse.clicked_object->translate(Mouse.clicked_object->old_transform.position);
-            for (GameObject *child : Mouse.clicked_object->children) {
+            object->translate(Mouse.clicked_object->old_transform.position);
+            for (GameObject *&child : object->children) {
               if (child == Characters::Players::ActivePlayer) {
                 Characters::Players::ActivePlayer->translate(object->transform.position + glm::vec3(std::fmod(Characters::Players::ActivePlayer->transform.position.x, TileSize.x), std::fmod(Characters::Players::ActivePlayer->transform.position.y, TileSize.y), Characters::Players::ActivePlayer->transform.position.z));
               } else {
@@ -273,53 +253,45 @@ void Game::update() {
             }
             break;
           }
+        }
+      }
 
-          object->translate(Mouse.clicked_object->old_transform.position);
-          for (GameObject *&child : object->children) {
-            if (child == Characters::Players::ActivePlayer) {
-              Characters::Players::ActivePlayer->translate(object->transform.position + glm::vec3(std::fmod(Characters::Players::ActivePlayer->transform.position.x, TileSize.x), std::fmod(Characters::Players::ActivePlayer->transform.position.y, TileSize.y), Characters::Players::ActivePlayer->transform.position.z));
-            } else {
-              child->translate(object->transform.position);
-            }
+      // Update the position of all tiled objects
+      for (GameObject *&object : Mouse.focused_objects) {
+        if (object->handle != "tile" || object->handle != "player") {
+          if (object->handle != "goal") {
+            object->originate = false;
+            object->rigidbody = true;
           }
-          break;
+          object->translate(object->parent->transform.position);
         }
+      }
+
+      // Update the position of the player
+      Characters::Players::ActivePlayer->rigidbody = true;
+      
+      if (Characters::Players::ActivePlayer->parent == Mouse.clicked_object) {
+        glm::vec3 position_offset = Characters::Players::ActivePlayer->position_offset;
+        Characters::Players::ActivePlayer->position_offset = glm::vec3(0.0f);
+        Characters::Players::ActivePlayer->translate(Characters::Players::ActivePlayer->parent->transform.position + position_offset);
+      }
+
+      Mouse.clicked_object = nullptr;
+      Mouse.focused_objects = std::vector<GameObject *>();
+    }
+
+    // Update all player entities
+    for (Player *player : Characters::Players::all()) {
+      if (Mouse.clicked_object == nullptr) {
+        player->resolve_vectors();
+        player->update();
+        player->resolve_collisions();
+      } else {
+        player->update();
       }
     }
 
-    // Update the position of all tiled objects
-    for (GameObject *&object : Mouse.focused_objects) {
-      if (object->handle != "tile" || object->handle != "player") {
-        if (object->handle != "goal") {
-          object->originate = false;
-          object->rigidbody = true;
-        }
-        object->translate(object->parent->transform.position);
-      }
-    }
-
-    // Update the position of the player
-    Characters::Players::ActivePlayer->rigidbody = true;
-    
-    if (Characters::Players::ActivePlayer->parent == Mouse.clicked_object) {
-      glm::vec3 position_offset = Characters::Players::ActivePlayer->position_offset;
-      Characters::Players::ActivePlayer->position_offset = glm::vec3(0.0f);
-      Characters::Players::ActivePlayer->translate(Characters::Players::ActivePlayer->parent->transform.position + position_offset);
-    }
-
-    Mouse.clicked_object = nullptr;
-    Mouse.focused_objects = std::vector<GameObject *>();
-  }
-
-  // Update all player entities
-  for (Player *player : Characters::Players::all()) {
-    if (Mouse.clicked_object == nullptr) {
-      player->resolve_vectors();
-      player->update();
-      player->resolve_collisions();
-    } else {
-      player->update();
-    }
+    if (Characters::Players::ActivePlayer->won) GameState["game-over"] = true;
   }
 
   if (this->Keyboard['F'].pressed) toggle_fullscreen();
@@ -331,7 +303,10 @@ void Game::update() {
   if (this->Keyboard[GLFW_KEY_DOWN].pressed) Characters::Players::ActivePlayer->walk_speed -= 100.0f * factor;
   if (this->Keyboard['I'].pressed) Characters::Players::ActivePlayer->acceleration.y *= -1.0f;
   if (this->Keyboard['U'].pressed) Characters::Players::ActivePlayer->walk_speed *= -1.0f;
-
+  if (this->Keyboard['C'].pressed) {
+    this->GameState = std::map<std::string, bool>();
+    GameObjects::get("goal")->texture = ResourceManager::Texture::get("treasure");
+  }
 
   // Reset the pressed and released status of the mouse buttons
   Mouse.left_button_down = false;
@@ -401,7 +376,16 @@ void Game::render() {
     if (Mouse.clicked_object == Characters::Players::ActivePlayer->parent) Characters::Players::ActivePlayer->render();
   }
 
-  Text::render("Text-based rendering is based", "monocraft", Transform(glm::vec3(25.0f, 50.0f, 0.0f), glm::vec2(0.6f)), glm::vec4(0.5, 0.8f, 0.2f, 1.0f));
+  if (Mouse.left_button_down && Characters::Players::ActivePlayer->locked) GameState["immovable-player"] = true;
+  if (state("immovable-player") && !Characters::Players::ActivePlayer->locked) GameState["immovable-player"] = false;
+
+  // Text::render("CENTERED TEXT", "monocraft", Transform(glm::vec3(0.0f), glm::vec2(10.0f)), TEXT_BOTTOM_CENTER);
+
+  if (state("immovable-player")) 
+    Text::render("Cannot move tiles when player is between two tiles", "monocraft", Transform(glm::vec3(0.0f), glm::vec2(6.0f)), TEXT_MIDDLE_CENTER);
+
+  if (state("game-over"))
+    Text::render("YOU WON!", "monocraft", Transform(glm::vec3(0.0f), glm::vec2(20.0f)), TEXT_MIDDLE_CENTER);
 
   // Actually display the updated images to the screen
   glfwSwapBuffers(this->GameWindow);

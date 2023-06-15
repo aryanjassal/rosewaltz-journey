@@ -43,6 +43,7 @@ class Game {
     // Set up state variables
     MouseState Mouse;
     std::map<int, KeyState> Keyboard;
+    std::map<std::string, bool> GameState;
 
     // Set up other generic variables
     unsigned int width, height;
@@ -63,6 +64,9 @@ class Game {
 
     // This function contains code to update variables like input events, etc.
     void update();
+
+    // Returns the global state of the variable if it exists, otherwise returns false.
+    bool state(std::string);
 
     // Set GLFW callbacks
     void set_callbacks(GLFWcursorposfun cursorpos_callback, GLFWmousebuttonfun cursorbutton_callback, GLFWkeyfun keyboard_callback);

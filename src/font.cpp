@@ -11,7 +11,7 @@ void Fonts::init(FT_Library &ft) {
   }
 }
 
-void Text::render(std::string str, const char *font, Transform transform, glm::vec4 colour) {
+void Text::render(std::string str, const char *font, Transform transform, short alignment, glm::vec4 colour) {
   if (TextCamera == nullptr) throw std::runtime_error("[ERROR] TextCamera is undefined!");
 
   unsigned int t_vao, t_vbo;
@@ -24,6 +24,41 @@ void Text::render(std::string str, const char *font, Transform transform, glm::v
   glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
+
+  switch (alignment) {
+    case TEXT_TOP_LEFT:
+      transform.position += glm::vec3(0.0f, 4 * transform.scale.y, 0.0f);
+      break;
+    case TEXT_TOP_CENTER:
+      transform.position += glm::vec3((float)(TextCamera->width / 2.0f) - (float)((str.size() * transform.scale.x * 4) / 2.0f), 4 * transform.scale.y, 0.0f);
+      break;
+    case TEXT_TOP_RIGHT:
+      transform.position += glm::vec3((float)(TextCamera->width + (transform.scale.x * 6)) - (float)((str.size()) * transform.scale.x * 4), 4 * transform.scale.y, 0.0f);
+      break;
+    case TEXT_MIDDLE_LEFT:
+      transform.position += glm::vec3(0.0f, (TextCamera->height / 2.0f) + (float)(transform.scale.y * 4 / 2.0f), 0.0f);
+      break;
+    case TEXT_MIDDLE_CENTER:
+      transform.position += glm::vec3((float)((TextCamera->width + (transform.scale.x * 4)) / 2.0f) - (float)(str.size() * transform.scale.x * 2), (TextCamera->height / 2.0f) + (transform.scale.y * 4 / 2.0f), 0.0f);
+      break;
+    case TEXT_MIDDLE_RIGHT:
+      transform.position += glm::vec3((float)(TextCamera->width + (transform.scale.x * 6)) - (float)((str.size()) * transform.scale.x * 4), (TextCamera->height / 2.0f) + (transform.scale.y * 4 / 2.0f), 0.0f);
+      break;
+    case TEXT_BOTTOM_LEFT:
+      transform.position += glm::vec3(0.0f, (float)(TextCamera->height + (transform.scale.y * 6)) - (transform.scale.x * 6), 0.0f);
+      break;
+    case TEXT_BOTTOM_CENTER:
+      transform.position += glm::vec3((float)((TextCamera->width + (transform.scale.x * 4)) / 2.0f) - (float)(str.size() * transform.scale.x * 2), (float)(TextCamera->height + (transform.scale.y * 6)) - (transform.scale.x * 6), 0.0f);
+      break;
+    case TEXT_BOTTOM_RIGHT:
+      transform.position += glm::vec3((float)(TextCamera->width + (transform.scale.x * 6)) - (float)((str.size()) * transform.scale.x * 4), (float)(TextCamera->height + (transform.scale.y * 6)) - (transform.scale.x * 6), 0.0f);
+      break;
+    default:
+      printf("[ERROR] Invalid text alignment\n");
+      break;
+  }
+
+  transform.scale /= 10.0f;
 
   // glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f));
   // model = glm::rotate(model, glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -48,6 +83,7 @@ void Text::render(std::string str, const char *font, Transform transform, glm::v
 
     float w = ch.size.x * transform.scale.x;
     float h = ch.size.y * transform.scale.y;
+
     // update VBO for each character
     float vertices[6][4] = {
       { xpos,     ypos + h,   0.0f, 1.0f },            

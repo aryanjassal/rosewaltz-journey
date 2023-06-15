@@ -15,6 +15,16 @@
 #include "utils.h"
 #include "camera.h"
 
+#define TEXT_TOP_LEFT 0
+#define TEXT_TOP_CENTER 1
+#define TEXT_TOP_RIGHT 2
+#define TEXT_MIDDLE_LEFT 3
+#define TEXT_MIDDLE_CENTER 4
+#define TEXT_MIDDLE_RIGHT 5
+#define TEXT_BOTTOM_LEFT 6
+#define TEXT_BOTTOM_CENTER 7
+#define TEXT_BOTTOM_RIGHT 8
+
 // Struct storing character information
 typedef struct Character {
   unsigned int texture_id;  // The id of the glyph
@@ -29,7 +39,7 @@ extern OrthoCamera *TextCamera;
 
 // Namespace to generally deal with text rendering
 namespace Text {
-  void render(std::string str, const char *font, Transform transform, glm::vec4 colour = glm::vec4(1.0f));
+  void render(std::string str, const char *font, Transform transform, short alignment = TEXT_TOP_LEFT, glm::vec4 colour = glm::vec4(1.0f));
 }
 
 // Namespace to deal with font management

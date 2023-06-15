@@ -46,8 +46,9 @@ void Player::resolve_vectors() {
 void Player::resolve_collisions() {
   if (!this->rigidbody) return;
 
-  // Set the grounded to false, so if no collisions is detected, then the grounded will be false by default
+  // Set variables to false, so if they are not updated, they will be false by default
   this->grounded = false;
+  this->won = false;
 
   // Only do collisions if a parent tile is set. If no parent tile exist, then the player is not colliding
   // with any tiles, and running collisions is redundant
@@ -65,6 +66,9 @@ void Player::resolve_collisions() {
             this->transform.position.y -= c.vertical.mtv;
           } else if (c.vertical.collision && c.vertical.direction == UP) {
             // printf("[player] UP collision detected  \n");
+          } 
+          if (c.horizontal.collision && object->tags[0] == "tf") {
+            this->walk_speed *= -1.0;
           }
         }
       } 
@@ -72,6 +76,8 @@ void Player::resolve_collisions() {
       if (c.collision && !object->rigidbody) {
         if (object->handle == "goal") {
           object->texture = ResourceManager::Texture::get("treasure-open");
+          this->won = true;
+          this->locked = true;
         } else if (object->tags[0] == "tile") {
           t_touching++;
         }
@@ -80,12 +86,9 @@ void Player::resolve_collisions() {
 
     if (t_touching >= 2) {
       this->locked = true;
-      // printf("[player] touching multiple tiles      \r");
     } else {
-      // printf("[player] parent: %s [%i]              \r", this->parent->handle.c_str(), this->parent->id);
       this->locked = false;
     }
-    // fflush(stdout);
   }
 }
 

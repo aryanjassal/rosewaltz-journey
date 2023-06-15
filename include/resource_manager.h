@@ -14,6 +14,9 @@
 #include <fstream>
 #include <stdio.h>
 
+#define FILTER_NEAREST 0
+#define FILTER_LINEAR 1
+
 // A namespace hosting a myriad of functions related to managing game assets
 // and resources during runtime. Each resource is stored for future use using
 // a unique string handle.
@@ -61,7 +64,7 @@ namespace ResourceManager {
 
     // Load a new font.
     // NOTE: Only one font is supported. Loading another font will overwrite existing font.
-    void load(const char *file_path, std::string font_name, unsigned int num_chars);
+    void load(const char *file_path, std::string font_name, unsigned int num_chars, short filtering = FILTER_LINEAR);
   }
 
   // Deallocates all resources being managed by the program, freeing up memory.
