@@ -5,8 +5,15 @@
 #include FT_FREETYPE_H
 
 #include <cstdio>
+#include <string>
+#include <map>
+#include <stdexcept>
 
 #include "glm/glm.hpp"
+
+#include "shader.h"
+#include "utils.h"
+#include "camera.h"
 
 // Struct storing character information
 typedef struct Character {
@@ -16,16 +23,18 @@ typedef struct Character {
   unsigned int advance;     // Offset to advance to the next glyph
 };
 
-// Struct to generally deal with fonts
+extern std::map<std::string, std::map<char, Character>> CharacterLookup;
+extern Shader TextShader; 
+extern OrthoCamera *TextCamera;
+
+// Namespace to generally deal with text rendering
+namespace Text {
+  void render(std::string str, const char *font, Transform transform, glm::vec4 colour = glm::vec4(1.0f));
+}
+
+// Namespace to deal with font management
 namespace Fonts {
-  // Has the library been initialised?
-  // WARNING: This variable should never be written to manually.
-  extern bool initialised;
-
-  // Refering the intialised font variable
-  extern FT_Library lib;
-
-  void init();
+  void init(FT_Library &ft);
 }
 
 #endif

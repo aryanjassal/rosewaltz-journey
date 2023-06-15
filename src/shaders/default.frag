@@ -20,6 +20,4 @@ void main() {
     if (focus == 1) { pixel += vec4(0.796f, 0.482f, 0.494f, 1.0f); }
     else if (focus == -1) { pixel += vec4(0.4f, 0.4f, 0.4f, 1.0f); }
   }
-
-  // if (focus == 1) pixel = vec4(1.0f);
 }

@@ -5,44 +5,42 @@
 
 std::map<std::string, ::Shader> Shaders;
 std::map<std::string, ::Texture> Textures;
-std::map<char, Character> ResourceManager::Font::Characters;
+
+// std::map<char, Character> ResourceManager::Font::Characters;
 
 void ResourceManager::Font::load(const char *path, std::string font_name, unsigned int num_chars) {
+  // Declare the freetype library and fontface variables
+  FT_Library freetype;
+
+  Fonts::init(freetype);
+
   FT_Face face;
-  if (FT_New_Face(Fonts::lib, path, 0, &face)) {
-    printf("%s\n", "ERROR::FREETYPE: Failed to load font");  
+  if (FT_New_Face(freetype, path, 0, &face)) {
+    printf("[ERROR] ResourceManager failed to load font from file %s\n", path);  
+    return;
   }
 
+  // Set global glyph sizes
   FT_Set_Pixel_Sizes(face, 0, 48);
 
   // Disable byte-alignment restriction
+  // NOTE: Without this, the code can SEG_FAULT
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);   
 
-  for (unsigned char c = 0; c < num_chars; c++) {
-    // Load character glyph 
-    if (FT_Load_Char(face, c, FT_LOAD_RENDER))
-    {
-      printf("%s\n", "ERROR::FREETYTPE: Failed to load Glyph");
+  // Load each character glyph from the font until the num_chars limit is reached 
+  for (unsigned char ch = 0; ch < num_chars; ch++) {
+    if (FT_Load_Char(face, ch, FT_LOAD_RENDER)) {
+      printf("[ERROR] ResourceManager failed to load glyph '%c' from font '%s'\n", ch, font_name.c_str()); 
       continue;
     }
 
-    // Generate texture
+    // Generate the texture
     unsigned int texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(
-      GL_TEXTURE_2D,
-      0,
-      GL_RED,
-      face->glyph->bitmap.width,
-      face->glyph->bitmap.rows,
-      0,
-      GL_RED,
-      GL_UNSIGNED_BYTE,
-      face->glyph->bitmap.buffer
-    );
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, face->glyph->bitmap.width, face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
 
-    // Set texture options
+    // Set the texture options
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -53,14 +51,14 @@ void ResourceManager::Font::load(const char *path, std::string font_name, unsign
       texture, 
       glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
       glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-      face->glyph->advance.x
+      static_cast<unsigned int>(face->glyph->advance.x)
     };
 
-    Characters[c] = character;
+    CharacterLookup[font_name].insert(std::pair<char, Character>(ch, character));
   }
 
   FT_Done_Face(face);
-  FT_Done_FreeType(Fonts::lib);
+  FT_Done_FreeType(freetype);
 }
 
 ::Shader ResourceManager::Shader::load(const char *vertex_shader_path, const char *fragment_shader_path, const char *geometry_shader_path, std::string handle) {
@@ -90,7 +88,7 @@ void ResourceManager::Font::load(const char *path, std::string font_name, unsign
     fragment_shader_code = fragment_shader_stream.str();
     geometry_shader_code = geometry_shader_stream.str();
   } catch (std::exception e) {
-    printf("ERROR: could not read shader files!\n");
+    printf("[ERROR] Could not read the shader files!\n");
   }
 
   // Create a shader with the given vertex and fragment shader and add it to the resource manager
@@ -126,7 +124,7 @@ void ResourceManager::Font::load(const char *path, std::string font_name, unsign
     vertex_shader_code = vertex_shader_stream.str();
     fragment_shader_code = fragment_shader_stream.str();
   } catch (std::exception e) {
-    printf("ERROR: could not read shader files!\n");
+    printf("[ERROR] Could not read the shader files!\n");
   }
 
   // Create a shader with the given vertex and fragment shader and add it to the resource manager
@@ -189,7 +187,7 @@ unsigned char *ResourceManager::Image::load(const char *file_path, int &width, i
     error_message.append("\"\n");
 
     printf("\n");
-    if (stbi_failure_reason()) printf("stbi_failure on file \"%s\" [%s]\n", file_path, stbi_failure_reason());
+    if (stbi_failure_reason()) printf("[ERROR] stbi_failure on file \"%s\" [%s]\n", file_path, stbi_failure_reason());
     throw std::runtime_error(error_message);
   }
 

@@ -67,6 +67,9 @@ SpriteRenderer::~SpriteRenderer() {
 }
 
 void SpriteRenderer::render(Texture texture, Transform transform, glm::vec4 colour, int focus) {
+  // Active this shader before starting the rendering process
+  this->shader.activate();
+
   // Create a model transformation matrix and apply any origin transformations, if any
   glm::mat4 model_transform = glm::mat4(1.0f);
 

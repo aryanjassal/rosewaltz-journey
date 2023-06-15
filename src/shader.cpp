@@ -5,19 +5,19 @@ void Shader::compile(const char *vertex_code, const char *fragment_code, const c
   unsigned int vertex_shader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertex_shader, 1, &vertex_code, NULL);
   glCompileShader(vertex_shader);
-  compile_errors(vertex_shader, "VERTEX");
+  compile_errors(vertex_shader, "vertex");
 
   // Create the fragment shader
   unsigned int fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
   glShaderSource(fragment_shader, 1, &fragment_code, NULL);
   glCompileShader(fragment_shader);
-  compile_errors(fragment_shader, "FRAGMENT");
+  compile_errors(fragment_shader, "fragment");
 
   // Create the geometry shader
   unsigned int geometry_shader = glCreateShader(GL_GEOMETRY_SHADER);
   glShaderSource(geometry_shader, 1, &geometry_code, NULL);
   glCompileShader(geometry_shader);
-  compile_errors(geometry_shader, "GEOMETRY");
+  compile_errors(geometry_shader, "geometry");
 
   // Attach the shaders to the OpenGL program
   id = glCreateProgram();
@@ -25,7 +25,7 @@ void Shader::compile(const char *vertex_code, const char *fragment_code, const c
   glAttachShader(id, fragment_shader);
   glAttachShader(id, geometry_shader);
   glLinkProgram(id);
-  compile_errors(id, "PROGRAM");
+  compile_errors(id, "program");
 
   // Delete the shaders as they have already been linked to the shader
   glDeleteShader(vertex_shader);
@@ -38,20 +38,20 @@ void Shader::compile(const char *vertex_code, const char *fragment_code) {
   unsigned int vertex_shader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertex_shader, 1, &vertex_code, NULL);
   glCompileShader(vertex_shader);
-  compile_errors(vertex_shader, "VERTEX");
+  compile_errors(vertex_shader, "veretex");
 
   // Create the fragment shader
   unsigned int fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
   glShaderSource(fragment_shader, 1, &fragment_code, NULL);
   glCompileShader(fragment_shader);
-  compile_errors(fragment_shader, "FRAGMENT");
+  compile_errors(fragment_shader, "fragment");
 
   // Attach the shaders to the OpenGL program
   id = glCreateProgram();
   glAttachShader(id, vertex_shader);
   glAttachShader(id, fragment_shader);
   glLinkProgram(id);
-  compile_errors(id, "PROGRAM");
+  compile_errors(id, "program");
 
   // Delete the shaders as they have already been linked to the shader
   glDeleteShader(vertex_shader);
@@ -106,17 +106,19 @@ void Shader::set_bool(const char *handle, bool value) {
 void Shader::compile_errors(unsigned int shader, const char *type) {
   GLint has_compiled;
   char info_log[1024];
-  if (type != "PROGRAM") {
+  if (type != "program") {
     glGetShaderiv(shader, GL_COMPILE_STATUS, &has_compiled);
     if (has_compiled == GL_FALSE) {
       glGetShaderInfoLog(shader, 1024, NULL, info_log);
-      printf("SHADER_COMPILATION_ERROR for: %s\n", type);
+      printf("[ERROR] Shader %i could not compile the %s shader.\n", this->id, type);
+      printf("%s\n", info_log);
     }
   } else {
     glGetProgramiv(shader, GL_COMPILE_STATUS, &has_compiled);
     if (has_compiled == GL_FALSE) {
       glGetProgramInfoLog(shader, 1024, NULL, info_log);
-      printf("SHADER_LINKING_ERROR for: %s\n", type);
+      printf("[ERROR] Shader %i could not compile the %s shader.\n", this->id, type);
+      printf("%s\n", info_log);
     }
   }
 }

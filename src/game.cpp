@@ -110,14 +110,15 @@ void Game::init() {
 
   // Create a shader program, providing the default vertex and fragment shaders
   Shader sprite_shader = ResourceManager::Shader::load("src/shaders/default.vert", "src/shaders/default.frag", "default");
+  TextShader = ResourceManager::Shader::load("src/shaders/text.vert", "src/shaders/text.frag", "text");
 
   // Instantiate the camera and the renderer
   GameCamera = new OrthoCamera(this->width, this->height, -100.0f, 100.0f);
+  TextCamera = GameCamera;
   WindowSize = glm::vec2(this->width, this->height);
   Renderer = new SpriteRenderer(sprite_shader, GameCamera);
 
   // Initialise the font renderer
-  Fonts::init();
   ResourceManager::Font::load("fonts/monocraft.ttf", "monocraft", 128);
 
   // Assign the camera and the renderer as global renderers for the GameObject
@@ -388,7 +389,7 @@ void Game::render() {
   }
 
   // Render the current active Player
-  Characters::Players::ActivePlayer->render();
+  if (Mouse.clicked_object != Characters::Players::ActivePlayer->parent) Characters::Players::ActivePlayer->render();
 
   // Render the selected object to render them in the front
   if (Mouse.clicked_object != nullptr && Mouse.focused_objects != std::vector<GameObject *>()) {
@@ -397,9 +398,10 @@ void Game::render() {
     }
 
     Mouse.clicked_object->render(glm::vec4(1.0f, 1.0f, 1.0f, 0.5f), 1);
+    if (Mouse.clicked_object == Characters::Players::ActivePlayer->parent) Characters::Players::ActivePlayer->render();
   }
 
-  // RenderText("X", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+  Text::render("Text-based rendering is based", "monocraft", Transform(glm::vec3(25.0f, 50.0f, 0.0f), glm::vec2(0.6f)), glm::vec4(0.5, 0.8f, 0.2f, 1.0f));
 
   // Actually display the updated images to the screen
   glfwSwapBuffers(this->GameWindow);
