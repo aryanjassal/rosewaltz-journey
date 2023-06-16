@@ -25,51 +25,101 @@ void Text::render(std::string str, const char *font, Transform transform, short 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
 
+  // transform.scale /= 10.0f;
+
   switch (alignment) {
-    case TEXT_TOP_LEFT:
-      transform.position += glm::vec3(0.0f, 4 * transform.scale.y, 0.0f);
+    case TEXT_TOP_LEFT: {
+      transform.position += glm::vec3(0.0f);
+
+      float best_y = 0.0f;
+      for (std::string::const_iterator c = str.begin(); c != str.end(); c++) {
+        best_y = std::fmax(best_y, CharacterLookup[font][*c].bearing.y * transform.scale.y);
+      }
+      transform.position.y = best_y;
       break;
-    case TEXT_TOP_CENTER:
-      transform.position += glm::vec3((float)(TextCamera->width / 2.0f) - (float)((str.size() * transform.scale.x * 4) / 2.0f), 4 * transform.scale.y, 0.0f);
+    }
+    case TEXT_TOP_CENTER: {
+      transform.position += glm::vec3(TextCamera->width / 2.0f, 0.0f, 0.0f);
+
+      float best_y = 0.0f;
+      for (std::string::const_iterator c = str.begin(); c != str.end(); c++) {
+        transform.position.x -= ((CharacterLookup[font][*c].advance >> 6) * transform.scale.x) / 2.0f;
+        best_y = std::fmax(best_y, CharacterLookup[font][*c].bearing.y * transform.scale.y);
+      }
+      transform.position.y = best_y;
       break;
-    case TEXT_TOP_RIGHT:
-      transform.position += glm::vec3((float)(TextCamera->width + (transform.scale.x * 6)) - (float)((str.size()) * transform.scale.x * 4), 4 * transform.scale.y, 0.0f);
+    }
+    case TEXT_TOP_RIGHT: {
+      transform.position += glm::vec3((float)(TextCamera->width), 0.0f, 0.0f);
+
+      float best_y = 0.0f;
+      for (std::string::const_iterator c = str.begin(); c != str.end(); c++) {
+        transform.position.x -= (CharacterLookup[font][*c].advance >> 6) * transform.scale.x;
+        best_y = std::fmax(best_y, CharacterLookup[font][*c].bearing.y * transform.scale.y);
+      }
+      transform.position.y = best_y;
       break;
-    case TEXT_MIDDLE_LEFT:
-      transform.position += glm::vec3(0.0f, (TextCamera->height / 2.0f) + (float)(transform.scale.y * 4 / 2.0f), 0.0f);
+    }
+    case TEXT_MIDDLE_LEFT: {
+      transform.position += glm::vec3(0.0f, TextCamera->height / 2.0f, 0.0f);
+
+      float best_y = 0.0f;
+      for (std::string::const_iterator c = str.begin(); c != str.end(); c++) {
+        best_y = std::fmax(best_y, CharacterLookup[font][*c].bearing.y * transform.scale.y);
+      }
+      transform.position.y += best_y / 2.0f;
       break;
-    case TEXT_MIDDLE_CENTER:
-      transform.position += glm::vec3((float)((TextCamera->width + (transform.scale.x * 4)) / 2.0f) - (float)(str.size() * transform.scale.x * 2), (TextCamera->height / 2.0f) + (transform.scale.y * 4 / 2.0f), 0.0f);
+    }
+    case TEXT_MIDDLE_CENTER: {
+      transform.position += glm::vec3(TextCamera->width / 2.0f, TextCamera->height / 2.0f, 0.0f);
+
+      float best_y = 0.0f;
+      for (std::string::const_iterator c = str.begin(); c != str.end(); c++) {
+        transform.position.x -= ((CharacterLookup[font][*c].advance >> 6) * transform.scale.x) / 2.0f;
+        best_y = std::fmax(best_y, CharacterLookup[font][*c].bearing.y * transform.scale.y);
+      }
+      transform.position.y += best_y / 2.0f;
       break;
-    case TEXT_MIDDLE_RIGHT:
-      transform.position += glm::vec3((float)(TextCamera->width + (transform.scale.x * 6)) - (float)((str.size()) * transform.scale.x * 4), (TextCamera->height / 2.0f) + (transform.scale.y * 4 / 2.0f), 0.0f);
+    }
+    case TEXT_MIDDLE_RIGHT: {
+      transform.position += glm::vec3(TextCamera->width, TextCamera->height / 2.0f, 0.0f);
+
+      float best_y = 0.0f;
+      for (std::string::const_iterator c = str.begin(); c != str.end(); c++) {
+        transform.position.x -= (CharacterLookup[font][*c].advance >> 6) * transform.scale.x;
+        best_y = std::fmax(best_y, CharacterLookup[font][*c].bearing.y * transform.scale.y);
+      }
+      transform.position.y += best_y / 2.0f;
       break;
-    case TEXT_BOTTOM_LEFT:
-      transform.position += glm::vec3(0.0f, (float)(TextCamera->height + (transform.scale.y * 6)) - (transform.scale.x * 6), 0.0f);
+    }
+    case TEXT_BOTTOM_LEFT: {
+      transform.position += glm::vec3(0.0f, TextCamera->height, 0.0f);
       break;
-    case TEXT_BOTTOM_CENTER:
-      transform.position += glm::vec3((float)((TextCamera->width + (transform.scale.x * 4)) / 2.0f) - (float)(str.size() * transform.scale.x * 2), (float)(TextCamera->height + (transform.scale.y * 6)) - (transform.scale.x * 6), 0.0f);
+    }
+    case TEXT_BOTTOM_CENTER: {
+      transform.position += glm::vec3(TextCamera->width / 2.0f, TextCamera->height, 0.0f);
+      for (std::string::const_iterator c = str.begin(); c != str.end(); c++) {
+        transform.position.x -= ((CharacterLookup[font][*c].advance >> 6) * transform.scale.x) / 2.0f;
+      }
       break;
-    case TEXT_BOTTOM_RIGHT:
-      transform.position += glm::vec3((float)(TextCamera->width + (transform.scale.x * 6)) - (float)((str.size()) * transform.scale.x * 4), (float)(TextCamera->height + (transform.scale.y * 6)) - (transform.scale.x * 6), 0.0f);
+    }
+    case TEXT_BOTTOM_RIGHT: {
+      transform.position += glm::vec3(TextCamera->width, TextCamera->height, 0.0f);
+
+      for (std::string::const_iterator c = str.begin(); c != str.end(); c++) {
+        transform.position.x -= ((CharacterLookup[font][*c].advance >> 6) * transform.scale.x);
+      }
       break;
+    }
     default:
       printf("[ERROR] Invalid text alignment\n");
       break;
   }
 
-  transform.scale /= 10.0f;
-
-  // glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f));
-  // model = glm::rotate(model, glm::pi<float>(), glm::vec3(0.0f, 0.0f, 1.0f));
-  // model = glm::translate(model, glm::vec3(-0.5f));
-
   // Activate corresponding rendering shader	
   TextShader.activate();
-  // TextShader.set_vector_4f("text_colour", colour);
   TextShader.set_vector_4f("text_colour", colour);
   TextShader.set_matrix_4f("projection", TextCamera->projection_matrix);
-  // TextShader.set_matrix_4f("model", model);
   glActiveTexture(GL_TEXTURE0);
   glBindVertexArray(t_vao);
 
@@ -94,8 +144,10 @@ void Text::render(std::string str, const char *font, Transform transform, short 
       { xpos + w, ypos,       1.0f, 0.0f },
       { xpos + w, ypos + h,   1.0f, 1.0f }           
     };
+
     // render glyph texture over quad
     glBindTexture(GL_TEXTURE_2D, ch.texture_id);
+
     // update content of VBO memory
     glBindBuffer(GL_ARRAY_BUFFER, t_vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); 

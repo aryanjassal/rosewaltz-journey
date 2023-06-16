@@ -379,13 +379,13 @@ void Game::render() {
   if (Mouse.left_button_down && Characters::Players::ActivePlayer->locked) GameState["immovable-player"] = true;
   if (state("immovable-player") && !Characters::Players::ActivePlayer->locked) GameState["immovable-player"] = false;
 
-  // Text::render("CENTERED TEXT", "monocraft", Transform(glm::vec3(0.0f), glm::vec2(10.0f)), TEXT_BOTTOM_CENTER);
+  // Text::render("FLIPPER TEN BILLION, CENTERED TEXT", "monocraft", Transform(glm::vec3(0.0f), glm::vec2(1.0f)), TEXT_BOTTOM_RIGHT);
 
   if (state("immovable-player")) 
-    Text::render("Cannot move tiles when player is between two tiles", "monocraft", Transform(glm::vec3(0.0f), glm::vec2(6.0f)), TEXT_MIDDLE_CENTER);
+    Text::render("Cannot move tiles when player is between two tiles", "monocraft", Transform(glm::vec3(0.0f), glm::vec2(0.6f)), TEXT_MIDDLE_CENTER);
 
   if (state("game-over"))
-    Text::render("YOU WON!", "monocraft", Transform(glm::vec3(0.0f), glm::vec2(20.0f)), TEXT_MIDDLE_CENTER);
+    Text::render("YOU WON!", "monocraft", Transform(glm::vec3(0.0f), glm::vec2(2.0f)), TEXT_MIDDLE_CENTER);
 
   // Actually display the updated images to the screen
   glfwSwapBuffers(this->GameWindow);
