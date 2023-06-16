@@ -13,14 +13,32 @@ Player *Characters::Players::create(const char *handle, Texture texture, Transfo
   return &Characters::Players::Players[handle];
 }
 
+void Player::animate() {
+  this->animation_timer -= Time::delta * 1000;
+
+  if (this->animation_timer <= 0.0f) {
+    this->current_frame = (this->current_frame + 1) % this->animation_sprite_sheet.size();
+    this->texture = this->animation_sprite_sheet.at(current_frame);
+    this->animation_timer = this->fps;
+  }
+}
+
 void Player::update() {
   if (this->rigidbody) {
     if (this->bounding_box.left <= 0.0f || this->bounding_box.right >= GameObjects::Camera->width) {
       this->walk_speed *= -1;
+      // this->transform.scale.x *= -1;
       this->transform.position.x = std::clamp(this->transform.position.x, 0.0f, (float)GameObjects::Camera->width - this->transform.scale.x);
     }
   }
   this->transform.position.z = 1.0f;
+
+  // if (this->walk_speed < 0) {
+  //   this->transform.scale.x = std::fabs(this->transform.scale.x);
+  // } else {
+  //   this->transform.scale.x = -std::fabs(this->transform.scale.x);
+  // }
+  // printf("scale: %.2f\n", this->transform.scale.x);
 }
 
 void Player::resolve_vectors() {
@@ -69,6 +87,7 @@ void Player::resolve_collisions() {
           } 
           if (c.horizontal.collision && object->tags[0] == "tf") {
             this->walk_speed *= -1.0;
+            // this->transform.scale.x *= -1;
           }
         }
       } 

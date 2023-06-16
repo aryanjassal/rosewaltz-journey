@@ -25,8 +25,6 @@ void Text::render(std::string str, const char *font, Transform transform, short 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
 
-  // transform.scale /= 10.0f;
-
   switch (alignment) {
     case TEXT_TOP_LEFT: {
       transform.position += glm::vec3(0.0f);
@@ -111,9 +109,10 @@ void Text::render(std::string str, const char *font, Transform transform, short 
       }
       break;
     }
-    default:
+    default: {
       printf("[ERROR] Invalid text alignment\n");
       break;
+    }
   }
 
   // Activate corresponding rendering shader	
@@ -123,7 +122,7 @@ void Text::render(std::string str, const char *font, Transform transform, short 
   glActiveTexture(GL_TEXTURE0);
   glBindVertexArray(t_vao);
 
-  // iterate through all characters
+  // Iterate through all the characters within the string
   std::string::const_iterator c;
   for (c = str.begin(); c != str.end(); c++) {
     Character ch = CharacterLookup[font][*c];
@@ -134,7 +133,8 @@ void Text::render(std::string str, const char *font, Transform transform, short 
     float w = ch.size.x * transform.scale.x;
     float h = ch.size.y * transform.scale.y;
 
-    // update VBO for each character
+    // Create unique VBOs for each glyph with correct offset and scale
+    // Not using EBOs because it's too much effort
     float vertices[6][4] = {
       { xpos,     ypos + h,   0.0f, 1.0f },            
       { xpos,     ypos,       0.0f, 0.0f },
@@ -145,18 +145,23 @@ void Text::render(std::string str, const char *font, Transform transform, short 
       { xpos + w, ypos + h,   1.0f, 1.0f }           
     };
 
-    // render glyph texture over quad
+    // Render the glyph texture over the quad we just made
     glBindTexture(GL_TEXTURE_2D, ch.texture_id);
 
-    // update content of VBO memory
+    // Update the content of the VBO buffer
     glBindBuffer(GL_ARRAY_BUFFER, t_vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    // render quad
+
+    // Draw the buffer onto the screen
     glDrawArrays(GL_TRIANGLES, 0, 6);
-    // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
-    transform.position.x += (ch.advance >> 6) * transform.scale.x; // bitshift by 6 to get value in pixels (2^6 = 64)
+
+    // Advance the "cursor" to the correct offset for the next glyph
+    // Note: The offset, or advance, is in a number of 1/64 pixels, so bit-shifting by 6 will convert this value into a pixel size (2^6 = 64)
+    transform.position.x += (ch.advance >> 6) * transform.scale.x;
   }
+
+  // Unbind the VAOs and the textures
   glBindVertexArray(0);
   glBindTexture(GL_TEXTURE_2D, 0);
 }

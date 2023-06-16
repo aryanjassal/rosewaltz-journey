@@ -99,6 +99,16 @@ void Game::init() {
 
   // Create the player
   Player *player = Characters::Players::create("player", gigachad, Transform(glm::vec3(100.0f, 450.0f, 1.0f), glm::vec2(100.0f)), { "player" });
+  // player->origin = player->transform.scale / glm::vec2(2.0f);
+  // player->originate = true;
+
+  // Load the player's animation sprites
+  std::string base_name = "run";
+  std::string base_path = "textures/player/";
+  for (int i = 0; i < 5; i++) {
+    player->animation_sprite_sheet.push_back(ResourceManager::Texture::load((base_path + base_name + std::to_string(i) + ".png").c_str(), true, "player-" + base_name + "-" + std::to_string(i)));
+  }
+  
   Characters::Players::ActivePlayer = player;
 
   // Create ObjectPrefabs
@@ -364,7 +374,10 @@ void Game::render() {
   }
 
   // Render the current active Player
-  if (Mouse.clicked_object != Characters::Players::ActivePlayer->parent) Characters::Players::ActivePlayer->render();
+  if (Mouse.clicked_object != Characters::Players::ActivePlayer->parent) {
+    Characters::Players::ActivePlayer->animate();
+    Characters::Players::ActivePlayer->render();
+  }
 
   // Render the selected object to render them in the front
   if (Mouse.clicked_object != nullptr && Mouse.focused_objects != std::vector<GameObject *>()) {
@@ -373,13 +386,14 @@ void Game::render() {
     }
 
     Mouse.clicked_object->render(glm::vec4(1.0f, 1.0f, 1.0f, 0.5f), 1);
-    if (Mouse.clicked_object == Characters::Players::ActivePlayer->parent) Characters::Players::ActivePlayer->render();
+    if (Mouse.clicked_object == Characters::Players::ActivePlayer->parent) {
+      Characters::Players::ActivePlayer->animate();
+      Characters::Players::ActivePlayer->render();
+    }
   }
 
   if (Mouse.left_button_down && Characters::Players::ActivePlayer->locked) GameState["immovable-player"] = true;
   if (state("immovable-player") && !Characters::Players::ActivePlayer->locked) GameState["immovable-player"] = false;
-
-  // Text::render("FLIPPER TEN BILLION, CENTERED TEXT", "monocraft", Transform(glm::vec3(0.0f), glm::vec2(1.0f)), TEXT_BOTTOM_RIGHT);
 
   if (state("immovable-player")) 
     Text::render("Cannot move tiles when player is between two tiles", "monocraft", Transform(glm::vec3(0.0f), glm::vec2(0.6f)), TEXT_MIDDLE_CENTER);

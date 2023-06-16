@@ -13,6 +13,7 @@
 #include "sprite.h"
 #include "object.h"
 #include "resource_manager.h"
+#include "texture.h"
 
 // Create a Player class to handle any and all player-related code 
 class Player : public GameObject {
@@ -35,6 +36,14 @@ class Player : public GameObject {
     // Did the player win?
     bool won = false;
 
+    // Animation related variables 
+    float fps = 100.0f;
+    float animation_timer = this->fps;
+    int current_frame = 0;
+
+    // The sprite sheet for the player's animation
+    std::vector<Texture> animation_sprite_sheet = std::vector<Texture>();
+
     // Empty construtor
     Player() { }
 
@@ -46,6 +55,9 @@ class Player : public GameObject {
 
     // Resolve all collisions with other objects
     void resolve_collisions();
+
+    // Update the animation state
+    void animate();
 };
 
 // When handling GameObjects gets too annoying and more control over
