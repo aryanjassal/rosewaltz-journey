@@ -84,23 +84,24 @@ void Game::init() {
 
   // Load textures into the game
   Texture nothing = ResourceManager::Texture::load("textures/nothing.png", true, "nothing");
-  Texture windows = ResourceManager::Texture::load("textures/windows-11.png", true, "windows");
-  Texture gigachad = ResourceManager::Texture::load("textures/gigachad.jpg", true, "gigachad");
-  Texture journey = ResourceManager::Texture::load("textures/journey.jpg", true, "journey");
-  Texture cross = ResourceManager::Texture::load("textures/cross.png", true, "cross");
+  // Texture windows = ResourceManager::Texture::load("textures/windows-11.png", true, "windows");
+  // Texture gigachad = ResourceManager::Texture::load("textures/gigachad.jpg", true, "gigachad");
+  // Texture journey = ResourceManager::Texture::load("textures/journey.jpg", true, "journey");
+  // Texture cross = ResourceManager::Texture::load("textures/cross.png", true, "cross");
+  Texture blank = ResourceManager::Texture::load("textures/blank.png", true, "blank");
   Texture floor = ResourceManager::Texture::load("textures/tiles/tile-floor.png", true, "tile-floor");
   Texture treasure = ResourceManager::Texture::load("textures/tiles/treasure.png", true, "treasure");
   Texture treasure_open = ResourceManager::Texture::load("textures/tiles/treasure-open.png", true, "treasure-open");
 
-  Texture tf = ResourceManager::Texture::load("textures/tiles/solo-tile-floor.png", true, "tf");
+  Texture tex_safe_obstacle = ResourceManager::Texture::load("textures/tiles/solo-tile-floor.png", true, "tf");
   
   // Set up the global variables to create GameObjects
   float ratio = (float)height / 8.85f;
 
   // Create the player
-  Player *player = Characters::Players::create("player", gigachad, Transform(glm::vec3(100.0f, 450.0f, 1.0f), glm::vec2(100.0f)), { "player" });
-  // player->origin = player->transform.scale / glm::vec2(2.0f);
-  // player->originate = true;
+  Player *player = Characters::Players::create("player", blank, Transform(glm::vec3(100.0f, 450.0f, 1.0f), glm::vec2(72.72f, 100.0f)), { "player" });
+  player->fps = 150;
+  // player->collider_revealed = true;
 
   // Load the player's animation sprites
   std::string base_name = "run";
@@ -123,9 +124,9 @@ void Game::init() {
   tile_floor->position_offset = glm::vec3(0.0f, TileSize.y - ratio, 1.0f);
   tile_floor->set_parent(tile);
 
-  GameObject *ttf = GameObjects::ObjectPrefabs::create("tf", tf, { "tf" }, Transform());
-  ttf->rigidbody = true;
-  ttf->position_offset = glm::vec3(0.0f, TileSize.y - ratio - 100.0f, 1.0f);
+  GameObject *safe_obstacle = GameObjects::ObjectPrefabs::create("safe-obstacle", tex_safe_obstacle, { "obstacle", "safe-obstacle" }, Transform());
+  safe_obstacle->rigidbody = true;
+  safe_obstacle->position_offset = glm::vec3(0.0f, TileSize.y - ratio - 100.0f, 1.0f);
 
   GameObject *goal = GameObjects::ObjectPrefabs::create("goal", treasure, { "goal" });
   goal->position_offset = glm::vec3((TileSize.x / 2.0f) - (goal->transform.scale.x / 2.0f), TileSize.y - ratio - goal->transform.scale.y, 1.0f);
@@ -139,11 +140,9 @@ void Game::init() {
   // Create GameObjects
   for (int i = 0; i < 3; i++) {
     GameObject *t = GameObjects::instantiate("tile", Transform(glm::vec3(TileSize.x * i, TileSize.y, 1.0f), TileSize));
-    // t->texture = (i == 0) ? gigachad : (i == 1) ? windows : journey;
 
     if (i == 1 || i == 2) {
-      GameObject *o = GameObjects::instantiate("tf");
-      // o->rigidbody = true;
+      GameObject *o = GameObjects::instantiate("safe-obstacle");
       o->set_parent(t);
       o->translate(t->transform.position);
     }
@@ -156,10 +155,6 @@ void Game::init() {
 
     GameObject *im = GameObjects::instantiate("immovable", Transform(glm::vec3(TileSize.x * i, 0.0f, 1.0f), TileSize));
   }
-
-  // for (auto &object : GameObjects::all()) {
-  //   printf("[exists] (%i) [%.2f, %.2f] %s\n", object->id, object->transform.position.x, object->transform.position.y, object->handle.c_str());
-  // }
 }
 
 bool Game::state(std::string state) {
@@ -183,6 +178,11 @@ void Game::run() {
 
 void Game::update() {
   if (!this->state("game-over")) {
+    if (Mouse.right_button_down) {
+      Characters::Players::ActivePlayer->transform.position = glm::vec3(Mouse.position, 0.0f);
+      Characters::Players::ActivePlayer->grounded = false;
+    }
+
     GameObject *p_parent = nullptr;
     for (GameObject *&object : GameObjects::all()) {
       if (Mouse.left_button_down && !Mouse.left_button_up && Characters::Players::ActivePlayer->parent != nullptr) {
@@ -321,6 +321,8 @@ void Game::update() {
   // Reset the pressed and released status of the mouse buttons
   Mouse.left_button_down = false;
   Mouse.left_button_up = false;
+  Mouse.right_button_down = false;
+  Mouse.right_button_up = false;
   
   // If left click has been released, then there should be no active object
   if (!Mouse.left_button) {
@@ -374,10 +376,8 @@ void Game::render() {
   }
 
   // Render the current active Player
-  if (Mouse.clicked_object != Characters::Players::ActivePlayer->parent) {
-    Characters::Players::ActivePlayer->animate();
-    Characters::Players::ActivePlayer->render();
-  }
+  if (Mouse.clicked_object == nullptr) Characters::Players::ActivePlayer->animate();
+  if (Mouse.clicked_object != Characters::Players::ActivePlayer->parent) Characters::Players::ActivePlayer->render();
 
   // Render the selected object to render them in the front
   if (Mouse.clicked_object != nullptr && Mouse.focused_objects != std::vector<GameObject *>()) {
@@ -386,10 +386,7 @@ void Game::render() {
     }
 
     Mouse.clicked_object->render(glm::vec4(1.0f, 1.0f, 1.0f, 0.5f), 1);
-    if (Mouse.clicked_object == Characters::Players::ActivePlayer->parent) {
-      Characters::Players::ActivePlayer->animate();
-      Characters::Players::ActivePlayer->render();
-    }
+    if (Mouse.clicked_object == Characters::Players::ActivePlayer->parent) Characters::Players::ActivePlayer->render();
   }
 
   if (Mouse.left_button_down && Characters::Players::ActivePlayer->locked) GameState["immovable-player"] = true;

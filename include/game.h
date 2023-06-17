@@ -28,6 +28,7 @@ class Game {
     typedef struct MouseState {
       // General mouse information
       bool left_button, left_button_down, left_button_up;
+      bool right_button, right_button_down, right_button_up;
       glm::vec2 position;
       
       // Information relating to selected GameObjects

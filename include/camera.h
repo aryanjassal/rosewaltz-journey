@@ -23,9 +23,12 @@ class Camera {
   void scale(float x, float y);
   void scale(glm::vec2 factor);
 
-protected:
   // The closest and the farthest plane the camera will render
   float near, far;
+
+// protected:
+//   // The closest and the farthest plane the camera will render
+//   float near, far;
 };
 
 class OrthoCamera : public Camera {

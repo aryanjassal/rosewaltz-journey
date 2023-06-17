@@ -31,6 +31,14 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     RosewaltzJourney->Mouse.left_button = false;
     RosewaltzJourney->Mouse.left_button_up = true;
   }
+
+  if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+    RosewaltzJourney->Mouse.right_button = true;
+    RosewaltzJourney->Mouse.right_button_down = true;
+  } else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE) {
+    RosewaltzJourney->Mouse.right_button = false;
+    RosewaltzJourney->Mouse.right_button_up = true;
+  }
 }
 
 // Callback function to update the position of the mouse

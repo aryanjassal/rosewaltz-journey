@@ -14,9 +14,120 @@ static unsigned long instantiation_id = 0;
 void GameObject::render(glm::vec4 colour, int focus) {
   Transform n_transform = this->transform;
   n_transform.position += this->position_offset;
+  if (this->flip_x) {
+    n_transform.position.x += n_transform.scale.x;
+    n_transform.scale.x *= -1.0f;
+  }
+  if (this->flip_y) n_transform.scale.y *= -1.0f;
   // if (this->tags[0] == "tile") n_transform.scale += glm::vec2(2.0f);
 
-  if (this->active) GameObjects::Renderer->render(this->texture, n_transform, colour, focus);
+  if (this->active) {
+    if (this->transform.position.z >= GameObjects::Camera->far || this->transform.position.z <= GameObjects::Camera->near) {
+      printf("[WARNING] Object (%i) %s has z-index out of the camera's range.", this->id, this->handle.c_str());
+    }
+
+    if (this->collider_revealed) {
+      unsigned int t_vao, t_vbo;
+      glGenVertexArrays(1, &t_vao);
+      glGenBuffers(1, &t_vbo);
+      glBindVertexArray(t_vao);
+      glBindBuffer(GL_ARRAY_BUFFER, t_vbo);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
+      glEnableVertexAttribArray(0);
+      glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+      glBindBuffer(GL_ARRAY_BUFFER, 0);
+      glBindVertexArray(0);
+      Shader shader = ResourceManager::Shader::get("default");
+      shader.activate();
+      shader.set_vector_4f("colour", glm::vec4(0.5f));
+      shader.set_matrix_4f("projection", GameObjects::Camera->projection_matrix);
+      shader.set_matrix_4f("model", glm::mat4(1.0f));
+      shader.set_matrix_4f("view", glm::mat4(1.0f));
+      glActiveTexture(GL_TEXTURE0);
+      glBindVertexArray(t_vao);
+
+      float xpos = this->transform.position.x + this->position_offset.x;
+      float ypos = this->transform.position.y + this->position_offset.y;
+      float w = this->transform.scale.x;
+      float h = this->transform.scale.y;
+
+      float vertices[6][4] = {
+        { xpos,     ypos + h,   0.0f, 1.0f },            
+        { xpos,     ypos,       0.0f, 0.0f },
+        { xpos + w, ypos,       1.0f, 0.0f },
+
+        { xpos,     ypos + h,   0.0f, 1.0f },
+        { xpos + w, ypos,       1.0f, 0.0f },
+        { xpos + w, ypos + h,   1.0f, 1.0f }           
+      };
+
+      glBindTexture(GL_TEXTURE_2D, ResourceManager::Texture::get("blank").id);
+
+      // Update the content of the VBO buffer
+      glBindBuffer(GL_ARRAY_BUFFER, t_vbo);
+      glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); 
+      glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+      // Draw the buffer onto the screen
+      glDrawArrays(GL_TRIANGLES, 0, 6);
+
+      // Unbind the VAOs and the textures
+      glBindVertexArray(0);
+      glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    GameObjects::Renderer->render(this->texture, n_transform, colour, focus);
+
+    if (this->collider_revealed) {
+      unsigned int t_vao, t_vbo;
+      glGenVertexArrays(1, &t_vao);
+      glGenBuffers(1, &t_vbo);
+      glBindVertexArray(t_vao);
+      glBindBuffer(GL_ARRAY_BUFFER, t_vbo);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
+      glEnableVertexAttribArray(0);
+      glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+      glBindBuffer(GL_ARRAY_BUFFER, 0);
+      glBindVertexArray(0);
+      Shader shader = ResourceManager::Shader::get("default");
+      shader.activate();
+      shader.set_vector_4f("colour", glm::vec4(1.0f, 0.3f, 0.3f, 0.8f));
+      shader.set_matrix_4f("projection", GameObjects::Camera ->projection_matrix);
+      shader.set_matrix_4f("model", glm::mat4(1.0f));
+      shader.set_matrix_4f("view", glm::mat4(1.0f));
+      glActiveTexture(GL_TEXTURE0);
+      glBindVertexArray(t_vao);
+
+      float xpos = this->transform.position.x + this->position_offset.x + this->origin.x;
+      float ypos = this->transform.position.y + this->position_offset.y + this->origin.y;
+      float w = 10.0f;
+      float h = 10.0f;
+
+      float vertices[6][4] = {
+        { xpos,     ypos + h,   0.0f, 1.0f },            
+        { xpos,     ypos,       0.0f, 0.0f },
+        { xpos + w, ypos,       1.0f, 0.0f },
+
+        { xpos,     ypos + h,   0.0f, 1.0f },
+        { xpos + w, ypos,       1.0f, 0.0f },
+        { xpos + w, ypos + h,   1.0f, 1.0f }           
+      };
+
+      glBindTexture(GL_TEXTURE_2D, ResourceManager::Texture::get("blank").id);
+
+      // Update the content of the VBO buffer
+      glBindBuffer(GL_ARRAY_BUFFER, t_vbo);
+      glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); 
+      glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+      // Draw the buffer onto the screen
+      glDrawArrays(GL_TRIANGLES, 0, 6);
+
+      // Unbind the VAOs and the textures
+      glBindVertexArray(0);
+      glBindTexture(GL_TEXTURE_2D, 0);
+    }
+  }
 }
 
 void GameObject::translate(glm::vec2 point) {

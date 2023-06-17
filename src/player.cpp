@@ -27,18 +27,20 @@ void Player::update() {
   if (this->rigidbody) {
     if (this->bounding_box.left <= 0.0f || this->bounding_box.right >= GameObjects::Camera->width) {
       this->walk_speed *= -1;
+      
+      if (this->walk_speed < 0) this->flip_x = true;
+      else this->flip_x = false;
+
+      // if (this->walk_speed > 0) this->position_offset.x -= 100.0f;
+      // else this->position_offset.x += 100.0f;
+
       // this->transform.scale.x *= -1;
-      this->transform.position.x = std::clamp(this->transform.position.x, 0.0f, (float)GameObjects::Camera->width - this->transform.scale.x);
+      // printf("transfor: %.2f, %.2f, %.2f\n", this->transform.position.x, this->transform.position.y, this->transform.position.z);
+
+      this->transform.position.x = std::clamp(this->transform.position.x - this->position_offset.x, 0.0f, (float)GameObjects::Camera->width - this->transform.scale.x);
     }
   }
   this->transform.position.z = 1.0f;
-
-  // if (this->walk_speed < 0) {
-  //   this->transform.scale.x = std::fabs(this->transform.scale.x);
-  // } else {
-  //   this->transform.scale.x = -std::fabs(this->transform.scale.x);
-  // }
-  // printf("scale: %.2f\n", this->transform.scale.x);
 }
 
 void Player::resolve_vectors() {
@@ -82,11 +84,24 @@ void Player::resolve_collisions() {
           if (c.vertical.collision && c.vertical.direction == DOWN) {
             this->grounded = true;
             this->transform.position.y -= c.vertical.mtv;
-          } else if (c.vertical.collision && c.vertical.direction == UP) {
-            // printf("[player] UP collision detected  \n");
+          } else if (c.vertical.collision && c.vertical.direction == UP && !c.horizontal.collision) {
+            printf("[player] UP collision detected  \n");
           } 
-          if (c.horizontal.collision && object->tags[0] == "tf") {
-            this->walk_speed *= -1.0;
+
+          if (object->tags[0] == "obstacle") {
+            if (c.vertical.collision && c.vertical.direction == DOWN) this->transform.position.y -= c.vertical.mtv;
+            else {
+              if (c.horizontal.collision && c.horizontal.direction == LEFT) this->transform.position.x -= c.horizontal.mtv;
+              else if (c.horizontal.collision && c.horizontal.direction == RIGHT) this->transform.position.x -= c.horizontal.mtv - (object->transform.scale.x * 2.0f);
+              this->walk_speed *= -1.0;
+
+              if (this->walk_speed < 0) this->flip_x = true;
+              else this->flip_x = false;
+            }
+            
+            // if (this->walk_speed > 0) this->position_offset.x -= 100.0f;
+            // else this->position_offset.x += 100.0f;
+            //
             // this->transform.scale.x *= -1;
           }
         }

@@ -14,7 +14,7 @@
 #include "sprite.h"
 #include "utils.h"
 #include "physics.h"
-
+#include "resource_manager.h"
 
 // This class handles all game objects, containing boilerplate code for
 // collision detection or motion or anything else an object might need.
@@ -71,6 +71,13 @@ class GameObject {
 
     // Locked controls whether the tile can move at all or not. This includes swapping and everything.
     bool locked = false;
+
+    // Should the collider be revealed?
+    // Tip: This is a debug function
+    bool collider_revealed = false;
+
+    // Flip the sprite on an axis without tampering with the scale or anything
+    bool flip_x = false, flip_y = false;
 
     // Declare a parent object
     GameObject *parent = nullptr;
