@@ -1,2 +1,2 @@
-immovable immovable immovable
-tile-full tile-full-safe-obstacle-left tile-full-safe-obstacle-left-goal-centered
+immovable tile-full tile-full-safe-obstacle-left
+tile-full tile-full-safe-obstacle-left[locked] tile-full-goal-centered[locked]

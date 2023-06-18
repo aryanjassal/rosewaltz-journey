@@ -17,7 +17,7 @@ Game::Game(unsigned int width, unsigned int height, std::string window_title, bo
 
   // Initialise GLFW
   if (!glfwInit()) {
-    printf("ERROR: GLFW failed to initialise!\n");
+    printf("[ERROR] GLFW failed to initialise!\n");
   }
 
   // Create a window for the game
@@ -126,10 +126,21 @@ void Game::init() {
   safe_obstacle->position_offset = glm::vec3(0.0f, TileSize.y - ratio - 100.0f, 1.0f);
   safe_obstacle->set_parent(tile_safe_obstacle_left);
 
+  GameObject *tile_full_safe_obstacle_left_locked = GameObjects::ObjectPrefabs::create("tile-full-safe-obstacle-left-locked", *tile);
+  tile_full_safe_obstacle_left_locked->locked = true;
+  tile_full_safe_obstacle_left_locked->swap = true;
+
   GameObject *tile_goal = GameObjects::ObjectPrefabs::create("tile-full-safe-obstacle-left-goal-centered", *tile_safe_obstacle_left);
   GameObject *goal = GameObjects::ObjectPrefabs::create("goal", treasure, { "goal" });
   goal->position_offset = glm::vec3((TileSize.x / 2.0f) - (goal->transform.scale.x / 2.0f), TileSize.y - ratio - goal->transform.scale.y, 1.0f);
   goal->set_parent(tile_goal);
+
+  GameObject *tile_full_goal_centered_locked = GameObjects::ObjectPrefabs::create("tile-full-goal-centered-locked", *tile);
+  tile_full_goal_centered_locked->locked = true;
+  tile_full_goal_centered_locked->swap = true;
+  GameObject *goal_locked = GameObjects::ObjectPrefabs::create("goal-locked", treasure, { "goal" });
+  goal_locked->position_offset = glm::vec3((TileSize.x / 2.0f) - (goal->transform.scale.x / 2.0f), TileSize.y - ratio - goal->transform.scale.y, 1.0f);
+  goal_locked->set_parent(tile_full_goal_centered_locked);
 
   GameObject *immovable = GameObjects::ObjectPrefabs::create("immovable", nothing, { "tile", "locked" }, Transform(glm::vec3(0.0f), TileSize));
   immovable->origin = TileSize / glm::vec2(2.0f); 

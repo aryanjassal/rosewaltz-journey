@@ -1,1 +1,104 @@
+// All lines starting with a `#` refer to a required texture that should aleady be loaded
+// Failure means either a runtime error could be thrown or a placeholder could be used
+// This tag can be specified with the `%tex-failure` parameter. It takes `placeholder` or `failure` as it's parameters
 
+%tex-falure = failure
+
+#nothing
+#tile-full-floor
+#obstacle-safe
+#goal
+#goal-acquired
+
+// The syntax:
+// $<id (string)> : <leader-tile-id (string, optional)> {
+// texture = <texture (string)>
+// tags = <tags (string, comma-separated)>
+// position = <position (float, vec3, comma-separated)>
+// scale = <scale (float, vec2, comma-separated)>
+// rotation = <rotation (float)>
+// origin = <origin (float, vec2, comma-separated)>
+// grid = <grid (float, vec2, comma-separated)>
+// interactive = <interactive (bool)>
+// swap = <swap (bool)>
+// rigidbody = <rigidbody (bool)>
+// position-offset = <position-offset (float, vec2, comma-separated)
+// ^<parent-id (string)>
+// }
+
+// Note to list the position, scale, and rotation in that order.
+// If rotation is not required, then it can be omitted, but if scale is required and position isn't, then the position will still need to be declared.
+
+// Note the constants are written with a `*`. For example, *const.
+// List of constants: 
+// *TSX (TileSize.x)
+// *TSY (TileSize.y)
+// *TSX/2 (TileSize.x / 2.0f)
+// *TSY/2 (TileSize.y / 2.0f)
+// *TSY-R (TileSize.y - ratio)
+// *TSY-R-SY (TileSize.y - ratio - this->transform.scale.y)
+// *TXSC ((TileSize.x / 2.0f) - (this->transform.scale.x / 2.0f))
+// *TYSC ((TileSize.y / 2.0f) - (this->transform.scale.y / 2.0f))
+// *R (ratio)
+// *SX (this->transform.scale.x)
+// *SY (this->transform.scale.y)
+// *PX (this->transform.position.x)
+// *PY (this->transform.position.y)
+
+// Note that two attributes or even the opening and closing braces should not be on the same line as they will not be processed correctly by the parser
+
+// The id (or anything else) should not have any spaces as those are trimmed at runtime
+
+$tile-full {
+  texture = nothing
+  tags = tile
+  scale = *TSX, *R
+  origin = *TSX/2, *TSY/2
+  grid = *TSX, *TSY
+  interactive = true
+  swap = true
+}
+
+$tile-floor-full {
+  texture = tile-floor-full
+  tags = tile-floor
+  scale = *TSX, *R
+  rigidbody = true
+  position-offset = 0.0, *TSY-R, 0.0
+  ^tile-full
+}
+
+$tile-full-obstacle-safe-left : tile-full {
+}
+
+$obstacle-safe-left {
+  texture = obstacle-safe
+  tags = obstacle, obstacle-safe
+  rigidbody = true
+  position-offset = 0.0, *TSY-R-SY, 0.0
+  ^tile-full-obstacle-safe-left
+}
+
+// $tile-full-obstacle-safe-left-locked : tile-full-obstacle-safe-left {
+//   locked = true
+//   swap = true
+// }
+
+$tile-full-goal-centered : tile-full {
+}
+
+$goal-centered {
+  texture = goal, goal-acquired
+  position-offset = *TXSC, *TSY-R-SY, 0.0
+  ^tile-full-goal-centered
+}
+
+$immovable {
+  texture = nothing
+  tags = tile, locked
+  scale = *TSX, *TSY
+  // origin = *TSX/2, *TSY/2
+  grid = *TSX, *TSY
+  swap = true
+  locked = true
+}

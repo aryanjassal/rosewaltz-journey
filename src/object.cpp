@@ -247,7 +247,7 @@ void GameObject::unset_child(GameObject *child) {
 
 GameObject *GameObjects::ObjectPrefabs::create(std::string handle, Texture texture, std::vector<std::string> tags, Transform transform) {
   if (GameObjects::Renderer == nullptr) throw std::runtime_error("A SpriteRenderer must be set for GameObjects::Renderer\n");
-  if (Prefabs.find(handle) != Prefabs.end()) throw std::runtime_error("Another Prefab already exists with the same handle!\n");
+  if (Prefabs.find(handle) != Prefabs.end()) throw std::runtime_error("Another Prefab already exists with the same handle as " + handle + "'\n");
 
   GameObject object = GameObject();
   object.handle = handle;
@@ -263,7 +263,7 @@ GameObject *GameObjects::ObjectPrefabs::create(std::string handle, Texture textu
 
 GameObject *GameObjects::ObjectPrefabs::create(std::string handle, GameObject prefab) {
   if (GameObjects::Renderer == nullptr) throw std::runtime_error("A SpriteRenderer must be set for GameObjects::Renderer\n");
-  if (Prefabs.find(handle) != Prefabs.end()) throw std::runtime_error("Another Prefab already exists with the same handle!\n");
+  if (Prefabs.find(handle) != Prefabs.end()) throw std::runtime_error("Another Prefab already exists with the same handle as " + handle + "'\n");
 
   Prefabs[handle] = prefab;
   return &Prefabs[handle];
