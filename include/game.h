@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <chrono>
 #include <unistd.h>
+#include <fstream>
 
 #include "glm/glm.hpp"
 

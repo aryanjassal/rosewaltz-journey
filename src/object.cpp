@@ -161,12 +161,13 @@ Collision GameObject::check_collision(GameObject *object) {
 
     Direction direction = vector_direction(difference);
 
-    CollisionInfo vertical, horizontal;
-    vertical.collision = (object->bounding_box.bottom >= this->bounding_box.top && object->bounding_box.top <= this->bounding_box.bottom);
+    CollisionInfo vertical((object->bounding_box.bottom >= this->bounding_box.top && object->bounding_box.top <= this->bounding_box.bottom));
+    // vertical.collision = (object->bounding_box.bottom >= this->bounding_box.top && object->bounding_box.top <= this->bounding_box.bottom);
     vertical.direction = vector_direction(glm::vec2(0.0f, difference.y));
     vertical.mtv = difference.y + (difference.y > 0 ? (this->transform.scale.y / -2.0f) + object->transform.scale.y : (this->transform.scale.y / 2.0f));
 
-    horizontal.collision = (object->bounding_box.right >= this->bounding_box.left && object->bounding_box.left <= this->bounding_box.right);
+    CollisionInfo horizontal((object->bounding_box.right >= this->bounding_box.left && object->bounding_box.left <= this->bounding_box.right));
+    // horizontal.collision = (object->bounding_box.right >= this->bounding_box.left && object->bounding_box.left <= this->bounding_box.right);
     horizontal.direction = vector_direction(glm::vec2(difference.x, 0.0f));
     horizontal.mtv = difference.x + (this->transform.scale.x / 2.0f);
 

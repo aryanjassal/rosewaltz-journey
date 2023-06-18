@@ -126,7 +126,7 @@ void Game::init() {
   safe_obstacle->position_offset = glm::vec3(0.0f, TileSize.y - ratio - 100.0f, 1.0f);
   safe_obstacle->set_parent(tile_safe_obstacle_left);
 
-  GameObject *tile_goal = GameObjects::ObjectPrefabs::create("tile-full-safe-obstacle-left-goal", *tile_safe_obstacle_left);
+  GameObject *tile_goal = GameObjects::ObjectPrefabs::create("tile-full-safe-obstacle-left-goal-centered", *tile_safe_obstacle_left);
   GameObject *goal = GameObjects::ObjectPrefabs::create("goal", treasure, { "goal" });
   goal->position_offset = glm::vec3((TileSize.x / 2.0f) - (goal->transform.scale.x / 2.0f), TileSize.y - ratio - goal->transform.scale.y, 1.0f);
   goal->set_parent(tile_goal);
@@ -137,7 +137,28 @@ void Game::init() {
   immovable->swap = true;
   immovable->locked = true;
 
-  const std::vector<std::vector<std::string>> instantiation_order = { { "immovable", "immovable", "immovable" }, { "tile-full", "tile-full-safe-obstacle-left", "tile-full-safe-obstacle-left-goal" } };
+  std::vector<std::vector<std::string>> instantiation_order;
+  std::ifstream levelmap("1.level");
+  std::string delimiter = " ";
+  std::string line;
+  if (levelmap.is_open()) {
+    while(std::getline(levelmap, line)) {
+      std::vector<std::string> layer;
+
+      int pos = 0;
+      pos = line.find(delimiter);
+      while(pos != std::string::npos) {
+        std::string token = line.substr(0, pos);
+        layer.push_back(token);
+        printf("%s\n", token.c_str());
+        line.erase(0, pos + delimiter.length());
+        pos = line.find(delimiter);
+      }
+      layer.push_back(line);
+
+      instantiation_order.push_back(layer);
+    }
+  }
 
   // Create GameObjects
   for (int i = 0; i < instantiation_order.size(); i++) {
@@ -191,7 +212,7 @@ void Game::update() {
           object->snap = false;
           Mouse.clicked_object = object;
 
-          if (object->check_collision(Characters::Players::ActivePlayer).collision) {
+          if (object->check_collision(Characters::Players::ActivePlayer)) {
             Characters::Players::ActivePlayer->old_transform = Characters::Players::ActivePlayer->transform;
             Characters::Players::ActivePlayer->position_offset = glm::vec3(std::fmod(Characters::Players::ActivePlayer->transform.position.x, TileSize.x), std::fmod(Characters::Players::ActivePlayer->transform.position.y, TileSize.y), 0.0f);
             Characters::Players::ActivePlayer->rigidbody = false;
@@ -209,7 +230,7 @@ void Game::update() {
       }
 
       // If the tile is a background tile, is colliding with the player, and no tile is selected by the mouse, then set the tile as the player's parent tile
-      if (!Mouse.left_button_down && Mouse.clicked_object == nullptr && object->tags[0] == "tile" && object->check_collision(Characters::Players::ActivePlayer).collision) {
+      if (!Mouse.left_button_down && Mouse.clicked_object == nullptr && object->tags[0] == "tile" && object->check_collision(Characters::Players::ActivePlayer)) {
         p_parent = object;
       }
 
@@ -328,7 +349,7 @@ void Game::update() {
       GameObjects::uninstantiate(object->id);
     }
 
-    const std::vector<std::vector<std::string>> instantiation_order = { { "immovable", "immovable", "immovable" }, { "tile-full", "tile-full-safe-obstacle-left", "tile-full-safe-obstacle-left-goal" } };
+    const std::vector<std::vector<std::string>> instantiation_order = { { "immovable", "immovable", "immovable" }, { "tile-full", "tile-full-safe-obstacle-left", "tile-full-safe-obstacle-left-goal-centered" } };
 
     // Create GameObjects
     for (int i = 0; i < instantiation_order.size(); i++) {
@@ -342,7 +363,7 @@ void Game::update() {
     Characters::Players::ActivePlayer->translate(glm::vec2(100.0f, 450.0f));
     Characters::Players::ActivePlayer->flip_x = false;
     Characters::Players::ActivePlayer->velocity = glm::vec2(0.0f);
-    Characters::Players::ActivePlayer->walk_speed = std::fabs(Characters::Players::ActivePlayer->walk_speed);
+    Characters::Players::ActivePlayer->walk_speed = 100.0f; 
   }
 
   // Reset the pressed and released status of the mouse buttons

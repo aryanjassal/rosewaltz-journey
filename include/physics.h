@@ -36,10 +36,15 @@ typedef struct CollisionInfo {
   CollisionInfo(bool _collision, Direction _direction): collision{_collision}, direction{_direction}, mtv(0.0f) { }
   CollisionInfo(bool _collision, Direction _direction, float _mtv): collision{_collision}, direction{_direction}, mtv{_mtv} { }
 
+  // Override the boolean conversion
+  operator bool() { return collision; }
+
   // Fields of the struct
-  bool collision;
   Direction direction;
   float mtv;
+
+  private: 
+    bool collision;
 };
 
 // A struct which combines the vertical and horizontal collision information
@@ -49,10 +54,15 @@ typedef struct Collision {
   Collision(bool _collision) : collision{_collision}, horizontal(CollisionInfo()), vertical(CollisionInfo()) { }
   Collision(bool _collision, CollisionInfo _horizontal, CollisionInfo _vertical) : collision{_collision}, horizontal{_horizontal}, vertical{_vertical} { }
 
+  // Override the boolean conversion
+  operator bool() { return collision; }
+
   // Fields of the struct
-  bool collision;
   CollisionInfo horizontal;
   CollisionInfo vertical;
+
+  private: 
+    bool collision;
 };
 
 #endif

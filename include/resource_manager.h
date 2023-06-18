@@ -17,6 +17,10 @@
 #define FILTER_NEAREST 0
 #define FILTER_LINEAR 1
 
+// #define FILETYPE_TEXTURES 0
+// #define FILETYPE_PREFABS 1
+// #define FILETYPE_LEVELMAP 2
+
 // A namespace hosting a myriad of functions related to managing game assets
 // and resources during runtime. Each resource is stored for future use using
 // a unique string handle.
@@ -66,6 +70,11 @@ namespace ResourceManager {
     // NOTE: Only one font is supported. Loading another font will overwrite existing font.
     void load(const char *file_path, std::string font_name, unsigned int num_chars, short filtering = FILTER_LINEAR);
   }
+
+  // // Manages loading and reading all files like level maps or required resource or prefabs
+  // namespace File {
+  //   void load(const char *path, int filetype);
+  // }
 
   // Deallocates all resources being managed by the program, freeing up memory.
   void deallocate();

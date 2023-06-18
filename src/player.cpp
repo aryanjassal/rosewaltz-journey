@@ -76,23 +76,23 @@ void Player::resolve_collisions() {
     int t_touching = 0;
     for (GameObject *&object : GameObjects::all()) {
       // The collision is being checked here as it is needed for the lock-unlock calculation
-      Collision c = object->check_collision(this);
+      Collision collision = object->check_collision(this);
 
       // If the object is a rigidbody, then execute the collision checking
       if (object->rigidbody) {
-        if (c.collision) {
-          if (c.vertical.collision && c.vertical.direction == DOWN) {
+        if (collision) {
+          if (collision.vertical && collision.vertical.direction == DOWN) {
             this->grounded = true;
-            this->transform.position.y -= c.vertical.mtv;
-          } else if (c.vertical.collision && c.vertical.direction == UP && !c.horizontal.collision) {
+            this->transform.position.y -= collision.vertical.mtv;
+          } else if (collision.vertical && collision.vertical.direction == UP && !collision.horizontal) {
             printf("[player] UP collision detected  \n");
           } 
 
           if (object->tags[0] == "obstacle") {
-            if (c.vertical.collision && c.vertical.direction == DOWN) this->transform.position.y -= c.vertical.mtv;
+            if (collision.vertical && collision.vertical.direction == DOWN) this->transform.position.y -= collision.vertical.mtv;
             else {
-              if (c.horizontal.collision && c.horizontal.direction == LEFT) this->transform.position.x -= c.horizontal.mtv;
-              else if (c.horizontal.collision && c.horizontal.direction == RIGHT) this->transform.position.x -= c.horizontal.mtv - object->transform.scale.x - this->transform.scale.x;
+              if (collision.horizontal && collision.horizontal.direction == LEFT) this->transform.position.x -= collision.horizontal.mtv;
+              else if (collision.horizontal && collision.horizontal.direction == RIGHT) this->transform.position.x -= collision.horizontal.mtv - object->transform.scale.x - this->transform.scale.x;
               this->walk_speed *= -1.0;
 
               if (this->walk_speed < 0) this->flip_x = true;
@@ -102,7 +102,7 @@ void Player::resolve_collisions() {
         }
       } 
 
-      if (c.collision && !object->rigidbody) {
+      if (collision && !object->rigidbody) {
         if (object->handle == "goal") {
           object->texture = ResourceManager::Texture::get("treasure-open");
           this->won = true;
