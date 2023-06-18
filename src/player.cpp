@@ -92,17 +92,12 @@ void Player::resolve_collisions() {
             if (c.vertical.collision && c.vertical.direction == DOWN) this->transform.position.y -= c.vertical.mtv;
             else {
               if (c.horizontal.collision && c.horizontal.direction == LEFT) this->transform.position.x -= c.horizontal.mtv;
-              else if (c.horizontal.collision && c.horizontal.direction == RIGHT) this->transform.position.x -= c.horizontal.mtv - (object->transform.scale.x * 2.0f);
+              else if (c.horizontal.collision && c.horizontal.direction == RIGHT) this->transform.position.x -= c.horizontal.mtv - object->transform.scale.x - this->transform.scale.x;
               this->walk_speed *= -1.0;
 
               if (this->walk_speed < 0) this->flip_x = true;
               else this->flip_x = false;
             }
-            
-            // if (this->walk_speed > 0) this->position_offset.x -= 100.0f;
-            // else this->position_offset.x += 100.0f;
-            //
-            // this->transform.scale.x *= -1;
           }
         }
       } 

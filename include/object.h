@@ -128,6 +128,7 @@ namespace GameObjects {
   // This namespace handles creating and dealing with Prefabs
   namespace ObjectPrefabs {
     GameObject *create(std::string handle, Texture texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
+    GameObject *create(std::string handle, GameObject prefab);
     GameObject *get(std::string handle);
   }
 
@@ -139,6 +140,10 @@ namespace GameObjects {
   GameObject *instantiate(GameObject prefab);
   GameObject *instantiate(std::string prefab_handle, Transform transform);
   GameObject *instantiate(GameObject prefab, Transform transform);
+
+  // Delete an instantiated object (only removes the object and not the prefab)
+  void uninstantiate(std::string handle);
+  void uninstantiate(unsigned long id);
 
   // Fetch the pointer to a GameObject from the list of GameObjects
   GameObject *get(std::string handle);

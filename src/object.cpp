@@ -260,6 +260,14 @@ GameObject *GameObjects::ObjectPrefabs::create(std::string handle, Texture textu
   return &Prefabs[handle];
 }
 
+GameObject *GameObjects::ObjectPrefabs::create(std::string handle, GameObject prefab) {
+  if (GameObjects::Renderer == nullptr) throw std::runtime_error("A SpriteRenderer must be set for GameObjects::Renderer\n");
+  if (Prefabs.find(handle) != Prefabs.end()) throw std::runtime_error("Another Prefab already exists with the same handle!\n");
+
+  Prefabs[handle] = prefab;
+  return &Prefabs[handle];
+}
+
 GameObject *GameObjects::create(std::string handle, Texture texture, std::vector<std::string> tags, Transform transform) {
   if (GameObjects::Renderer == nullptr) throw std::runtime_error("A SpriteRenderer must be set for GameObjects::Renderer\n");
 
@@ -278,6 +286,8 @@ GameObject *GameObjects::create(std::string handle, Texture texture, std::vector
 }
 
 GameObject *GameObjects::instantiate(std::string prefab_handle) {
+  if (Prefabs.find(prefab_handle) == Prefabs.end()) throw std::runtime_error("[ERROR] Prefab with handle '" + prefab_handle + "' doesn't exist!");
+
   GameObject *prefab = GameObjects::ObjectPrefabs::get(prefab_handle);
   prefab->id = instantiation_id;
   prefab->active = true;
@@ -299,6 +309,8 @@ GameObject *GameObjects::instantiate(GameObject prefab) {
 }
 
 GameObject *GameObjects::instantiate(std::string prefab_handle, Transform transform) {
+  if (Prefabs.find(prefab_handle) == Prefabs.end()) throw std::runtime_error("[ERROR] Prefab with handle '" + prefab_handle + "' doesn't exist!");
+
   GameObject *prefab = GameObjects::ObjectPrefabs::get(prefab_handle);
   prefab->active = true;
   prefab->transform = transform;
@@ -327,6 +339,18 @@ GameObject *GameObjects::instantiate(GameObject prefab, Transform transform) {
   Objects[prefab.id] = prefab;
   return &Objects[prefab.id];
 }
+
+void GameObjects::uninstantiate(std::string handle) {
+  for (GameObject *&object : GameObjects::all()) 
+    if (object->handle == handle) 
+      Objects.erase(Objects.find(object->id));
+}
+
+void GameObjects::uninstantiate(unsigned long id) {
+  if (id <= instantiation_id && Objects.find(id) != Objects.end()) 
+    Objects.erase(id);
+}
+
 
 std::vector<GameObject *> GameObjects::all() {
   std::vector<GameObject *> all_objects;
