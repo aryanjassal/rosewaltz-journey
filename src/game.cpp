@@ -54,6 +54,17 @@ Game::~Game() {
 void Game::load_level(const char *path) {
   this->GameState = std::map<std::string, bool>();
 
+  if (Characters::Players::ActivePlayer != nullptr) {
+    Characters::Players::ActivePlayer->parent = nullptr;
+    Characters::Players::ActivePlayer->translate(glm::vec2(100.0f, 450.0f));
+    Characters::Players::ActivePlayer->flip_x = false;
+    Characters::Players::ActivePlayer->velocity = glm::vec2(0.0f);
+    Characters::Players::ActivePlayer->walk_speed = 100.0f; 
+  }
+
+  Mouse.clicked_object = nullptr;
+  Mouse.focused_objects = std::vector<GameObject *>();
+
   for (GameObject *&object : GameObjects::all()) {
     GameObjects::uninstantiate(object->id);
   }
@@ -99,13 +110,6 @@ void Game::load_level(const char *path) {
   }
 
   if (GameObjects::filter("goal") == std::vector<GameObject *>()) printf("[WARNING] Level has no goal tile!\n");
-
-  if (Characters::Players::ActivePlayer == nullptr) return;
-
-  Characters::Players::ActivePlayer->translate(glm::vec2(100.0f, 450.0f));
-  Characters::Players::ActivePlayer->flip_x = false;
-  Characters::Players::ActivePlayer->velocity = glm::vec2(0.0f);
-  Characters::Players::ActivePlayer->walk_speed = 100.0f; 
 }
 
 // Initialise the game by loading in and initialising all the required assets

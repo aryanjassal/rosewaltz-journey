@@ -223,10 +223,15 @@ void GameObject::set_parent(GameObject *parent) {
 }
 
 void GameObject::unset_parent() {
-  if (this->parent != nullptr) {
-    if (std::find(this->parent->children.begin(), this->parent->children.end(), this) != this->parent->children.end()) {
-      this->parent->children.erase(std::find(this->parent->children.begin(), this->parent->children.end(), this));
+  try {
+    if (this->parent != nullptr) {
+      if (std::find(this->parent->children.begin(), this->parent->children.end(), this) != this->parent->children.end()) {
+        this->parent->children.erase(std::find(this->parent->children.begin(), this->parent->children.end(), this));
+      }
+      this->parent = nullptr;
     }
+  } catch (...) {
+    printf("[WARNING] could not properly unset parent of object (%i) %s\n", this->id, this->handle.c_str());
     this->parent = nullptr;
   }
 }
