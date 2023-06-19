@@ -117,7 +117,6 @@ void Game::load_level(const char *path) {
 void Game::init() {
   // Set the clear colour of the scene background
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-  exit(0);
 
   // Create a shader program, providing the default vertex and fragment shaders
   Shader sprite_shader = ResourceManager::Shader::load("src/shaders/default.vert", "src/shaders/default.frag", "default");

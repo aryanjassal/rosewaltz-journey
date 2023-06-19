@@ -82,9 +82,9 @@ void Player::resolve_collisions() {
           if (collision.vertical && collision.vertical.direction == DOWN) {
             this->grounded = true;
             this->transform.position.y -= collision.vertical.mtv;
-          } else if (collision.vertical && collision.vertical.direction == UP && !this->grounded /* && !collision.horizontal */) {
+          } else if (collision.vertical && collision.vertical.direction == UP && !this->grounded) {
             this->grounded = false;
-            this->transform.position.y -= collision.vertical.mtv - object->transform.scale.y - (this->transform.scale.y * 2.0f);
+            this->transform.position.y -= collision.vertical.mtv - object->transform.scale.y - this->transform.scale.y - 20.0f;
             this->velocity.y = 0.0f;
           } 
 
