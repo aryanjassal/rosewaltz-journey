@@ -54,14 +54,6 @@ Game::~Game() {
 void Game::load_level(const char *path) {
   this->GameState = std::map<std::string, bool>();
 
-  if (Characters::Players::ActivePlayer != nullptr) {
-    Characters::Players::ActivePlayer->parent = nullptr;
-    Characters::Players::ActivePlayer->translate(glm::vec2(100.0f, 450.0f));
-    Characters::Players::ActivePlayer->flip_x = false;
-    Characters::Players::ActivePlayer->velocity = glm::vec2(0.0f);
-    Characters::Players::ActivePlayer->walk_speed = 100.0f; 
-  }
-
   Mouse.clicked_object = nullptr;
   Mouse.focused_objects = std::vector<GameObject *>();
 
@@ -109,6 +101,15 @@ void Game::load_level(const char *path) {
     }
   }
 
+  if (Characters::Players::ActivePlayer != nullptr) {
+    Characters::Players::ActivePlayer->parent = nullptr;
+    Characters::Players::ActivePlayer->translate(glm::vec3(100.0f, 450.0f, 0.0f));
+    Characters::Players::ActivePlayer->flip_x = false;
+    Characters::Players::ActivePlayer->velocity = glm::vec2(0.0f);
+    Characters::Players::ActivePlayer->walk_speed = 100.0f; 
+    Characters::Players::ActivePlayer->grounded = false; 
+  }
+
   if (GameObjects::filter("goal") == std::vector<GameObject *>()) printf("[WARNING] Level has no goal tile!\n");
 }
 
@@ -116,6 +117,7 @@ void Game::load_level(const char *path) {
 void Game::init() {
   // Set the clear colour of the scene background
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  exit(0);
 
   // Create a shader program, providing the default vertex and fragment shaders
   Shader sprite_shader = ResourceManager::Shader::load("src/shaders/default.vert", "src/shaders/default.frag", "default");

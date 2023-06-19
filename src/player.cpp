@@ -35,12 +35,6 @@ void Player::update() {
       if (this->walk_speed < 0) this->flip_x = true;
       else this->flip_x = false;
 
-      // if (this->walk_speed > 0) this->position_offset.x -= 100.0f;
-      // else this->position_offset.x += 100.0f;
-
-      // this->transform.scale.x *= -1;
-      // printf("transfor: %.2f, %.2f, %.2f\n", this->transform.position.x, this->transform.position.y, this->transform.position.z);
-
       this->transform.position.x = std::clamp(this->transform.position.x - this->position_offset.x, 0.0f, (float)GameObjects::Camera->width - this->transform.scale.x);
     }
   }
@@ -88,8 +82,10 @@ void Player::resolve_collisions() {
           if (collision.vertical && collision.vertical.direction == DOWN) {
             this->grounded = true;
             this->transform.position.y -= collision.vertical.mtv;
-          } else if (collision.vertical && collision.vertical.direction == UP && !collision.horizontal) {
-            printf("[player] UP collision detected  \n");
+          } else if (collision.vertical && collision.vertical.direction == UP && !this->grounded /* && !collision.horizontal */) {
+            this->grounded = false;
+            this->transform.position.y -= collision.vertical.mtv - object->transform.scale.y - (this->transform.scale.y * 2.0f);
+            this->velocity.y = 0.0f;
           } 
 
           if (object->tags[0] == "obstacle") {
