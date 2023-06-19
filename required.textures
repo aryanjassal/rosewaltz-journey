@@ -14,8 +14,9 @@ tile-full-floor; textures/tiles/tile-full-floor.png
 tile-half-floor; textures/tiles/tile-half-floor.png
 goal; textures/tiles/goal.png
 goal-acquired; textures/tiles/goal-acquired.png
-obstacle-safe; textures/tiles/solo-tile-floor.png
+obstacle-safe; textures/tiles/obstacle-safe.png
+obstacle-danger; textures/tiles/obstacle-danger.png
 
 // Other miscellaneous textures
 nothing; textures/nothing.png
-blank; textures/blank.png; false
+// blank; textures/blank.png; false

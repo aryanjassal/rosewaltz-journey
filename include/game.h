@@ -46,6 +46,7 @@ class Game {
     MouseState Mouse;
     std::map<int, KeyState> Keyboard;
     std::map<std::string, bool> GameState;
+    std::map<std::string, std::string> CriticalGameState;
 
     // Set up other generic variables
     unsigned int width, height;
@@ -69,6 +70,9 @@ class Game {
 
     // Returns the global state of the variable if it exists, otherwise returns false.
     bool state(std::string);
+
+    // Returns the global state of the critical variable if it exists, otherwise returns false.
+    std::string cstate(std::string);
 
     // Set GLFW callbacks
     void set_callbacks(GLFWcursorposfun cursorpos_callback, GLFWmousebuttonfun cursorbutton_callback, GLFWkeyfun keyboard_callback);

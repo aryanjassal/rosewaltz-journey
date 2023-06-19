@@ -89,14 +89,18 @@ void Player::resolve_collisions() {
           } 
 
           if (object->tags[0] == "obstacle") {
-            if (collision.vertical && collision.vertical.direction == DOWN) this->transform.position.y -= collision.vertical.mtv;
-            else {
-              if (collision.horizontal && collision.horizontal.direction == LEFT) this->transform.position.x -= collision.horizontal.mtv;
-              else if (collision.horizontal && collision.horizontal.direction == RIGHT) this->transform.position.x -= collision.horizontal.mtv - object->transform.scale.x - this->transform.scale.x;
-              this->walk_speed *= -1.0;
+            if (object->tags[1] == "obstacle-safe") {
+              if (collision.vertical && collision.vertical.direction == DOWN) this->transform.position.y -= collision.vertical.mtv;
+              else {
+                if (collision.horizontal && collision.horizontal.direction == LEFT) this->transform.position.x -= collision.horizontal.mtv;
+                else if (collision.horizontal && collision.horizontal.direction == RIGHT) this->transform.position.x -= collision.horizontal.mtv - object->transform.scale.x - this->transform.scale.x;
+                this->walk_speed *= -1.0;
 
-              if (this->walk_speed < 0) this->flip_x = true;
-              else this->flip_x = false;
+                if (this->walk_speed < 0) this->flip_x = true;
+                else this->flip_x = false;
+              }
+            } else if (object->tags[1] == "obstacle-danger") {
+              this->die = true;
             }
           }
         }

@@ -36,6 +36,9 @@ class Player : public GameObject {
     // Did the player win?
     bool won = false;
 
+    // Did the player die?
+    bool die = false;
+
     // Animation related variables 
     float fps = 100.0f;
     float animation_timer = this->fps;

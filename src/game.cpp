@@ -108,6 +108,9 @@ void Game::load_level(const char *path) {
     Characters::Players::ActivePlayer->velocity = glm::vec2(0.0f);
     Characters::Players::ActivePlayer->walk_speed = 100.0f; 
     Characters::Players::ActivePlayer->grounded = false; 
+    Characters::Players::ActivePlayer->locked = false; 
+    Characters::Players::ActivePlayer->won = false; 
+    Characters::Players::ActivePlayer->die = false; 
   }
 
   if (GameObjects::filter("goal") == std::vector<GameObject *>()) printf("[WARNING] Level has no goal tile!\n");
@@ -130,6 +133,7 @@ void Game::init() {
 
   // Initialise the font renderer
   ResourceManager::Font::load("fonts/monocraft.ttf", "monocraft", 128, FILTER_NEAREST);
+  ResourceManager::Texture::load("textures/blank.png", true, "blank");
 
   // Assign the camera and the renderer as global renderers for the GameObject
   GameObjects::Camera = GameCamera;
@@ -158,8 +162,10 @@ void Game::init() {
   // Load the ObjectPrefabs from the Prefabs R* file
   GameObjects::ObjectPrefabs::load_from_file("required.prefabs");
 
+  CriticalGameState["level"] = "1.level";
+
   // Load the level from a level R* file
-  this->load_level("1.level");
+  this->load_level(cstate("level").c_str());
 
 }
 
@@ -168,6 +174,13 @@ bool Game::state(std::string state) {
     return this->GameState[state];
   else
     return false;
+}
+
+std::string Game::cstate(std::string state) {
+  if (this->CriticalGameState.find(state) != this->CriticalGameState.end())
+    return this->CriticalGameState[state];
+  else
+    return "";
 }
 
 void Game::run() {
@@ -310,6 +323,11 @@ void Game::update() {
     if (Characters::Players::ActivePlayer->won) GameState["game-over"] = true;
   }
 
+  if (Characters::Players::ActivePlayer->die) {
+    GameState["game-over"] = true;
+    GameState["lost"] = true;
+  }
+
   if (this->Keyboard['F'].pressed) toggle_fullscreen();
 
   // Debug keybinds
@@ -327,7 +345,15 @@ void Game::update() {
     this->GameState = std::map<std::string, bool>();
     GameObjects::get("goal")->texture_index = 0;
   }
-  if (this->Keyboard['R'].pressed) this->load_level("1.level");
+  if (this->Keyboard['R'].pressed) this->load_level(cstate("level").c_str());
+
+  if (this->Keyboard['1'].pressed) {
+    CriticalGameState["level"] = "1.level";
+    this->load_level("1.level");
+  } else if (this->Keyboard['2'].pressed) {
+    CriticalGameState["level"] = "2.level";
+    this->load_level("2.level");
+  }
 
   // Reset the pressed and released status of the mouse buttons
   Mouse.left_button_down = false;
@@ -388,7 +414,7 @@ void Game::render() {
 
   // Render the current active Player
   if (Mouse.clicked_object == nullptr && !state("game-over")) Characters::Players::ActivePlayer->animate();
-  if (Mouse.clicked_object != Characters::Players::ActivePlayer->parent || Mouse.clicked_object == nullptr) Characters::Players::ActivePlayer->render();
+  if (Mouse.clicked_object != Characters::Players::ActivePlayer->parent || Mouse.clicked_object == nullptr) Characters::Players::ActivePlayer->render(Characters::Players::ActivePlayer->die ? glm::vec4(0.97f, 0.2f, 0.2f, 1.0f) : glm::vec4(1.0f));
 
   // Render the selected object to render them in the front
   if (Mouse.clicked_object != nullptr && Mouse.focused_objects != std::vector<GameObject *>()) {
@@ -406,8 +432,10 @@ void Game::render() {
   if (state("immovable-player")) 
     Text::render("Cannot move tiles when player is between two tiles", "monocraft", Transform(glm::vec3(0.0f), glm::vec2(0.6f)), TEXT_MIDDLE_CENTER);
 
-  if (state("game-over"))
+  if (state("game-over") && !state("lost"))
     Text::render("YOU WON!", "monocraft", Transform(glm::vec3(0.0f), glm::vec2(2.0f)), TEXT_MIDDLE_CENTER);
+  else if (state("game-over") && state("lost"))
+    Text::render("YOU LOST!", "monocraft", Transform(glm::vec3(0.0f), glm::vec2(2.0f)), TEXT_MIDDLE_CENTER);
 
   // Actually display the updated images to the screen
   glfwSwapBuffers(this->GameWindow);

@@ -469,9 +469,31 @@ std::vector<std::string> p_csstr(std::string list) {
   return out;
 }
 
+// PARSE PREFABS FILE
 int line_num = 0;
 
-std::vector<float> p_csfloat(std::string list, std::map<std::string, float> constants) {
+std::vector<float> p_csfloat(std::string list, GameObject *object) {
+  glm::vec2 TileSize = glm::vec2(GameObjects::Camera->width / 3.0f, GameObjects::Camera->height / 2.0f);
+  float ratio = (float)WindowSize.y / 8.85f;
+  
+  std::map<std::string, float> constants;
+  constants["*TSX"] = TileSize.x;
+  constants["*TSY"] = TileSize.y;
+  constants["*TSX/2"] = TileSize.x / 2.0f;
+  constants["*TSY/2"] = TileSize.y / 2.0f;
+  constants["*TSX/3"] = TileSize.x / 3.0f;
+  constants["*TSY/3"] = TileSize.y / 3.0f;
+  constants["*TSY-R"] = TileSize.y - ratio;
+  constants["*TSX-SX"] = TileSize.x - object->transform.scale.x;
+  constants["*TSY-R-SY"] = TileSize.y - ratio - object->transform.scale.y;
+  constants["*TXSC"] = (TileSize.x / 2.0f) - (object->transform.scale.x / 2.0f);
+  constants["*TYSC"] = (TileSize.y / 2.0f) - (object->transform.scale.y / 2.0f);
+  constants["*R"] = ratio;
+  constants["*SX"] = object->transform.scale.x;
+  constants["*SY"] = object->transform.scale.y;
+  constants["*PX"] = object->transform.position.x;
+  constants["*PY"] = object->transform.position.y;
+
   int pos = list.find(",");
   std::vector<float> out;
 
@@ -523,37 +545,11 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
   bool editing_object = false;
   int objects_loaded = 0;
 
-  glm::vec2 TileSize = glm::vec2(GameObjects::Camera->width / 3.0f, GameObjects::Camera->height / 2.0f);
-  float ratio = (float)WindowSize.y / 8.85f;
-  GameObject *default_object = GameObjects::ObjectPrefabs::create("default", ResourceManager::Texture::get("blank"), {}, Transform());
-  GameObject *object = default_object;
-
   #define DEBUG false
   #define DEBUG_LEVEL 5
 
-  #define SX object->transform.scale.x
-  #define SY object->transform.scale.y
-  #define PX object->transform.position.x
-  #define PY object->transform.position.y
-
-  std::map<std::string, float> constants;
-  constants["*TSX"] = TileSize.x;
-  constants["*TSY"] = TileSize.y;
-  constants["*TSX/2"] = TileSize.x / 2.0f;
-  constants["*TSY/2"] = TileSize.y / 2.0f;
-  constants["*TSX/3"] = TileSize.x / 3.0f;
-  constants["*TSY/3"] = TileSize.y / 3.0f;
-  constants["*TSY-R"] = TileSize.y - ratio;
-  constants["*TSX-SX"] = TileSize.x - SX;
-  constants["*TSX-TSX/3"] = TileSize.x - (TileSize.x / 3.0f);
-  constants["*TSY-R-SY"] = TileSize.y - ratio - SY;
-  constants["*TXSC"] = (TileSize.x / 2.0f) - (SX / 2.0f);
-  constants["*TYSC"] = (TileSize.y / 2.0f) - (SY / 2.0f);
-  constants["*R"] = ratio;
-  constants["*SX"] = SX;
-  constants["*SY"] = SY;
-  constants["*PX"] = PX;
-  constants["*PY"] = PY;
+  GameObject *default_object = GameObjects::ObjectPrefabs::create("default", ResourceManager::Texture::get("blank"), {}, Transform());
+  GameObject *object = default_object;
 
   if (DEBUG && DEBUG_LEVEL >= 2) printf("\n");
 
@@ -630,7 +626,7 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
         } else if (substr == "position") {
           line.erase(0, pos + 1);
           if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (list cannot be empty)");
-          std::vector<float> position = p_csfloat(line, constants);
+          std::vector<float> position = p_csfloat(line, object);
           try {
             object->transform.position = glm::vec3(position[0], position[1], position[2]); 
           } catch (...) {
@@ -639,7 +635,7 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
         } else if (substr == "scale") {
           line.erase(0, pos + 1);
           if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (list cannot be empty)");
-          std::vector<float> scale = p_csfloat(line, constants);
+          std::vector<float> scale = p_csfloat(line, object);
           try {
             object->transform.scale = glm::vec2(scale[0], scale[1]);
           } catch (...) {
@@ -648,7 +644,7 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
         } else if (substr == "origin") {
           line.erase(0, pos + 1);
           if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (list cannot be empty)");
-          std::vector<float> origin = p_csfloat(line, constants);
+          std::vector<float> origin = p_csfloat(line, object);
           try {
             object->origin = glm::vec2(origin[0], origin[1]);
           } catch (...) {
@@ -657,7 +653,7 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
         } else if (substr == "grid") {
           line.erase(0, pos + 1);
           if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (list cannot be empty)");
-          std::vector<float> grid = p_csfloat(line, constants);
+          std::vector<float> grid = p_csfloat(line, object);
           try {
             object->grid = glm::vec2(grid[0], grid[1]);
           } catch (...) {
@@ -666,7 +662,7 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
         } else if (substr == "position-offset") {
           line.erase(0, pos + 1);
           if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (list cannot be empty)");
-          std::vector<float> position_offset = p_csfloat(line, constants);
+          std::vector<float> position_offset = p_csfloat(line, object);
           try {
             object->position_offset = glm::vec3(position_offset[0], position_offset[1], position_offset[2]);
           } catch (...) {
@@ -726,6 +722,12 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
   if (editing_object) p_error("EOF before object was fully initialised (missing '}')");
 
   if (DEBUG && DEBUG_LEVEL >= 2) printf("Loaded %i objects from file!\n", objects_loaded);
-  // exit(0);
+
+  // for (auto object : Prefabs) {
+  //   auto o = object.second;
+  //   printf("---[%s]---\n", o.handle.c_str());
+  //   for (auto tag : o.tags) printf("[tag] %s\n", tag.c_str());
+  //   printf("\n");
+  // }
 }
 

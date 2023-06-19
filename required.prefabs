@@ -8,6 +8,7 @@
 #tile-full-floor
 #tile-half-floor
 #obstacle-safe
+#obstacle-danger
 #goal
 #goal-acquired
 
@@ -89,28 +90,67 @@ $tile-floor-half-right : tile-floor {
   parent = tile-half
 }
 
+$obstacle-safe {
+  texture = obstacle-safe
+  tags = obstacle, obstacle-safe
+  rigidbody = true
+  scale = 75.0, 150.0
+}
+
+$obstacle-danger {
+  texture = obstacle-danger
+  tags = obstacle, obstacle-danger
+  rigidbody = true
+  scale = 100.0, 50.0
+}
+
+$tile-full-obstacle-danger-center : tile-full
+
+$full-obstacle-danger-center : obstacle-danger {
+  position-offset = *TXSC, *TSY-R-SY, 0.0
+  parent = tile-full-obstacle-danger-center
+}
+
+$tile-half-obstacle-danger-left : tile-half
+
+$half-obstacle-danger-left : obstacle-danger {
+  position-offset = 0.0, *TSY-R-SY, 0.0
+  parent = tile-half-obstacle-danger-left
+}
+
 $tile-full-obstacle-safe-left : tile-full
 
 $tile-full-obstacle-safe-right : tile-full
 
-$obstacle-safe-left {
-  texture = obstacle-safe
-  tags = obstacle, obstacle-safe
-  rigidbody = true
+$obstacle-safe-left : obstacle-safe {
   position-offset = 0.0, *TSY-R-SY, 0.0
   parent = tile-full-obstacle-safe-left
 }
 
-$obstacle-safe-right : obstacle-safe-left {
+$obstacle-safe-right : obstacle-safe {
   position-offset = *TSX-SX, *TSY-R-SY, 0.0
   parent = tile-full-obstacle-safe-right
 }
 
 $tile-half-obstacle-safe-left : tile-half
 
-$half-obstacle-safe-left : obstacle-safe-left {
+$half-obstacle-safe-left : obstacle-safe {
+  position-offset = 0.0, *TSY-R-SY, 0.0
   parent = tile-half-obstacle-safe-left
 }
+
+
+$tile-full-obstacle-safe-left-obstacle-danger-right : tile-full 
+
+$full-obstacle-safe-left-1 : obstacle-safe-left {
+  parent = tile-full-obstacle-safe-left-obstacle-danger-right
+}
+
+$full-obstacle-danger-right-1 : obstacle-danger {
+  position-offset = *TSX-SX, *TSY-R-SY, 0.0
+  parent = tile-full-obstacle-safe-left-obstacle-danger-right
+}
+
 
 $tile-full-goal-centered : tile-full 
 

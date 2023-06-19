@@ -1,0 +1,2 @@
+tile-half-obstacle-danger-left;         tile-full > lock;                                     tile-full-obstacle-danger-center
+tile-full-obstacle-safe-right;          tile-full-obstacle-safe-left-obstacle-danger-right;   tile-full-goal-centered > lock
