@@ -26,10 +26,7 @@
 // ^<parent-id (string)>
 // }
 
-// Note to list the position, scale, and rotation in that order.
-// If rotation is not required, then it can be omitted, but if scale is required and position isn't, then the position will still need to be declared.
-
-// Note the constants are written with a `*`. For example, *const.
+// Note the constants are written with a `*`. For example, `*const`.
 // List of constants: 
 // *TSX (TileSize.x)
 // *TSY (TileSize.y)
@@ -46,8 +43,9 @@
 // *PY (this->transform.position.y)
 
 // Note that two attributes or even the opening and closing braces should not be on the same line as they will not be processed correctly by the parser
+// Although, if you do not want to update any attributes of a derived prefab, then simply omit the brackets
 
-// The id (or anything else) should not have any spaces as those are trimmed at runtime
+// The id (or anything else for that matter) should not have any spaces as those are trimmed at runtime
 
 $tile-full {
   texture = nothing
@@ -78,8 +76,7 @@ $obstacle-safe-left {
   parent = tile-full-obstacle-safe-left
 }
 
-$tile-full-goal-centered : tile-full {
-}
+$tile-full-goal-centered : tile-full 
 
 $goal {
   texture = goal, goal-acquired
@@ -92,8 +89,7 @@ $goal-centered : goal {
   parent = tile-full-goal-centered
 }
 
-$tile-full-obstacle-safe-left-goal-centered : tile-full-obstacle-safe-left {
-}
+$tile-full-obstacle-safe-left-goal-centered : tile-full-obstacle-safe-left 
 
 $goal-centered-obstacle-safe-left : goal-centered {
   parent = tile-full-obstacle-safe-left-goal-centered
@@ -103,7 +99,6 @@ $immovable {
   texture = nothing
   tags = tile, locked
   scale = *TSX, *TSY
-  // origin = *TSX/2, *TSY/2
   grid = *TSX, *TSY
   swap = true
   locked = true

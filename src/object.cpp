@@ -585,6 +585,9 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
           std::string derived_from = line.substr(dpos + 1, line.find("{"));
           std::string obj_name = line.substr(0, dpos);
           object = GameObjects::ObjectPrefabs::create(obj_name.c_str(), *GameObjects::ObjectPrefabs::get(derived_from));
+          objects_loaded++;
+          if (DEBUG && DEBUG_LEVEL >= 2) printf("Loaded object '%s' from file!\n\n", object->handle.c_str());
+          if (pos == std::string::npos) continue;
         } else {
           object = GameObjects::ObjectPrefabs::create(line.c_str(), *default_object);
         }
