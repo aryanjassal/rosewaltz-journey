@@ -523,7 +523,7 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
   GameObject *default_object = GameObjects::ObjectPrefabs::create("default", ResourceManager::Texture::get("blank"), {}, Transform());
   GameObject *object = default_object;
 
-  #define DEBUG true
+  #define DEBUG false
   #define DEBUG_LEVEL 5
 
   #define SX object->transform.scale.x

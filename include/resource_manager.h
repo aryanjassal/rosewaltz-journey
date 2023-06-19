@@ -13,6 +13,7 @@
 #include <sstream>
 #include <fstream>
 #include <stdio.h>
+#include <algorithm>
 
 #define FILTER_NEAREST 0
 #define FILTER_LINEAR 1
@@ -48,6 +49,9 @@ namespace ResourceManager {
 
     // Deallocates a texture with the given handle
     void deallocate(std::string handle);
+
+    // Load all textures from a given R* textures file
+    void load_from_file(const char *file_path);
   }
 
   // Manages loading and deallocating image files.

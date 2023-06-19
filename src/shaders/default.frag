@@ -19,5 +19,6 @@ void main() {
   if (texture_coordinate.x <= 0.005f || texture_coordinate.x >= 0.995f || texture_coordinate.y <= 0.005f || texture_coordinate.y >= 0.995f) {
     if (focus == 1) { pixel += vec4(0.796f, 0.482f, 0.494f, 0.6f); }
     else if (focus == -1) { pixel += vec4(0.4f, 0.4f, 0.4f, 0.6f); }
+    else if (focus == -2) { pixel += vec4(1.0f, 0.843f, 0.0f, 0.6f); }
   }
 }

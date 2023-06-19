@@ -196,6 +196,66 @@ unsigned char *ResourceManager::Image::load(const char *file_path, int &width, i
   return data;
 }
 
+void t_error(std::string error, bool fail = true) {
+  if (fail) {
+    printf("[R* PARSING ERROR]\n  %s\n", error.c_str());
+    exit(0);
+  } else {
+    printf("[R* WARNING]\n  %s\n", error.c_str());
+  }
+}
+
+void ResourceManager::Texture::load_from_file(const char *file_path) {
+  std::ifstream file(file_path);
+  std::string line;
+
+  // Variables for the scripting language
+  bool fail_on_texture_not_found = true;
+  bool editing_object = false;
+  int objects_loaded = 0;
+  int line_num = 0;
+
+  #define DEBUG false
+  #define DEBUG_LEVEL 5
+
+  if (DEBUG && DEBUG_LEVEL >= 2) printf("\n");
+
+  // std::getline(file, line);
+  if (file.is_open()) {
+    while (std::getline(file, line)) {
+      line_num++;
+
+      // Erase all spaces from the file
+      line.erase(std::remove_if(line.begin(), line.end(), [](unsigned char x) { return std::isspace(x); }), line.end());
+
+      // Ignore all comments and blanklines in the file
+      if (line.find("//") == 0 || !line.size()) continue;
+
+      // Parses the file
+      int pos = line.find(";");
+      if (pos != std::string::npos) {
+        std::string handle = line.substr(0, pos);
+        std::string path; 
+        std::string transparent = "true";
+
+        line.erase(0, pos + 1);
+        pos = line.find(";");
+        path = line.substr(0, pos);
+
+        if (pos != std::string::npos) transparent = line.substr(pos + 1);
+
+        bool transparency;
+        if (transparent == "false") transparency = false;
+        else if (transparent == "true") transparency = true;
+        else if (!transparent.size()) t_error("Invalid syntax at line " + std::to_string(line_num) + " (line endings should not have a semicolon)", false);
+        else t_error("Invalid syntax at line " + std::to_string(line_num) + " ('" + transparent + "' invalid value)");
+
+        ResourceManager::Texture::load(path.c_str(), transparency, handle);
+      }
+    }
+  }
+}
+
 unsigned char *ResourceManager::Image::load(const char *file_path) {
   int width, height, colour_channels;
   return ResourceManager::Image::load(file_path, width, height, colour_channels);

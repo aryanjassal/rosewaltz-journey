@@ -89,7 +89,7 @@ $goal-centered : goal {
   parent = tile-full-goal-centered
 }
 
-$tile-full-obstacle-safe-left-goal-centered : tile-full-obstacle-safe-left 
+$tile-full-obstacle-safe-left-goal-centered : tile-full-obstacle-safe-left
 
 $goal-centered-obstacle-safe-left : goal-centered {
   parent = tile-full-obstacle-safe-left-goal-centered

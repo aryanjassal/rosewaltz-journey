@@ -73,29 +73,28 @@ void Game::init() {
   GameObjects::Camera = GameCamera;
   GameObjects::Renderer = Renderer;
 
-  // Set the tile width and height settings
   TileSize = glm::vec2(GameCamera->width / 3.0f, GameCamera->height / 2.0f);
 
   // Load the background layers
-  Texture background_bg = ResourceManager::Texture::load("textures/background/background-bg.png", true, "background-bg");
-  Texture background_far = ResourceManager::Texture::load("textures/background/background-far.png", true, "background-far");
-  Texture background_mid = ResourceManager::Texture::load("textures/background/background-mid.png", true, "background-mid");
-  Texture background_near = ResourceManager::Texture::load("textures/background/background-near.png", true, "background-near");
+  // Texture background_bg = ResourceManager::Texture::load("textures/background/background-bg.png", true, "background-bg");
+  // Texture background_far = ResourceManager::Texture::load("textures/background/background-far.png", true, "background-far");
+  // Texture background_mid = ResourceManager::Texture::load("textures/background/background-mid.png", true, "background-mid");
+  // Texture background_near = ResourceManager::Texture::load("textures/background/background-near.png", true, "background-near");
+  //
+  // // Load textures into the game
+  // Texture nothing = ResourceManager::Texture::load("textures/nothing.png", true, "nothing");
+  // Texture blank = ResourceManager::Texture::load("textures/blank.png", true, "blank");
+  // Texture floor = ResourceManager::Texture::load("textures/tiles/tile-floor.png", true, "tile-full-floor");
+  // Texture treasure = ResourceManager::Texture::load("textures/tiles/treasure.png", true, "goal");
+  // Texture treasure_open = ResourceManager::Texture::load("textures/tiles/treasure-open.png", true, "goal-acquired");
+  //
+  // Texture tex_safe_obstacle = ResourceManager::Texture::load("textures/tiles/solo-tile-floor.png", true, "obstacle-safe");
 
-  // Load textures into the game
-  Texture nothing = ResourceManager::Texture::load("textures/nothing.png", true, "nothing");
-  Texture blank = ResourceManager::Texture::load("textures/blank.png", true, "blank");
-  Texture floor = ResourceManager::Texture::load("textures/tiles/tile-floor.png", true, "tile-full-floor");
-  Texture treasure = ResourceManager::Texture::load("textures/tiles/treasure.png", true, "goal");
-  Texture treasure_open = ResourceManager::Texture::load("textures/tiles/treasure-open.png", true, "goal-acquired");
-
-  Texture tex_safe_obstacle = ResourceManager::Texture::load("textures/tiles/solo-tile-floor.png", true, "obstacle-safe");
+  // Load the textures from a given R* file
+  ResourceManager::Texture::load_from_file("required.textures");
   
-  // Set up the global variables to create GameObjects
-  float ratio = (float)height / 8.85f;
-
   // Create the player
-  Player *player = Characters::Players::create("player", blank, Transform(glm::vec3(100.0f, 450.0f, 1.0f), glm::vec2(72.72f, 100.0f)), { "player" });
+  Player *player = Characters::Players::create("player", ResourceManager::Texture::get("blank"), Transform(glm::vec3(100.0f, 450.0f, 1.0f), glm::vec2(72.72f, 100.0f)), { "player" });
   player->texture = std::vector<Texture>();
   player->fps = 150;
   // player->collider_revealed = true;
@@ -109,46 +108,7 @@ void Game::init() {
   
   Characters::Players::ActivePlayer = player;
 
-  // // Create ObjectPrefabs
-  // GameObject *tile = GameObjects::ObjectPrefabs::create("tile-full", nothing, { "tile" }, Transform(glm::vec3(0.0f), TileSize));
-  // tile->origin = TileSize / glm::vec2(2.0f); 
-  // tile->grid = TileSize;
-  // tile->interactive = true;
-  // tile->swap = true;
-  //
-  // GameObject *tile_floor = GameObjects::ObjectPrefabs::create("tile-floor", floor, { "tile-floor" }, Transform(glm::vec3(0.0f), glm::vec2(TileSize.x, ratio)));
-  // tile_floor->rigidbody = true;
-  // tile_floor->position_offset = glm::vec3(0.0f, TileSize.y - ratio, 1.0f);
-  // tile_floor->set_parent(tile);
-  //
-  // GameObject *tile_safe_obstacle_left = GameObjects::ObjectPrefabs::create("tile-full-obstacle-safe-left", *tile);
-  // GameObject *safe_obstacle = GameObjects::ObjectPrefabs::create("safe-obstacle", tex_safe_obstacle, { "obstacle", "safe-obstacle" }, Transform());
-  // safe_obstacle->rigidbody = true;
-  // safe_obstacle->position_offset = glm::vec3(0.0f, TileSize.y - ratio - 100.0f, 1.0f);
-  // safe_obstacle->set_parent(tile_safe_obstacle_left);
-  //
-  // GameObject *tile_full_safe_obstacle_left_locked = GameObjects::ObjectPrefabs::create("tile-ful-obstacle-safe-left-locked", *tile);
-  // tile_full_safe_obstacle_left_locked->locked = true;
-  // tile_full_safe_obstacle_left_locked->swap = true;
-  //
-  // GameObject *tile_goal = GameObjects::ObjectPrefabs::create("tile-full-obstacle-safe-left-goal-centered", *tile_safe_obstacle_left);
-  // GameObject *goal = GameObjects::ObjectPrefabs::create("goal", treasure, { "goal" });
-  // goal->position_offset = glm::vec3((TileSize.x / 2.0f) - (goal->transform.scale.x / 2.0f), TileSize.y - ratio - goal->transform.scale.y, 1.0f);
-  // goal->set_parent(tile_goal);
-  //
-  // GameObject *tile_full_goal_centered_locked = GameObjects::ObjectPrefabs::create("tile-full-goal-centered-locked", *tile);
-  // tile_full_goal_centered_locked->locked = true;
-  // tile_full_goal_centered_locked->swap = true;
-  // GameObject *goal_locked = GameObjects::ObjectPrefabs::create("goal-locked", treasure, { "goal" });
-  // goal_locked->position_offset = glm::vec3((TileSize.x / 2.0f) - (goal->transform.scale.x / 2.0f), TileSize.y - ratio - goal->transform.scale.y, 1.0f);
-  // goal_locked->set_parent(tile_full_goal_centered_locked);
-  //
-  // GameObject *immovable = GameObjects::ObjectPrefabs::create("immovable", nothing, { "tile", "locked" }, Transform(glm::vec3(0.0f), TileSize));
-  // immovable->origin = TileSize / glm::vec2(2.0f); 
-  // immovable->grid = TileSize;
-  // immovable->swap = true;
-  // immovable->locked = true;
-
+  // Load the ObjectPrefabs from the Prefabs R* file
   GameObjects::ObjectPrefabs::load_from_file("required.prefabs");
 
   std::vector<std::vector<std::string>> instantiation_order;
@@ -178,7 +138,12 @@ void Game::init() {
   // Create GameObjects
   for (int i = 0; i < instantiation_order.size(); i++) {
     for (int j = 0; j < instantiation_order.begin()->size(); j++) {
-      GameObject *t = GameObjects::instantiate(instantiation_order.at(i).at(j), Transform(glm::vec3(TileSize.x * j, TileSize.y * i, 1.0f), TileSize));
+      std::string name = instantiation_order.at(i).at(j);
+      if (name.find(">") != std::string::npos) {
+        GameObject *t = GameObjects::instantiate(name.substr(0, name.find(">")), Transform(glm::vec3(TileSize.x * j, TileSize.y * i, 1.0f), TileSize));
+        if (name.substr(name.find(">") + 1) == "lock") t->locked = true;
+        else throw std::runtime_error("Invalid property\n");
+      } else GameObject *t = GameObjects::instantiate(instantiation_order.at(i).at(j), Transform(glm::vec3(TileSize.x * j, TileSize.y * i, 1.0f), TileSize));
     }
   }
 
@@ -222,7 +187,7 @@ void Game::update() {
     GameObject *p_parent = nullptr;
     for (GameObject *&object : GameObjects::all()) {
       if (Mouse.left_button_down && !Mouse.left_button_up && Characters::Players::ActivePlayer->parent != nullptr) {
-        if (object->interactive && !Characters::Players::ActivePlayer->locked && object->check_point_intersection(screen_to_world(Mouse.position))) {
+        if (object->interactive && !object->locked && !Characters::Players::ActivePlayer->locked && object->check_point_intersection(screen_to_world(Mouse.position))) {
           object->old_transform = object->transform;
           object->snap = false;
           Mouse.clicked_object = object;
@@ -455,7 +420,7 @@ void Game::render() {
   // Render each tile GameObject
   for (GameObject *&object : GameObjects::all()) {
     if (object->tags[0] == "tile") {
-      object->render(glm::vec4(1.0f), (object->tags[1] == "locked") ? 0 : -1);
+      object->render(glm::vec4(1.0f), (object->handle == "immovable") ? 0 : (object->locked) ? -2 : -1);
     }
   }
 
