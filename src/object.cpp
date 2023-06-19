@@ -76,7 +76,7 @@ void GameObject::render(glm::vec4 colour, int focus) {
       glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-    GameObjects::Renderer->render(this->texture, n_transform, colour, focus);
+    GameObjects::Renderer->render(this->texture[this->texture_index], n_transform, colour, focus);
 
     if (this->collider_revealed) {
       unsigned int t_vao, t_vbo;
@@ -246,12 +246,16 @@ void GameObject::unset_child(GameObject *child) {
 }
 
 GameObject *GameObjects::ObjectPrefabs::create(std::string handle, Texture texture, std::vector<std::string> tags, Transform transform) {
+  return GameObjects::ObjectPrefabs::create(handle, (std::vector<Texture>) { texture }, tags, transform);
+}
+
+GameObject *GameObjects::ObjectPrefabs::create(std::string handle, std::vector<Texture> texture, std::vector<std::string> tags, Transform transform) {
   if (GameObjects::Renderer == nullptr) throw std::runtime_error("A SpriteRenderer must be set for GameObjects::Renderer\n");
   if (Prefabs.find(handle) != Prefabs.end()) throw std::runtime_error("Another Prefab already exists with the same handle as " + handle + "'\n");
 
   GameObject object = GameObject();
   object.handle = handle;
-  object.texture = texture;
+  object.texture = (std::vector<Texture>) { texture };
   object.tags = tags;
   object.transform = transform;
   object.active = false;
@@ -265,17 +269,18 @@ GameObject *GameObjects::ObjectPrefabs::create(std::string handle, GameObject pr
   if (GameObjects::Renderer == nullptr) throw std::runtime_error("A SpriteRenderer must be set for GameObjects::Renderer\n");
   if (Prefabs.find(handle) != Prefabs.end()) throw std::runtime_error("Another Prefab already exists with the same handle as " + handle + "'\n");
 
+  prefab.handle = handle;
   Prefabs[handle] = prefab;
   return &Prefabs[handle];
 }
 
-GameObject *GameObjects::create(std::string handle, Texture texture, std::vector<std::string> tags, Transform transform) {
+GameObject *GameObjects::create(std::string handle, std::vector<Texture> texture, std::vector<std::string> tags, Transform transform) {
   if (GameObjects::Renderer == nullptr) throw std::runtime_error("A SpriteRenderer must be set for GameObjects::Renderer\n");
 
   GameObject object = GameObject();
   object.handle = handle;
   object.id = instantiation_id;
-  object.texture = texture;
+  object.texture = (std::vector<Texture>) { texture };
   object.tags = tags;
   object.transform = transform;
   object.update_bounding_box();
@@ -284,6 +289,10 @@ GameObject *GameObjects::create(std::string handle, Texture texture, std::vector
 
   Objects[object.id] = object;
   return &Objects[object.id];
+}
+
+GameObject *GameObjects::create(std::string handle, Texture texture, std::vector<std::string> tags, Transform transform) {
+  return GameObjects::create(handle, { texture }, tags, transform);
 }
 
 GameObject *GameObjects::instantiate(std::string prefab_handle) {
@@ -373,6 +382,7 @@ GameObject *GameObjects::get(std::string handle) {
 }
 
 GameObject *GameObjects::ObjectPrefabs::get(std::string handle) {
+  if (Prefabs.find(handle) == Prefabs.end()) throw std::runtime_error("Prefab with handle '" + handle + "' does not exist!");
   return &Prefabs[handle];
 }
 
@@ -432,3 +442,276 @@ std::vector<GameObject *> GameObjects::except(std::string tag) {
   }
   return filtered_objects;
 }
+
+void p_error(std::string error, bool fail = true) {
+  printf("[R* PARSING ERROR]\n  %s\n", error.c_str());
+  if (fail) exit(0);
+}
+
+std::vector<std::string> p_csstr(std::string list) {
+  int pos = list.find(",");
+  std::vector<std::string> out;
+
+  while (pos != std::string::npos) {
+    pos = list.find(",");
+    if (pos == std::string::npos) break;
+    out.push_back(list.substr(0, pos));
+    // printf("tag: %s\n", list.substr(0, pos).c_str());
+    list.erase(0, pos + 1);
+  }
+  // printf("tag: %s\n", list.c_str());
+  out.push_back(list);
+  return out;
+}
+
+int line_num = 0;
+
+std::vector<float> p_csfloat(std::string list, std::map<std::string, float> constants) {
+  int pos = list.find(",");
+  std::vector<float> out;
+
+  while (pos != std::string::npos) {
+    pos = list.find(",");
+    if (pos == std::string::npos) break;
+    std::string val = list.substr(0, pos);
+    if (val.substr(0, 1) == "*") {
+      try {
+        out.push_back(static_cast<float>(constants[val]));
+      } catch (...) {
+        p_error("Invalid syntax at line " + std::to_string(line_num) + " (invalid constant)");
+      }
+    } else {
+      try {
+        out.push_back(std::stof(val));
+      } catch (...) {
+        p_error("Invalid syntax at line " + std::to_string(line_num) + " (invalid symbol)");
+      }
+    }
+
+    // printf("tag: %s\n", list.substr(0, pos).c_str());
+    list.erase(0, pos + 1);
+  }
+
+  if (list.substr(0, 1) == "*") {
+    try {
+      out.push_back(static_cast<float>(constants[list]));
+    } catch (...) {
+      p_error("Invalid syntax at line " + std::to_string(line_num) + " (invalid constant)");
+    }
+  } else {
+    try {
+      out.push_back(std::stof(list));
+    } catch (...) {
+      p_error("Invalid syntax at line " + std::to_string(line_num) + " (invalid symbol)");
+    }
+  }
+
+  return out;
+}
+
+void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
+  std::ifstream file(file_path);
+  std::string line;
+
+  // Variables for the scripting language
+  bool fail_on_texture_not_found = true;
+  bool editing_object = false;
+  int objects_loaded = 0;
+
+  glm::vec2 TileSize = glm::vec2(GameObjects::Camera->width / 3.0f, GameObjects::Camera->height / 2.0f);
+  float ratio = (float)WindowSize.y / 8.85f;
+  GameObject *default_object = GameObjects::ObjectPrefabs::create("default", ResourceManager::Texture::get("blank"), {}, Transform());
+  GameObject *object = default_object;
+
+  #define DEBUG true
+  #define DEBUG_LEVEL 5
+
+  #define SX object->transform.scale.x
+  #define SY object->transform.scale.y
+  #define PX object->transform.position.x
+  #define PY object->transform.position.y
+
+  std::map<std::string, float> constants;
+  constants["*TSX"] = TileSize.x;
+  constants["*TSY"] = TileSize.y;
+  constants["*TSX/2"] = TileSize.x / 2.0f;
+  constants["*TSY/2"] = TileSize.y / 2.0f;
+  constants["*TSY-R"] = TileSize.y - ratio;
+  constants["*TSY-R-SY"] = TileSize.y - ratio - SY;
+  constants["*TXSC"] = (TileSize.x / 2.0f) - (SX / 2.0f);
+  constants["*TYSC"] = (TileSize.y / 2.0f) - (SY / 2.0f);
+  constants["*R"] = ratio;
+  constants["*SX"] = SX;
+  constants["*SY"] = SY;
+  constants["*PX"] = PX;
+  constants["*PY"] = PY;
+
+  if (DEBUG && DEBUG_LEVEL >= 2) printf("\n");
+
+  // std::getline(file, line);
+  if (file.is_open()) {
+    while (std::getline(file, line)) {
+      line_num++;
+      // Erase all spaces from the file
+      line.erase(std::remove_if(line.begin(), line.end(), [](unsigned char x) { return std::isspace(x); }), line.end());
+      if (line.find("//") == 0 || !line.size()) continue;
+
+      // Parses the file
+      if (line.substr(0, 1) == "%") {
+        line.erase(0, 1);
+        int pos = line.find("=");
+        if (pos != std::string::npos) {
+          line.erase(0, pos + 1);
+          if (line == "failure") fail_on_texture_not_found = true;
+          else if (line == "placeholder") fail_on_texture_not_found = false;
+          else p_error("Invalid syntax at line " + std::to_string(line_num) + " (invalid value)");
+        } else p_error("Invalid syntax at line " + std::to_string(line_num) + " (missing '=')");
+      } else if (line.substr(0, 1) == "#") {
+        line.erase(0, 1);
+        try {
+          ResourceManager::Texture::get(line);
+        } catch (...) { 
+          if (fail_on_texture_not_found) p_error("TEXTURE_FAILURE at line " + std::to_string(line_num) + " (texture '" + line + "' not found)"); 
+        }
+      } else if (line.substr(0, 1) == "$") {
+        if (editing_object) p_error("Invalid syntax at line " + std::to_string(line_num) + " (cannot have nested object declarations)");
+
+        line.erase(0, 1);
+        int pos = line.find("{");
+        if (pos != std::string::npos) line.erase(pos, 1);
+
+        int dpos = line.find(":");
+        if (dpos != std::string::npos) {
+          std::string derived_from = line.substr(dpos + 1, line.find("{"));
+          std::string obj_name = line.substr(0, dpos);
+          object = GameObjects::ObjectPrefabs::create(obj_name.c_str(), *GameObjects::ObjectPrefabs::get(derived_from));
+        } else {
+          object = GameObjects::ObjectPrefabs::create(line.c_str(), *default_object);
+        }
+
+        if (pos != std::string::npos) {
+          editing_object = true;
+        } else {
+          editing_object = false;
+        }
+      } else if (editing_object) {
+        int pos = line.find("=");
+        std::string substr = line.substr(0, pos);
+        if (DEBUG && DEBUG_LEVEL >= 4 && substr != "}") printf("substr: %s\n", substr.c_str());
+        if (substr == "texture") {
+          std::vector<std::string> cs_textures = p_csstr(line.substr(pos + 1));
+          std::vector<Texture> textures;
+          for (std::string texture : cs_textures) {
+            try {
+               textures.push_back(ResourceManager::Texture::get(texture));
+            } catch (...) {
+              if (fail_on_texture_not_found) p_error("Invalid syntax at line " + std::to_string(line_num) + " ('" + texture.c_str() + "' unknown texture)");
+            }
+          }
+          object->texture = textures;
+        } else if (substr == "tags") {
+          line.erase(0, pos + 1);
+          if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (list cannot be empty)");
+          std::vector<std::string> tags = p_csstr(line);
+          object->tags.insert(object->tags.begin(), tags.begin(), tags.end());
+          if (DEBUG && DEBUG_LEVEL >= 5) for (std::string tag : tags) printf(" tag: %s\n", tag.c_str());
+        } else if (substr == "position") {
+          line.erase(0, pos + 1);
+          if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (list cannot be empty)");
+          std::vector<float> position = p_csfloat(line, constants);
+          try {
+            object->transform.position = glm::vec3(position[0], position[1], position[2]); 
+          } catch (...) {
+            p_error("Invalid syntax at line " + std::to_string(line_num) + " (unsufficient parameters)");
+          }
+        } else if (substr == "scale") {
+          line.erase(0, pos + 1);
+          if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (list cannot be empty)");
+          std::vector<float> scale = p_csfloat(line, constants);
+          try {
+            object->transform.scale = glm::vec2(scale[0], scale[1]);
+          } catch (...) {
+            p_error("Invalid syntax at line " + std::to_string(line_num) + " (unsufficient parameters)");
+          }
+        } else if (substr == "origin") {
+          line.erase(0, pos + 1);
+          if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (list cannot be empty)");
+          std::vector<float> origin = p_csfloat(line, constants);
+          try {
+            object->origin = glm::vec2(origin[0], origin[1]);
+          } catch (...) {
+            p_error("Invalid syntax at line " + std::to_string(line_num) + " (unsufficient parameters)");
+          }
+        } else if (substr == "grid") {
+          line.erase(0, pos + 1);
+          if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (list cannot be empty)");
+          std::vector<float> grid = p_csfloat(line, constants);
+          try {
+            object->grid = glm::vec2(grid[0], grid[1]);
+          } catch (...) {
+            p_error("Invalid syntax at line " + std::to_string(line_num) + " (unsufficient parameters)");
+          }
+        } else if (substr == "position-offset") {
+          line.erase(0, pos + 1);
+          if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (list cannot be empty)");
+          std::vector<float> position_offset = p_csfloat(line, constants);
+          try {
+            object->position_offset = glm::vec3(position_offset[0], position_offset[1], position_offset[2]);
+          } catch (...) {
+            p_error("Invalid syntax at line " + std::to_string(line_num) + " (unsufficient parameters)");
+          }
+
+        } else if (substr == "interactive") {
+          line.erase(0, pos + 1);
+          if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (attribute cannot be empty)");
+
+          if (line == "true") object->interactive = true;
+          else if (line == "false") object->interactive = false;
+          else p_error("Invalid syntax at line " + std::to_string(line_num) + " (unknown value)");
+        } else if (substr == "swap") {
+          line.erase(0, pos + 1);
+          if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (attribute cannot be empty)");
+
+          if (line == "true") object->swap = true;
+          else if (line == "false") object->swap = false;
+          else p_error("Invalid syntax at line " + std::to_string(line_num) + " (unknown value)");
+        } else if (substr == "locked") {
+          line.erase(0, pos + 1);
+          if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (attribute cannot be empty)");
+
+          if (line == "true") object->locked = true;
+          else if (line == "false") object->locked = false;
+          else p_error("Invalid syntax at line " + std::to_string(line_num) + " (unknown value)");
+        } else if (substr == "rigidbody") {
+          line.erase(0, pos + 1);
+          if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (attribute cannot be empty)");
+
+          if (line == "true") object->rigidbody = true;
+          else if (line == "false") object->rigidbody = false;
+          else p_error("Invalid syntax at line " + std::to_string(line_num) + " (unknown value)");
+        } else if (substr == "parent") {
+          line.erase(0, pos + 1);
+          if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (attribute cannot be empty)");
+          
+          try {
+            object->set_parent(GameObjects::ObjectPrefabs::get(line));
+          } catch (...) {
+            p_error("Invalid syntax at line " + std::to_string(line_num) + " (parent does not exist)");
+          }
+        } else if (substr == "}") {
+          objects_loaded++;
+          editing_object = false;
+          if (DEBUG && DEBUG_LEVEL >= 2) printf("Loaded object '%s' from file!\n\n", object->handle.c_str());
+        } else {
+          p_error("Invalid syntax at line " + std::to_string(line_num) + " ('" + substr + "' unknown attribute)");
+        }
+      } else p_error("Invalid syntax at line " + std::to_string(line_num) + " (UNKNOWN SYNTAX)");
+    }
+  }
+
+  if (editing_object) p_error("EOF before object was fully initialised (missing '}')");
+
+  if (DEBUG && DEBUG_LEVEL >= 2) printf("Loaded %i objects from file!\n", objects_loaded);
+  // exit(0);
+}
+

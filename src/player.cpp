@@ -1,6 +1,6 @@
 #include "player.h"
 
-Player *Characters::Players::create(const char *handle, Texture texture, Transform transform, std::vector<std::string> tags) {
+Player *Characters::Players::create(const char *handle, std::vector<Texture> texture, Transform transform, std::vector<std::string> tags) {
   Player player = Player();
   player.handle = handle;
   player.texture = texture;
@@ -13,12 +13,16 @@ Player *Characters::Players::create(const char *handle, Texture texture, Transfo
   return &Characters::Players::Players[handle];
 }
 
+Player *Characters::Players::create(const char *handle, Texture texture, Transform transform, std::vector<std::string> tags) {
+  return Characters::Players::create(handle, (std::vector<Texture>){ texture }, transform, tags);
+}
+
 void Player::animate() {
   this->animation_timer -= Time::delta * 1000;
 
   if (this->animation_timer <= 0.0f) {
-    this->current_frame = (this->current_frame + 1) % this->animation_sprite_sheet.size();
-    this->texture = this->animation_sprite_sheet.at(current_frame);
+    this->texture_index = (this->texture_index + 1) % this->texture.size();
+    // this->texture = this->texture.at(texture_index);
     this->animation_timer = this->fps;
   }
 }
@@ -103,13 +107,15 @@ void Player::resolve_collisions() {
       } 
 
       if (collision && !object->rigidbody) {
-        if (object->handle == "goal") {
-          object->texture = ResourceManager::Texture::get("treasure-open");
-          this->won = true;
-          this->locked = true;
-        } else if (object->tags[0] == "tile") {
+        if (object->tags[0] == "tile") {
           t_touching++;
         }
+      }
+
+      if (collision && object->tags[0] == "goal") {
+        object->texture_index = 1;
+        this->won = true;
+        this->locked = true;
       }
     }
 

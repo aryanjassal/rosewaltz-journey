@@ -169,7 +169,9 @@ void ResourceManager::Shader::deallocate(std::string handle) {
 }
 
 ::Texture ResourceManager::Texture::get(std::string handle) {
-  return Textures[handle];
+  if (Textures.find(handle) != Textures.end())
+    return Textures[handle];
+  else throw std::runtime_error("Texture '" + handle + "' doesn't exist!");
 }
 
 void ResourceManager::Texture::deallocate(std::string handle) {

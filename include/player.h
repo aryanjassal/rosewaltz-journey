@@ -39,10 +39,6 @@ class Player : public GameObject {
     // Animation related variables 
     float fps = 100.0f;
     float animation_timer = this->fps;
-    int current_frame = 0;
-
-    // The sprite sheet for the player's animation
-    std::vector<Texture> animation_sprite_sheet = std::vector<Texture>();
 
     // Empty construtor
     Player() { }
@@ -73,6 +69,7 @@ namespace Characters {
     static Player *ActivePlayer;
 
     // Create a Player by providing all the required parameters
+    Player *create(const char *handle, std::vector<Texture> texture, Transform transform = Transform(), std::vector<std::string> tags = std::vector<std::string>());
     Player *create(const char *handle, Texture texture, Transform transform = Transform(), std::vector<std::string> tags = std::vector<std::string>());
 
     std::vector<Player *> all();

@@ -85,17 +85,18 @@ void Game::init() {
   // Load textures into the game
   Texture nothing = ResourceManager::Texture::load("textures/nothing.png", true, "nothing");
   Texture blank = ResourceManager::Texture::load("textures/blank.png", true, "blank");
-  Texture floor = ResourceManager::Texture::load("textures/tiles/tile-floor.png", true, "tile-floor");
-  Texture treasure = ResourceManager::Texture::load("textures/tiles/treasure.png", true, "treasure");
-  Texture treasure_open = ResourceManager::Texture::load("textures/tiles/treasure-open.png", true, "treasure-open");
+  Texture floor = ResourceManager::Texture::load("textures/tiles/tile-floor.png", true, "tile-full-floor");
+  Texture treasure = ResourceManager::Texture::load("textures/tiles/treasure.png", true, "goal");
+  Texture treasure_open = ResourceManager::Texture::load("textures/tiles/treasure-open.png", true, "goal-acquired");
 
-  Texture tex_safe_obstacle = ResourceManager::Texture::load("textures/tiles/solo-tile-floor.png", true, "tf");
+  Texture tex_safe_obstacle = ResourceManager::Texture::load("textures/tiles/solo-tile-floor.png", true, "obstacle-safe");
   
   // Set up the global variables to create GameObjects
   float ratio = (float)height / 8.85f;
 
   // Create the player
   Player *player = Characters::Players::create("player", blank, Transform(glm::vec3(100.0f, 450.0f, 1.0f), glm::vec2(72.72f, 100.0f)), { "player" });
+  player->texture = std::vector<Texture>();
   player->fps = 150;
   // player->collider_revealed = true;
 
@@ -103,50 +104,52 @@ void Game::init() {
   std::string base_name = "run";
   std::string base_path = "textures/player/";
   for (int i = 0; i < 5; i++) {
-    player->animation_sprite_sheet.push_back(ResourceManager::Texture::load((base_path + base_name + std::to_string(i) + ".png").c_str(), true, "player-" + base_name + "-" + std::to_string(i)));
+    player->texture.push_back(ResourceManager::Texture::load((base_path + base_name + std::to_string(i) + ".png").c_str(), true, "player-" + base_name + "-" + std::to_string(i)));
   }
   
   Characters::Players::ActivePlayer = player;
 
-  // Create ObjectPrefabs
-  GameObject *tile = GameObjects::ObjectPrefabs::create("tile-full", nothing, { "tile" }, Transform(glm::vec3(0.0f), TileSize));
-  tile->origin = TileSize / glm::vec2(2.0f); 
-  tile->grid = TileSize;
-  tile->interactive = true;
-  tile->swap = true;
+  // // Create ObjectPrefabs
+  // GameObject *tile = GameObjects::ObjectPrefabs::create("tile-full", nothing, { "tile" }, Transform(glm::vec3(0.0f), TileSize));
+  // tile->origin = TileSize / glm::vec2(2.0f); 
+  // tile->grid = TileSize;
+  // tile->interactive = true;
+  // tile->swap = true;
+  //
+  // GameObject *tile_floor = GameObjects::ObjectPrefabs::create("tile-floor", floor, { "tile-floor" }, Transform(glm::vec3(0.0f), glm::vec2(TileSize.x, ratio)));
+  // tile_floor->rigidbody = true;
+  // tile_floor->position_offset = glm::vec3(0.0f, TileSize.y - ratio, 1.0f);
+  // tile_floor->set_parent(tile);
+  //
+  // GameObject *tile_safe_obstacle_left = GameObjects::ObjectPrefabs::create("tile-full-obstacle-safe-left", *tile);
+  // GameObject *safe_obstacle = GameObjects::ObjectPrefabs::create("safe-obstacle", tex_safe_obstacle, { "obstacle", "safe-obstacle" }, Transform());
+  // safe_obstacle->rigidbody = true;
+  // safe_obstacle->position_offset = glm::vec3(0.0f, TileSize.y - ratio - 100.0f, 1.0f);
+  // safe_obstacle->set_parent(tile_safe_obstacle_left);
+  //
+  // GameObject *tile_full_safe_obstacle_left_locked = GameObjects::ObjectPrefabs::create("tile-ful-obstacle-safe-left-locked", *tile);
+  // tile_full_safe_obstacle_left_locked->locked = true;
+  // tile_full_safe_obstacle_left_locked->swap = true;
+  //
+  // GameObject *tile_goal = GameObjects::ObjectPrefabs::create("tile-full-obstacle-safe-left-goal-centered", *tile_safe_obstacle_left);
+  // GameObject *goal = GameObjects::ObjectPrefabs::create("goal", treasure, { "goal" });
+  // goal->position_offset = glm::vec3((TileSize.x / 2.0f) - (goal->transform.scale.x / 2.0f), TileSize.y - ratio - goal->transform.scale.y, 1.0f);
+  // goal->set_parent(tile_goal);
+  //
+  // GameObject *tile_full_goal_centered_locked = GameObjects::ObjectPrefabs::create("tile-full-goal-centered-locked", *tile);
+  // tile_full_goal_centered_locked->locked = true;
+  // tile_full_goal_centered_locked->swap = true;
+  // GameObject *goal_locked = GameObjects::ObjectPrefabs::create("goal-locked", treasure, { "goal" });
+  // goal_locked->position_offset = glm::vec3((TileSize.x / 2.0f) - (goal->transform.scale.x / 2.0f), TileSize.y - ratio - goal->transform.scale.y, 1.0f);
+  // goal_locked->set_parent(tile_full_goal_centered_locked);
+  //
+  // GameObject *immovable = GameObjects::ObjectPrefabs::create("immovable", nothing, { "tile", "locked" }, Transform(glm::vec3(0.0f), TileSize));
+  // immovable->origin = TileSize / glm::vec2(2.0f); 
+  // immovable->grid = TileSize;
+  // immovable->swap = true;
+  // immovable->locked = true;
 
-  GameObject *tile_floor = GameObjects::ObjectPrefabs::create("tile-floor", floor, { "tile-floor" }, Transform(glm::vec3(0.0f), glm::vec2(TileSize.x, ratio)));
-  tile_floor->rigidbody = true;
-  tile_floor->position_offset = glm::vec3(0.0f, TileSize.y - ratio, 1.0f);
-  tile_floor->set_parent(tile);
-
-  GameObject *tile_safe_obstacle_left = GameObjects::ObjectPrefabs::create("tile-full-safe-obstacle-left", *tile);
-  GameObject *safe_obstacle = GameObjects::ObjectPrefabs::create("safe-obstacle", tex_safe_obstacle, { "obstacle", "safe-obstacle" }, Transform());
-  safe_obstacle->rigidbody = true;
-  safe_obstacle->position_offset = glm::vec3(0.0f, TileSize.y - ratio - 100.0f, 1.0f);
-  safe_obstacle->set_parent(tile_safe_obstacle_left);
-
-  GameObject *tile_full_safe_obstacle_left_locked = GameObjects::ObjectPrefabs::create("tile-full-safe-obstacle-left-locked", *tile);
-  tile_full_safe_obstacle_left_locked->locked = true;
-  tile_full_safe_obstacle_left_locked->swap = true;
-
-  GameObject *tile_goal = GameObjects::ObjectPrefabs::create("tile-full-safe-obstacle-left-goal-centered", *tile_safe_obstacle_left);
-  GameObject *goal = GameObjects::ObjectPrefabs::create("goal", treasure, { "goal" });
-  goal->position_offset = glm::vec3((TileSize.x / 2.0f) - (goal->transform.scale.x / 2.0f), TileSize.y - ratio - goal->transform.scale.y, 1.0f);
-  goal->set_parent(tile_goal);
-
-  GameObject *tile_full_goal_centered_locked = GameObjects::ObjectPrefabs::create("tile-full-goal-centered-locked", *tile);
-  tile_full_goal_centered_locked->locked = true;
-  tile_full_goal_centered_locked->swap = true;
-  GameObject *goal_locked = GameObjects::ObjectPrefabs::create("goal-locked", treasure, { "goal" });
-  goal_locked->position_offset = glm::vec3((TileSize.x / 2.0f) - (goal->transform.scale.x / 2.0f), TileSize.y - ratio - goal->transform.scale.y, 1.0f);
-  goal_locked->set_parent(tile_full_goal_centered_locked);
-
-  GameObject *immovable = GameObjects::ObjectPrefabs::create("immovable", nothing, { "tile", "locked" }, Transform(glm::vec3(0.0f), TileSize));
-  immovable->origin = TileSize / glm::vec2(2.0f); 
-  immovable->grid = TileSize;
-  immovable->swap = true;
-  immovable->locked = true;
+  GameObjects::ObjectPrefabs::load_from_file("required.prefabs");
 
   std::vector<std::vector<std::string>> instantiation_order;
   std::ifstream levelmap("1.level");
@@ -161,11 +164,12 @@ void Game::init() {
       while(pos != std::string::npos) {
         std::string token = line.substr(0, pos);
         layer.push_back(token);
-        printf("%s\n", token.c_str());
+        // printf("%s\n", token.c_str());
         line.erase(0, pos + delimiter.length());
         pos = line.find(delimiter);
       }
       layer.push_back(line);
+      // printf("%s\n", line.c_str());
 
       instantiation_order.push_back(layer);
     }
@@ -351,7 +355,7 @@ void Game::update() {
   }
   if (this->Keyboard['C'].pressed) {
     this->GameState = std::map<std::string, bool>();
-    GameObjects::get("goal")->texture = ResourceManager::Texture::get("treasure");
+    GameObjects::get("goal")->texture_index = 0;
   }
   if (this->Keyboard['R'].pressed) {
     this->GameState = std::map<std::string, bool>();
@@ -360,7 +364,28 @@ void Game::update() {
       GameObjects::uninstantiate(object->id);
     }
 
-    const std::vector<std::vector<std::string>> instantiation_order = { { "immovable", "immovable", "immovable" }, { "tile-full", "tile-full-safe-obstacle-left", "tile-full-safe-obstacle-left-goal-centered" } };
+    std::vector<std::vector<std::string>> instantiation_order;
+    std::ifstream levelmap("1.level");
+    std::string delimiter = " ";
+    std::string line;
+    if (levelmap.is_open()) {
+      while(std::getline(levelmap, line)) {
+        std::vector<std::string> layer;
+
+        int pos = 0;
+        pos = line.find(delimiter);
+        while(pos != std::string::npos) {
+          std::string token = line.substr(0, pos);
+          layer.push_back(token);
+          // printf("%s\n", token.c_str());
+          line.erase(0, pos + delimiter.length());
+          pos = line.find(delimiter);
+        }
+        layer.push_back(line);
+
+        instantiation_order.push_back(layer);
+      }
+    }
 
     // Create GameObjects
     for (int i = 0; i < instantiation_order.size(); i++) {

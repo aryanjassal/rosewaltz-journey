@@ -2,7 +2,7 @@
 // Failure means either a runtime error could be thrown or a placeholder could be used
 // This tag can be specified with the `%tex-failure` parameter. It takes `placeholder` or `failure` as it's parameters
 
-%tex-falure = failure
+%tex-failure = failure
 
 #nothing
 #tile-full-floor
@@ -60,37 +60,43 @@ $tile-full {
 }
 
 $tile-floor-full {
-  texture = tile-floor-full
+  texture = tile-full-floor
   tags = tile-floor
   scale = *TSX, *R
   rigidbody = true
   position-offset = 0.0, *TSY-R, 0.0
-  ^tile-full
+  parent = tile-full
 }
 
-$tile-full-obstacle-safe-left : tile-full {
-}
+$tile-full-obstacle-safe-left : tile-full
 
 $obstacle-safe-left {
   texture = obstacle-safe
   tags = obstacle, obstacle-safe
   rigidbody = true
   position-offset = 0.0, *TSY-R-SY, 0.0
-  ^tile-full-obstacle-safe-left
+  parent = tile-full-obstacle-safe-left
 }
-
-// $tile-full-obstacle-safe-left-locked : tile-full-obstacle-safe-left {
-//   locked = true
-//   swap = true
-// }
 
 $tile-full-goal-centered : tile-full {
 }
 
-$goal-centered {
+$goal {
   texture = goal, goal-acquired
+  tags = goal
+  position-offset = 0.0, *TSY-R-SY, 0.0
+}
+
+$goal-centered : goal {
   position-offset = *TXSC, *TSY-R-SY, 0.0
-  ^tile-full-goal-centered
+  parent = tile-full-goal-centered
+}
+
+$tile-full-obstacle-safe-left-goal-centered : tile-full-obstacle-safe-left {
+}
+
+$goal-centered-obstacle-safe-left : goal-centered {
+  parent = tile-full-obstacle-safe-left-goal-centered
 }
 
 $immovable {

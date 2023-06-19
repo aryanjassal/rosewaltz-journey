@@ -43,7 +43,8 @@ class GameObject {
     std::vector<std::string> tags;
 
     // Defines the texture the GameObject will render
-    Texture texture;
+    std::vector<Texture> texture;
+    unsigned int texture_index = 0;
 
     // Defines the origin of the object
     glm::vec2 origin = glm::vec2(0.0f);
@@ -128,12 +129,17 @@ namespace GameObjects {
   // This namespace handles creating and dealing with Prefabs
   namespace ObjectPrefabs {
     GameObject *create(std::string handle, Texture texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
+    GameObject *create(std::string handle, std::vector<Texture> texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
     GameObject *create(std::string handle, GameObject prefab);
     GameObject *get(std::string handle);
+
+    // Load GameObject Prefabs from the given file (should be `required.prefabs` with R* syntax)
+    void load_from_file(const char *file_path);
   }
 
   // Create a GameObject by providing all the required parameters
   GameObject *create(std::string handle, Texture texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
+  GameObject *create(std::string handle, std::vector<Texture> texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
 
   // Instantiate an existing prefab with all the required settings already set
   GameObject *instantiate(std::string prefab_handle);
