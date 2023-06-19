@@ -88,6 +88,9 @@ class Game {
 
     // Toggle the fullscreen status of the window
     void toggle_fullscreen();
+
+    // Load a level from a R* level file
+    void load_level(const char *path);
 };
 
 #endif

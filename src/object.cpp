@@ -536,7 +536,11 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
   constants["*TSY"] = TileSize.y;
   constants["*TSX/2"] = TileSize.x / 2.0f;
   constants["*TSY/2"] = TileSize.y / 2.0f;
+  constants["*TSX/3"] = TileSize.x / 3.0f;
+  constants["*TSY/3"] = TileSize.y / 3.0f;
   constants["*TSY-R"] = TileSize.y - ratio;
+  constants["*TSX-SX"] = TileSize.x - SX;
+  constants["*TSX-TSX/3"] = TileSize.x - (TileSize.x / 3.0f);
   constants["*TSY-R-SY"] = TileSize.y - ratio - SY;
   constants["*TXSC"] = (TileSize.x / 2.0f) - (SX / 2.0f);
   constants["*TYSC"] = (TileSize.y / 2.0f) - (SY / 2.0f);
@@ -701,6 +705,8 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
           } catch (...) {
             p_error("Invalid syntax at line " + std::to_string(line_num) + " (parent does not exist)");
           }
+        } else if (substr == ">nochild") {
+          object->children = std::vector<GameObject *>();
         } else if (substr == "}") {
           objects_loaded++;
           editing_object = false;

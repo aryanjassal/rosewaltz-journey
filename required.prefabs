@@ -6,6 +6,7 @@
 
 #nothing
 #tile-full-floor
+#tile-half-floor
 #obstacle-safe
 #goal
 #goal-acquired
@@ -41,6 +42,7 @@
 // *SY (this->transform.scale.y)
 // *PX (this->transform.position.x)
 // *PY (this->transform.position.y)
+// ... and more (check the implementation in object.cpp for more constants)
 
 // Note that two attributes or even the opening and closing braces should not be on the same line as they will not be processed correctly by the parser
 // Although, if you do not want to update any attributes of a derived prefab, then simply omit the brackets
@@ -57,16 +59,39 @@ $tile-full {
   swap = true
 }
 
-$tile-floor-full {
+$tile-floor {
   texture = tile-full-floor
   tags = tile-floor
   scale = *TSX, *R
   rigidbody = true
   position-offset = 0.0, *TSY-R, 0.0
+}
+
+$tile-floor-full : tile-floor {
   parent = tile-full
 }
 
+$tile-half : tile-full {
+  >nochild
+}
+
+$tile-floor-half-left : tile-floor {
+  texture = tile-half-floor
+  scale = *TSX/3, *R
+  position-offset = 0.0, *TSY-R, 0.0
+  parent = tile-half
+}
+
+$tile-floor-half-right : tile-floor {
+  texture = tile-half-floor
+  scale = *TSX/3, *R
+  position-offset = *TSX-TSX/3, *TSY-R, 0.0
+  parent = tile-half
+}
+
 $tile-full-obstacle-safe-left : tile-full
+
+$tile-full-obstacle-safe-right : tile-full
 
 $obstacle-safe-left {
   texture = obstacle-safe
@@ -74,6 +99,17 @@ $obstacle-safe-left {
   rigidbody = true
   position-offset = 0.0, *TSY-R-SY, 0.0
   parent = tile-full-obstacle-safe-left
+}
+
+$obstacle-safe-right : obstacle-safe-left {
+  position-offset = *TSX-SX, *TSY-R-SY, 0.0
+  parent = tile-full-obstacle-safe-right
+}
+
+$tile-half-obstacle-safe-left : tile-half
+
+$half-obstacle-safe-left : obstacle-safe-left {
+  parent = tile-half-obstacle-safe-left
 }
 
 $tile-full-goal-centered : tile-full 

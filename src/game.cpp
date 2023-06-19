@@ -51,72 +51,23 @@ Game::~Game() {
   glfwTerminate();
 }
 
-// Initialise the game by loading in and initialising all the required assets
-void Game::init() {
-  // Set the clear colour of the scene background
-  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+void Game::load_level(const char *path) {
+  this->GameState = std::map<std::string, bool>();
 
-  // Create a shader program, providing the default vertex and fragment shaders
-  Shader sprite_shader = ResourceManager::Shader::load("src/shaders/default.vert", "src/shaders/default.frag", "default");
-  TextShader = ResourceManager::Shader::load("src/shaders/text.vert", "src/shaders/text.frag", "text");
-
-  // Instantiate the camera and the renderer
-  GameCamera = new OrthoCamera(this->width, this->height, -100.0f, 100.0f);
-  TextCamera = GameCamera;
-  WindowSize = glm::vec2(this->width, this->height);
-  Renderer = new SpriteRenderer(sprite_shader, GameCamera);
-
-  // Initialise the font renderer
-  ResourceManager::Font::load("fonts/monocraft.ttf", "monocraft", 128, FILTER_NEAREST);
-
-  // Assign the camera and the renderer as global renderers for the GameObject
-  GameObjects::Camera = GameCamera;
-  GameObjects::Renderer = Renderer;
-
-  TileSize = glm::vec2(GameCamera->width / 3.0f, GameCamera->height / 2.0f);
-
-  // Load the background layers
-  // Texture background_bg = ResourceManager::Texture::load("textures/background/background-bg.png", true, "background-bg");
-  // Texture background_far = ResourceManager::Texture::load("textures/background/background-far.png", true, "background-far");
-  // Texture background_mid = ResourceManager::Texture::load("textures/background/background-mid.png", true, "background-mid");
-  // Texture background_near = ResourceManager::Texture::load("textures/background/background-near.png", true, "background-near");
-  //
-  // // Load textures into the game
-  // Texture nothing = ResourceManager::Texture::load("textures/nothing.png", true, "nothing");
-  // Texture blank = ResourceManager::Texture::load("textures/blank.png", true, "blank");
-  // Texture floor = ResourceManager::Texture::load("textures/tiles/tile-floor.png", true, "tile-full-floor");
-  // Texture treasure = ResourceManager::Texture::load("textures/tiles/treasure.png", true, "goal");
-  // Texture treasure_open = ResourceManager::Texture::load("textures/tiles/treasure-open.png", true, "goal-acquired");
-  //
-  // Texture tex_safe_obstacle = ResourceManager::Texture::load("textures/tiles/solo-tile-floor.png", true, "obstacle-safe");
-
-  // Load the textures from a given R* file
-  ResourceManager::Texture::load_from_file("required.textures");
-  
-  // Create the player
-  Player *player = Characters::Players::create("player", ResourceManager::Texture::get("blank"), Transform(glm::vec3(100.0f, 450.0f, 1.0f), glm::vec2(72.72f, 100.0f)), { "player" });
-  player->texture = std::vector<Texture>();
-  player->fps = 150;
-  // player->collider_revealed = true;
-
-  // Load the player's animation sprites
-  std::string base_name = "run";
-  std::string base_path = "textures/player/";
-  for (int i = 0; i < 5; i++) {
-    player->texture.push_back(ResourceManager::Texture::load((base_path + base_name + std::to_string(i) + ".png").c_str(), true, "player-" + base_name + "-" + std::to_string(i)));
+  for (GameObject *&object : GameObjects::all()) {
+    GameObjects::uninstantiate(object->id);
   }
-  
-  Characters::Players::ActivePlayer = player;
-
-  // Load the ObjectPrefabs from the Prefabs R* file
-  GameObjects::ObjectPrefabs::load_from_file("required.prefabs");
 
   std::vector<std::vector<std::string>> instantiation_order;
-  std::ifstream levelmap("1.level");
-  std::string delimiter = " ";
+  std::ifstream levelmap(path);
+  std::string delimiter = ";";
   std::string line;
   if (levelmap.is_open()) {
     while(std::getline(levelmap, line)) {
+      // Erase all spaces from the file
+      line.erase(std::remove_if(line.begin(), line.end(), [](unsigned char x) { return std::isspace(x); }), line.end());
+      if (line.find("//") == 0 || !line.size()) continue;
+
       std::vector<std::string> layer;
 
       int pos = 0;
@@ -149,13 +100,62 @@ void Game::init() {
 
   if (GameObjects::filter("goal") == std::vector<GameObject *>()) printf("[WARNING] Level has no goal tile!\n");
 
-  // printf("Objects instantiated:\n");
-  // for (auto object : GameObjects::all()) {
-  //   printf("(%i) %s; tags: ", object->id, object->handle.c_str());
-  //   for (auto tag : object->tags) printf("%s, ", tag.c_str());
-  //   printf("\n");
-  // }
-  // printf("----- EOL <END OF LIST> -----\n");
+  if (Characters::Players::ActivePlayer == nullptr) return;
+
+  Characters::Players::ActivePlayer->translate(glm::vec2(100.0f, 450.0f));
+  Characters::Players::ActivePlayer->flip_x = false;
+  Characters::Players::ActivePlayer->velocity = glm::vec2(0.0f);
+  Characters::Players::ActivePlayer->walk_speed = 100.0f; 
+}
+
+// Initialise the game by loading in and initialising all the required assets
+void Game::init() {
+  // Set the clear colour of the scene background
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+  // Create a shader program, providing the default vertex and fragment shaders
+  Shader sprite_shader = ResourceManager::Shader::load("src/shaders/default.vert", "src/shaders/default.frag", "default");
+  TextShader = ResourceManager::Shader::load("src/shaders/text.vert", "src/shaders/text.frag", "text");
+
+  // Instantiate the camera and the renderer
+  GameCamera = new OrthoCamera(this->width, this->height, -100.0f, 100.0f);
+  TextCamera = GameCamera;
+  WindowSize = glm::vec2(this->width, this->height);
+  Renderer = new SpriteRenderer(sprite_shader, GameCamera);
+
+  // Initialise the font renderer
+  ResourceManager::Font::load("fonts/monocraft.ttf", "monocraft", 128, FILTER_NEAREST);
+
+  // Assign the camera and the renderer as global renderers for the GameObject
+  GameObjects::Camera = GameCamera;
+  GameObjects::Renderer = Renderer;
+
+  TileSize = glm::vec2(GameCamera->width / 3.0f, GameCamera->height / 2.0f);
+
+  // Load the textures from a given R* file
+  ResourceManager::Texture::load_from_file("required.textures");
+  
+  // Create the player
+  Player *player = Characters::Players::create("player", ResourceManager::Texture::get("blank"), Transform(glm::vec3(100.0f, 450.0f, 1.0f), glm::vec2(72.72f, 100.0f)), { "player" });
+  player->texture = std::vector<Texture>();
+  player->fps = 150;
+  // player->collider_revealed = true;
+
+  // Load the player's animation sprites
+  std::string base_name = "run";
+  std::string base_path = "textures/player/";
+  for (int i = 0; i < 5; i++) {
+    player->texture.push_back(ResourceManager::Texture::load((base_path + base_name + std::to_string(i) + ".png").c_str(), true, "player-" + base_name + "-" + std::to_string(i)));
+  }
+  
+  Characters::Players::ActivePlayer = player;
+
+  // Load the ObjectPrefabs from the Prefabs R* file
+  GameObjects::ObjectPrefabs::load_from_file("required.prefabs");
+
+  // Load the level from a level R* file
+  this->load_level("1.level");
+
 }
 
 bool Game::state(std::string state) {
@@ -322,50 +322,7 @@ void Game::update() {
     this->GameState = std::map<std::string, bool>();
     GameObjects::get("goal")->texture_index = 0;
   }
-  if (this->Keyboard['R'].pressed) {
-    this->GameState = std::map<std::string, bool>();
-
-    for (GameObject *&object : GameObjects::all()) {
-      GameObjects::uninstantiate(object->id);
-    }
-
-    std::vector<std::vector<std::string>> instantiation_order;
-    std::ifstream levelmap("1.level");
-    std::string delimiter = " ";
-    std::string line;
-    if (levelmap.is_open()) {
-      while(std::getline(levelmap, line)) {
-        std::vector<std::string> layer;
-
-        int pos = 0;
-        pos = line.find(delimiter);
-        while(pos != std::string::npos) {
-          std::string token = line.substr(0, pos);
-          layer.push_back(token);
-          // printf("%s\n", token.c_str());
-          line.erase(0, pos + delimiter.length());
-          pos = line.find(delimiter);
-        }
-        layer.push_back(line);
-
-        instantiation_order.push_back(layer);
-      }
-    }
-
-    // Create GameObjects
-    for (int i = 0; i < instantiation_order.size(); i++) {
-      for (int j = 0; j < instantiation_order.begin()->size(); j++) {
-        GameObject *t = GameObjects::instantiate(instantiation_order.at(i).at(j), Transform(glm::vec3(TileSize.x * j, TileSize.y * i, 1.0f), TileSize));
-      }
-    }
-
-    if (GameObjects::filter("goal") == std::vector<GameObject *>()) printf("[WARNING] Level has no goal tile!\n");
-
-    Characters::Players::ActivePlayer->translate(glm::vec2(100.0f, 450.0f));
-    Characters::Players::ActivePlayer->flip_x = false;
-    Characters::Players::ActivePlayer->velocity = glm::vec2(0.0f);
-    Characters::Players::ActivePlayer->walk_speed = 100.0f; 
-  }
+  if (this->Keyboard['R'].pressed) this->load_level("1.level");
 
   // Reset the pressed and released status of the mouse buttons
   Mouse.left_button_down = false;

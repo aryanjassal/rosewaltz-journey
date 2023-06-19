@@ -11,6 +11,7 @@ background-near; textures/background/background-near.png
 
 // Actual tile-related and game-related textures
 tile-full-floor; textures/tiles/tile-full-floor.png
+tile-half-floor; textures/tiles/tile-half-floor.png
 goal; textures/tiles/goal.png
 goal-acquired; textures/tiles/goal-acquired.png
 obstacle-safe; textures/tiles/solo-tile-floor.png
