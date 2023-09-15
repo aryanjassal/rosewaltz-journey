@@ -1,218 +1,133 @@
 #include "object.h"
+#include "physics.h"
 
 // Publically store the active Camera and the Renderer
-OrthoCamera *GameObjects::Camera = new OrthoCamera(WindowSize.x, WindowSize.y, 1000.0f, -1000.0f);
-SpriteRenderer *GameObjects::Renderer = nullptr;
+Camera *Entities::Camera = nullptr;
+Renderer *Entities::Renderer = nullptr;
 
 // Store a list of all the GameObjects and Prefabs ever created
-std::map<unsigned long, GameObject> Objects;
-std::map<std::string, GameObject> Prefabs;
+std::map<unsigned long, Entity> AllEntities;
+std::map<std::string, Entity> AllPrefabs;
 
-// Counter to keep track of the next id for instantiated GameObjects
+// Counter to keep track of the next ID for instantiated GameObjects
 static unsigned long instantiation_id = 0;
 
-void GameObject::render(glm::vec4 colour, int focus) {
-  Transform n_transform = this->transform;
-  n_transform.position += this->position_offset;
-  if (this->flip_x) {
-    n_transform.position.x += n_transform.scale.x;
-    n_transform.scale.x *= -1.0f;
-  }
-  if (this->flip_y) n_transform.scale.y *= -1.0f;
-  // if (this->tags[0] == "tile") n_transform.scale += glm::vec2(2.0f);
+// Constructor of the entity class
+Entity::Entity() {
+  // Define the id number of the entity
+  this->id = instantiation_id;
+  instantiation_id++;
 
+  // Ensure at least one collider is present
+  create_colliders(1);
+}
+
+// Constructor of the entity class
+Entity::Entity(std::string handle, TextureMap texture_map, std::vector<std::string> tags, Transform transform) {
+  // Define the id number of the entity
+  this->id = instantiation_id;
+  instantiation_id++;
+
+  // Ensure at least one collider is present
+  create_colliders(1);
+
+  // Assign attributes
+  this->handle = handle;
+  this->texture_map = texture_map;
+  this->tags = tags;
+  this->transform = transform;
+}
+
+// Render the current entity
+void Entity::render(glm::vec4 colour) {
   if (this->active) {
-    if (this->transform.position.z >= GameObjects::Camera->far || this->transform.position.z <= GameObjects::Camera->near) {
-      printf("[WARNING] Object (%i) %s has z-index out of the camera's range.", this->id, this->handle.c_str());
-    }
+    if (!Entities::Camera->in_range(this->transform.position, this->transform.z)) 
+      printf("[WARN] [%i](%s)'s z-index (%.4f) is out of the camera's bounds (%.4f, %.4f)\n", this->id, this->handle.c_str(), this->transform.z, Entities::Camera->near_plane(), Entities::Camera->far_plane());
 
-    if (this->collider_revealed) {
-      unsigned int t_vao, t_vbo;
-      glGenVertexArrays(1, &t_vao);
-      glGenBuffers(1, &t_vbo);
-      glBindVertexArray(t_vao);
-      glBindBuffer(GL_ARRAY_BUFFER, t_vbo);
-      glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
-      glEnableVertexAttribArray(0);
-      glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-      glBindBuffer(GL_ARRAY_BUFFER, 0);
-      glBindVertexArray(0);
-      Shader shader = ResourceManager::Shader::get("default");
-      shader.activate();
-      shader.set_vector_4f("colour", glm::vec4(0.5f));
-      shader.set_matrix_4f("projection", GameObjects::Camera->projection_matrix);
-      shader.set_matrix_4f("model", glm::mat4(1.0f));
-      shader.set_matrix_4f("view", glm::mat4(1.0f));
-      glActiveTexture(GL_TEXTURE0);
-      glBindVertexArray(t_vao);
+    Entities::Renderer->render(this->texture_map.texture(), this->transform, colour);
 
-      float xpos = this->transform.position.x + this->position_offset.x;
-      float ypos = this->transform.position.y + this->position_offset.y;
-      float w = this->transform.scale.x;
-      float h = this->transform.scale.y;
+    // Show colliders
+    if (this->debug_colliders) {
+      for (Collider collider : this->colliders) {
+        Transform transform;
+        transform.position = glm::vec3(collider.x, collider.y, 0.0f);
+        transform.scale = glm::vec2(collider.w, collider.h);
 
-      float vertices[6][4] = {
-        { xpos,     ypos + h,   0.0f, 1.0f },            
-        { xpos,     ypos,       0.0f, 0.0f },
-        { xpos + w, ypos,       1.0f, 0.0f },
+        glm::vec4 colour = glm::vec4(1.0f, 1.0f, 1.0f, 0.5f);
+        Entities::Renderer->render(ResourceManager::Texture::get("blank"), transform, colour);
+      }
 
-        { xpos,     ypos + h,   0.0f, 1.0f },
-        { xpos + w, ypos,       1.0f, 0.0f },
-        { xpos + w, ypos + h,   1.0f, 1.0f }           
-      };
+      Transform transform;
+      transform.position = this->transform.position + this->transform.origin;
+      transform.scale = glm::vec2(10.0f);
 
-      glBindTexture(GL_TEXTURE_2D, ResourceManager::Texture::get("blank").id);
-
-      // Update the content of the VBO buffer
-      glBindBuffer(GL_ARRAY_BUFFER, t_vbo);
-      glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); 
-      glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-      // Draw the buffer onto the screen
-      glDrawArrays(GL_TRIANGLES, 0, 6);
-
-      // Unbind the VAOs and the textures
-      glBindVertexArray(0);
-      glBindTexture(GL_TEXTURE_2D, 0);
-    }
-
-    GameObjects::Renderer->render(this->texture[this->texture_index], n_transform, colour, focus);
-
-    if (this->collider_revealed) {
-      unsigned int t_vao, t_vbo;
-      glGenVertexArrays(1, &t_vao);
-      glGenBuffers(1, &t_vbo);
-      glBindVertexArray(t_vao);
-      glBindBuffer(GL_ARRAY_BUFFER, t_vbo);
-      glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
-      glEnableVertexAttribArray(0);
-      glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-      glBindBuffer(GL_ARRAY_BUFFER, 0);
-      glBindVertexArray(0);
-      Shader shader = ResourceManager::Shader::get("default");
-      shader.activate();
-      shader.set_vector_4f("colour", glm::vec4(1.0f, 0.3f, 0.3f, 0.8f));
-      shader.set_matrix_4f("projection", GameObjects::Camera ->projection_matrix);
-      shader.set_matrix_4f("model", glm::mat4(1.0f));
-      shader.set_matrix_4f("view", glm::mat4(1.0f));
-      glActiveTexture(GL_TEXTURE0);
-      glBindVertexArray(t_vao);
-
-      float xpos = this->transform.position.x + this->position_offset.x + this->origin.x;
-      float ypos = this->transform.position.y + this->position_offset.y + this->origin.y;
-      float w = 10.0f;
-      float h = 10.0f;
-
-      float vertices[6][4] = {
-        { xpos,     ypos + h,   0.0f, 1.0f },            
-        { xpos,     ypos,       0.0f, 0.0f },
-        { xpos + w, ypos,       1.0f, 0.0f },
-
-        { xpos,     ypos + h,   0.0f, 1.0f },
-        { xpos + w, ypos,       1.0f, 0.0f },
-        { xpos + w, ypos + h,   1.0f, 1.0f }           
-      };
-
-      glBindTexture(GL_TEXTURE_2D, ResourceManager::Texture::get("blank").id);
-
-      // Update the content of the VBO buffer
-      glBindBuffer(GL_ARRAY_BUFFER, t_vbo);
-      glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); 
-      glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-      // Draw the buffer onto the screen
-      glDrawArrays(GL_TRIANGLES, 0, 6);
-
-      // Unbind the VAOs and the textures
-      glBindVertexArray(0);
-      glBindTexture(GL_TEXTURE_2D, 0);
+      glm::vec4 origin_colour = glm::vec4(1.0f, 0.3f, 0.3f, 0.7f);
+      Entities::Renderer->render(ResourceManager::Texture::get("blank"), transform, origin_colour);
     }
   }
 }
 
-void GameObject::translate(glm::vec2 point) {
-  glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
-  this->transform.position = glm::vec3(point - origin, 0.0f);
-
-  if (this->snap) this->update_snap_position();
-  else this->update_bounding_box();
+// Translate the object to a point on the game window
+void Entity::translate(glm::vec2 point) {
+  this->transform.position = point - this->transform.origin;
+  this->update_colliders();
 }
 
-bool GameObject::check_point_intersection(glm::vec2 point) {
-  return ((this->bounding_box.left <= point.x) 
-    && (this->bounding_box.right >= point.x) 
-    && (this->bounding_box.top <= point.y) 
-    && (this->bounding_box.bottom >= point.y));
-}
-
-Collision GameObject::check_collision(GameObject *object) {
-  if (object->bounding_box.right >= this->bounding_box.left
-    && object->bounding_box.left <= this->bounding_box.right
-    && object->bounding_box.bottom >= this->bounding_box.top
-    && object->bounding_box.top <= this->bounding_box.bottom
-  ) {
-    glm::vec2 this_center = glm::vec2(this->transform.position + this->position_offset) + (this->transform.scale / glm::vec2(2.0f));
-    glm::vec2 other_half_extent = object->transform.scale / glm::vec2(2.0f);
-    glm::vec2 other_center = glm::vec2(object->transform.position + object->position_offset) + other_half_extent;
-    
-    glm::vec2 clamped = glm::clamp(this->transform.scale, -other_half_extent, other_half_extent);
-    glm::vec2 closest = other_center + clamped;
-    glm::vec2 difference = closest - this_center;
-
-    Direction direction = vector_direction(difference);
-
-    CollisionInfo vertical((object->bounding_box.bottom >= this->bounding_box.top && object->bounding_box.top <= this->bounding_box.bottom));
-    // vertical.collision = (object->bounding_box.bottom >= this->bounding_box.top && object->bounding_box.top <= this->bounding_box.bottom);
-    vertical.direction = vector_direction(glm::vec2(0.0f, difference.y));
-    vertical.mtv = difference.y + (difference.y > 0 ? (this->transform.scale.y / -2.0f) + object->transform.scale.y : (this->transform.scale.y / 2.0f));
-
-    CollisionInfo horizontal((object->bounding_box.right >= this->bounding_box.left && object->bounding_box.left <= this->bounding_box.right));
-    // horizontal.collision = (object->bounding_box.right >= this->bounding_box.left && object->bounding_box.left <= this->bounding_box.right);
-    horizontal.direction = vector_direction(glm::vec2(difference.x, 0.0f));
-    horizontal.mtv = difference.x + (this->transform.scale.x / 2.0f);
-
-    return Collision(true, horizontal, vertical);
+// Check collision between this object and a point
+Collision Entity::check_collision(glm::vec2 point) {
+  for (Collider collider : this->colliders) {
+    Collision collision = Physics::collider_point_collision(collider, point);
+    if (collision) return collision;
   }
-
   return Collision();
 }
 
-void GameObject::update_bounding_box() {
-  // Use the origin if originate is set, otherwise remove it from any calculations
-  glm::vec2 origin = this->originate ? this->origin : glm::vec2(0.0f);
-
-  // Use the offset transform to calculate the bounding boxes
-  Transform n_transform = this->transform;
-  n_transform.position += this->position_offset;
-
-  // Update the bounding boxes using some super advanced math
-  this->bounding_box.right = n_transform.position.x + this->transform.scale.x + origin.x;
-  this->bounding_box.left = n_transform.position.x + origin.x;
-  this->bounding_box.bottom = n_transform.position.y + this->transform.scale.y + origin.y;
-  this->bounding_box.top = n_transform.position.y + origin.y;
-  
-  // if (this->handle == "goal") printf("[%s] [collider] %.2f < x < %.2f; %.2f < y < %.2f [pos: %.2f, %.2f]\n", this->handle.c_str(), this->bounding_box.left, this->bounding_box.right, this->bounding_box.top, this->bounding_box.bottom, this->transform.position.x + this->position_offset.x, this->transform.position.y + this->position_offset.y);
+// Check collision between an object and this
+Collision Entity::check_collision(Entity *object) {
+  for (Collider t_collider : this->colliders) {
+    for (Collider o_collider : object->colliders) {
+      Collision collision = Physics::collider_collider_collision(t_collider, o_collider);
+      if (collision) return collision;
+    }
+  }
+  return Collision();
 }
 
-void GameObject::update_snap_position() {
-  glm::vec2 origin = this->origin;
+// Update all the colliders of the object
+void Entity::update_colliders() {
+  glm::vec2 collider_pos = this->transform.position;
+  for (int i = 0; i < this->colliders.size(); i++) {
+    Collider collider = this->colliders.at(i);
+    this->update_colliders(i, collider_pos.x, collider_pos.y, collider.w <= 0 ? this->transform.scale.x : collider.w, collider.h <= 0 ? this->transform.scale.y : collider.h);
+  }
+}
+
+// Update a collider at the specified index
+void Entity::update_colliders(int i, float x, float y, float w, float h) {
+  if (this->colliders.size() <= i) throw std::runtime_error("Collider at index " + std::to_string(i) + " hasn't been declared yet\n");
+  this->colliders.at(i) = Collider(x, y, w, h);
+}
+
+void Entity::snap() {
+  glm::vec2 origin = this->transform.origin;
   glm::vec3 new_position;
   new_position.x = std::floor((this->transform.position.x + origin.x) / this->grid.x) * this->grid.x;
   new_position.y = std::floor((this->transform.position.y + origin.y) / this->grid.y) * this->grid.y;
 
   // If the new position is outside the dimensions, then just undo any translations and return it to its old position
-  if (new_position.x < 0 || new_position.x > GameObjects::Camera->width - this->grid.x || new_position.y < 0 || new_position.y > GameObjects::Camera->height - this->grid.y) {
+  if (new_position.x < 0 || new_position.x > Entities::Camera->dimensions.x - this->grid.x || new_position.y < 0 || new_position.y > Entities::Camera->dimensions.y - this->grid.y) {
     this->transform.position = this->old_transform.position;
-    this->update_bounding_box();
+    this->update_colliders();
     return;
   }
 
   // Otherwise, update the delta transform, the object's position, and it's bounding box
   this->transform.position = new_position;
-  this->update_bounding_box();
+  this->update_colliders();
 }
 
-void GameObject::set_parent(GameObject *parent) {
+// Set the parent of an entity to the provided parent
+void Entity::set_parent(Entity *parent) {
   if (parent != nullptr) {
     this->unset_parent();
     this->parent = parent;
@@ -222,7 +137,8 @@ void GameObject::set_parent(GameObject *parent) {
   }
 }
 
-void GameObject::unset_parent() {
+// Unset the parent of this object
+void Entity::unset_parent() {
   try {
     if (this->parent != nullptr) {
       if (std::find(this->parent->children.begin(), this->parent->children.end(), this) != this->parent->children.end()) {
@@ -231,147 +147,199 @@ void GameObject::unset_parent() {
       this->parent = nullptr;
     }
   } catch (...) {
-    printf("[WARNING] could not properly unset parent of object (%i) %s\n", this->id, this->handle.c_str());
+    warn("Could not properly unset parent of object (" + std::to_string(this->id) + ") " + this->handle);
     this->parent = nullptr;
   }
 }
 
-void GameObject::set_child(GameObject *child) {
+// Set an object as the child of this object
+void Entity::set_child(Entity *child) {
   if (child != nullptr) {
     child->parent = this;
     this->children.push_back(child);
   }
 }
 
-void GameObject::unset_child(GameObject *child) {
+// Remove a particular object as this object's child
+void Entity::unset_child(Entity *child) {
   if (child != nullptr) {
     this->children.erase(std::find(this->children.begin(), this->children.end(), child));
     child->parent = nullptr;
   }
 }
 
-GameObject *GameObjects::ObjectPrefabs::create(std::string handle, Texture texture, std::vector<std::string> tags, Transform transform) {
-  return GameObjects::ObjectPrefabs::create(handle, (std::vector<Texture>) { texture }, tags, transform);
+// Create a number of default colliders
+void Entity::create_colliders(int n) {
+  for (int i = 0; i < n; i++)
+    this->colliders.push_back(Collider());
 }
 
-GameObject *GameObjects::ObjectPrefabs::create(std::string handle, std::vector<Texture> texture, std::vector<std::string> tags, Transform transform) {
-  if (GameObjects::Renderer == nullptr) throw std::runtime_error("A SpriteRenderer must be set for GameObjects::Renderer\n");
-  if (Prefabs.find(handle) != Prefabs.end()) throw std::runtime_error("Another Prefab already exists with the same handle as " + handle + "'\n");
-
-  GameObject object = GameObject();
-  object.handle = handle;
-  object.texture = (std::vector<Texture>) { texture };
-  object.tags = tags;
-  object.transform = transform;
-  object.active = false;
-  object.update_bounding_box();
-
-  Prefabs[handle] = object;
-  return &Prefabs[handle];
+// Create a number of colliders with the given parameters
+void Entity::create_colliders(int n, float x, float y, float w, float h) {
+  for (int i = 0; i < n; i++) {
+    this->colliders.push_back(Collider(x, y, w, h));
+  }
 }
 
-GameObject *GameObjects::ObjectPrefabs::create(std::string handle, GameObject prefab) {
-  if (GameObjects::Renderer == nullptr) throw std::runtime_error("A SpriteRenderer must be set for GameObjects::Renderer\n");
-  if (Prefabs.find(handle) != Prefabs.end()) throw std::runtime_error("Another Prefab already exists with the same handle as " + handle + "'\n");
+// Create a number of colliders with the given parameters
+void Entity::create_colliders(int n, float x, float y, float w, float h, float angle) {
+  for (int i = 0; i < n; i++) {
+    this->colliders.push_back(Collider(x, y, w, h, angle));
+  }
+}
+
+// Validate whether the state of the renderer and the handle are valid
+void validate_state(std::string handle) {
+  if (Entities::Renderer == nullptr) throw std::runtime_error("A Renderer must be set for Entities::Renderer\n");
+  if (AllPrefabs.find(handle) != AllPrefabs.end()) throw std::runtime_error("Another prefab already exists with the same handle as '" + handle + "'\n");
+}
+
+// Validate whether the state of the renderer and the handle are valid
+void validate_state() {
+  if (Entities::Renderer == nullptr) throw std::runtime_error("A Renderer must be set for Entities::Renderer\n");
+}
+
+// Create a new entity using the gievn parameters and returns it
+Entity create_entity(std::string handle, TextureMap texture_map, std::vector<std::string> tags, Transform transform) {
+  validate_state(handle);
+
+  Entity entity = Entity();
+  entity.handle = handle;
+  entity.texture_map = texture_map;
+  entity.tags = tags;
+  entity.transform = transform;
+  entity.active = false;
+  entity.update_colliders();
+  return entity;
+}
+
+// Create a new prefab
+Entity *Entities::Prefabs::create(std::string handle, TextureMap texture_map) {
+  AllPrefabs[handle] = create_entity(handle, texture_map, {}, Transform());
+  return &AllPrefabs[handle];
+}
+
+// Create a new prefab
+Entity *Entities::Prefabs::create(std::string handle, Texture texture) {
+  AllPrefabs[handle] = create_entity(handle, TextureMap(texture), {}, Transform());
+  return &AllPrefabs[handle];
+}
+
+// Create a new prefab
+Entity *Entities::Prefabs::create(std::string handle, TextureMap texture_map, std::vector<std::string> tags, Transform transform) {
+  AllPrefabs[handle] = create_entity(handle, texture_map, tags, transform);
+  return &AllPrefabs[handle];
+}
+
+// Create a new prefab
+Entity *Entities::Prefabs::create(std::string handle, Texture texture, std::vector<std::string> tags, Transform transform) {
+  return Entities::Prefabs::create(handle, TextureMap(texture), tags, transform);
+}
+
+// Create a new prefab
+Entity *Entities::Prefabs::create(std::string handle, Texture texture, std::string tag, Transform transform) {
+  return Entities::Prefabs::create(handle, TextureMap(texture), std::vector<std::string>(1, tag), transform);
+}
+
+// Create a new prefab
+Entity *Entities::Prefabs::create(std::string handle, TextureMap texture_map, std::string tag, Transform transform) {
+  return Entities::Prefabs::create(handle, texture_map, std::vector<std::string>(1, tag), transform);
+}
+
+// Create a new prefab
+Entity *Entities::Prefabs::create(std::string handle, Entity prefab) {
+  validate_state(handle);
 
   prefab.handle = handle;
-  Prefabs[handle] = prefab;
-  return &Prefabs[handle];
+  AllPrefabs[handle] = prefab;
+  return &AllPrefabs[handle];
 }
 
-GameObject *GameObjects::create(std::string handle, std::vector<Texture> texture, std::vector<std::string> tags, Transform transform) {
-  if (GameObjects::Renderer == nullptr) throw std::runtime_error("A SpriteRenderer must be set for GameObjects::Renderer\n");
+// Instantiate a prefab using a given prefab handle (as handles cannot be duplicated)
+Entity instantiate_entity(std::string prefab_handle) {
+  if (AllPrefabs.find(prefab_handle) == AllPrefabs.end()) error("Prefab with handle '" + prefab_handle + "' doesn't exist!");
 
-  GameObject object = GameObject();
-  object.handle = handle;
-  object.id = instantiation_id;
-  object.texture = (std::vector<Texture>) { texture };
-  object.tags = tags;
-  object.transform = transform;
-  object.update_bounding_box();
-
-  instantiation_id++;
-
-  Objects[object.id] = object;
-  return &Objects[object.id];
-}
-
-GameObject *GameObjects::create(std::string handle, Texture texture, std::vector<std::string> tags, Transform transform) {
-  return GameObjects::create(handle, { texture }, tags, transform);
-}
-
-GameObject *GameObjects::instantiate(std::string prefab_handle) {
-  if (Prefabs.find(prefab_handle) == Prefabs.end()) throw std::runtime_error("[ERROR] Prefab with handle '" + prefab_handle + "' doesn't exist!");
-
-  GameObject *prefab = GameObjects::ObjectPrefabs::get(prefab_handle);
-  prefab->id = instantiation_id;
+  Entity *prefab = Entities::Prefabs::get(prefab_handle);
+  prefab->id = instantiation_id++;
   prefab->active = true;
 
-  instantiation_id++;
-
-  Objects[prefab->id] = *prefab;
-  return &Objects[prefab->id];
+  AllEntities[prefab->id] = *prefab;
+  return AllEntities[prefab->id];
 }
 
-GameObject *GameObjects::instantiate(GameObject prefab) {
-  prefab.id = instantiation_id;
-  prefab.active = true;
-
-  instantiation_id++;
-
-  Objects[prefab.id] = prefab;
-  return &Objects[prefab.id];
-}
-
-GameObject *GameObjects::instantiate(std::string prefab_handle, Transform transform) {
-  if (Prefabs.find(prefab_handle) == Prefabs.end()) throw std::runtime_error("[ERROR] Prefab with handle '" + prefab_handle + "' doesn't exist!");
-
-  GameObject *prefab = GameObjects::ObjectPrefabs::get(prefab_handle);
-  prefab->active = true;
-  prefab->transform = transform;
-  prefab->update_bounding_box();
-  prefab->id = instantiation_id;
-  instantiation_id++;
-
-  Objects[prefab->id] = *prefab;
-
-  for (GameObject *&child : prefab->children) {
-    GameObject *c = GameObjects::instantiate(*child);
-    c->set_parent(&Objects[prefab->id]);
-    c->translate(prefab->transform.position);
+// Instantiate all the children of a given prefab
+void instantiate_children(Entity parent) {
+  for (Entity *&child : parent.children) {
+    Entity *c = Entities::instantiate(*child);
+    c->set_parent(&AllEntities[parent.id]);
+    c->translate(parent.transform.position);
   }
-
-  return &Objects[prefab->id];
 }
 
-GameObject *GameObjects::instantiate(GameObject prefab, Transform transform) {
+// Instantiate a prefab using an existing prefab
+Entity instantiate_entity(Entity prefab) {
+  prefab.id = instantiation_id++;
   prefab.active = true;
-  prefab.transform = transform;
-  prefab.update_bounding_box();
-  prefab.id = instantiation_id;
-  instantiation_id++;
 
-  Objects[prefab.id] = prefab;
-  return &Objects[prefab.id];
+  instantiate_children(prefab);
+
+  AllEntities[prefab.id] = prefab;
+  return AllEntities[prefab.id];
 }
 
-void GameObjects::uninstantiate(std::string handle) {
-  for (GameObject *&object : GameObjects::all()) 
-    if (object->handle == handle) 
-      Objects.erase(Objects.find(object->id));
+// Instantiate a prefab using its handle
+Entity *Entities::instantiate(std::string prefab_handle) {
+  Entity instance = instantiate_entity(prefab_handle);
+  return &AllEntities[instance.id];
 }
 
-void GameObjects::uninstantiate(unsigned long id) {
-  if (id <= instantiation_id && Objects.find(id) != Objects.end()) 
-    Objects.erase(id);
+// Instantiate a prefab using an existing prefab
+Entity *Entities::instantiate(Entity prefab) {
+  Entity instance = instantiate_entity(prefab);
+  return &AllEntities[instance.id];
 }
 
+// Instantiate a prefab using its handle and a custom transform
+Entity *Entities::instantiate(std::string prefab_handle, Transform transform) {
+  Entity instance = instantiate_entity(prefab_handle);
+  instance.transform = transform;
+  instance.update_colliders();
+  AllEntities[instance.id] = instance;
 
-std::vector<GameObject *> GameObjects::all() {
-  std::vector<GameObject *> all_objects;
+  return &AllEntities[instance.id];
+}
+
+// Instantiate a prefab using an existing prefab and a custom transform
+Entity *Entities::instantiate(Entity prefab, Transform transform) {
+  Entity instance = instantiate_entity(prefab);
+  instance.transform = transform;
+  instance.update_colliders();
+  AllEntities[instance.id] = instance;
+
+  return &AllEntities[instance.id];
+}
+
+// Uninstantiate all entities matching a given handle
+// When you remove the entity from all entities, it stops getting updated/rendered
+void Entities::uninstantiate(std::string handle) {
+  for (Entity *&entity : Entities::all()) 
+    if (entity->handle == handle) 
+      AllEntities.erase(AllEntities.find(entity->id));
+}
+
+// Uninstantiate all entities matching a given handle
+// When you remove the entity from all entities, it stops getting updated/rendered
+void Entities::uninstantiate(unsigned long id) {
+  if (AllEntities.find(id) != AllEntities.end()) 
+    AllEntities.erase(id);
+}
+
+// Get all the active entities currently being kept track of
+std::vector<Entity*> Entities::all() {
+  std::vector<Entity*> all_objects;
 
   // Get all objects if they are active
-  for (auto &pair : Objects) {
+  for (auto &pair : AllEntities) {
     if (pair.second.active) {
       all_objects.push_back(&pair.second);
     }
@@ -379,25 +347,28 @@ std::vector<GameObject *> GameObjects::all() {
   return all_objects;
 }
 
-GameObject *GameObjects::get(std::string handle) {
-  for (GameObject *&object : GameObjects::all()) {
+// Get an entity which has the required handle
+Entity *Entities::get(std::string handle) {
+  for (Entity *&object : Entities::all()) {
     if (object->handle == handle)
-      return &Objects[object->id];
+      return &AllEntities[object->id];
   }
 }
 
-GameObject *GameObjects::ObjectPrefabs::get(std::string handle) {
-  if (Prefabs.find(handle) == Prefabs.end()) throw std::runtime_error("Prefab with handle '" + handle + "' does not exist!");
-  return &Prefabs[handle];
+// Get a prefab using its handle
+Entity *Entities::Prefabs::get(std::string handle) {
+  if (AllPrefabs.find(handle) == AllPrefabs.end()) warn("Prefab with handle '" + handle + "' does not exist!");
+  return &AllPrefabs[handle];
 }
 
-std::vector<GameObject *> GameObjects::filter(std::vector<std::string> tags) {
-  std::vector<GameObject *> filtered_objects;
+// Get a vector of entities matching the vector of tags
+std::vector<Entity*> Entities::filter(std::vector<std::string> tags) {
+  std::vector<Entity*> filtered_objects;
 
   // For each object, if the object is active, then check if it has all the tags
   // if it doesn't, then just skip that object. Otherwise, add that object to the
   // output vector
-  for (auto &pair : Objects) {
+  for (auto &pair : AllEntities) {
     if (pair.second.active) {
       bool contains_tags = true;
       for (std::string tag : tags) {
@@ -413,12 +384,13 @@ std::vector<GameObject *> GameObjects::filter(std::vector<std::string> tags) {
   return filtered_objects;
 }
 
-std::vector<GameObject *> GameObjects::filter(std::string tag) {
-  std::vector<GameObject *> filtered_objects;
+// Get a vector of entities matching the tag
+std::vector<Entity*> Entities::filter(std::string tag) {
+  std::vector<Entity*> filtered_objects;
 
   // For each object, if the object is active, check all its tags and if
   // it has the same tag as the one required, then add it to the output vector
-  for (auto &pair : Objects) {
+  for (auto &pair : AllEntities) {
     if (pair.second.active)
       for (std::string o_tag : pair.second.tags)
         if (tag == o_tag)
@@ -427,13 +399,14 @@ std::vector<GameObject *> GameObjects::filter(std::string tag) {
   return filtered_objects;
 }
 
-std::vector<GameObject *> GameObjects::except(std::string tag) {
-  std::vector<GameObject *> filtered_objects;
+// Get a vector of entities which do not match the tag
+std::vector<Entity*> Entities::except(std::string tag) {
+  std::vector<Entity*> filtered_objects;
 
   // For each GameObject, if it is active, check all its tags against the filter tag.
   // If the tag isn't in linked with the object, then just ignore that object. Otherwise, 
   // add that object to the output vector
-  for (auto &pair : Objects) {
+  for (auto &pair : AllEntities) {
     if (pair.second.active) {
       bool found = true;
       for (std::string o_tag : pair.second.tags) {
@@ -449,6 +422,7 @@ std::vector<GameObject *> GameObjects::except(std::string tag) {
 }
 
 void p_error(std::string error, bool fail = true) {
+  if (!fail) return;
   printf("[R* PARSING ERROR]\n  %s\n", error.c_str());
   if (fail) exit(0);
 }
@@ -472,8 +446,9 @@ std::vector<std::string> p_csstr(std::string list) {
 // PARSE PREFABS FILE
 int line_num = 0;
 
-std::vector<float> p_csfloat(std::string list, GameObject *object) {
-  glm::vec2 TileSize = glm::vec2(GameObjects::Camera->width / 3.0f, GameObjects::Camera->height / 2.0f);
+std::vector<float> p_csfloat(std::string list, Entity *object) {
+  // glm::vec2 TileSize = glm::vec2(Entities::Camera->dimensions.x / 3.0f, Entities::Camera->height / 2.0f);
+  glm::vec2 TileSize = Entities::Camera->dimensions / glm::vec2(3.0f, 2.0f);
   float ratio = (float)WindowSize.y / 8.85f;
   
   std::map<std::string, float> constants;
@@ -482,6 +457,7 @@ std::vector<float> p_csfloat(std::string list, GameObject *object) {
   constants["*TSX/2"] = TileSize.x / 2.0f;
   constants["*TSY/2"] = TileSize.y / 2.0f;
   constants["*TSX/3"] = TileSize.x / 3.0f;
+  constants["*TSX-TSX/3"] = TileSize.x - (TileSize.x / 3.0f);
   constants["*TSY/3"] = TileSize.y / 3.0f;
   constants["*TSY-R"] = TileSize.y - ratio;
   constants["*TSX-SX"] = TileSize.x - object->transform.scale.x;
@@ -536,7 +512,7 @@ std::vector<float> p_csfloat(std::string list, GameObject *object) {
   return out;
 }
 
-void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
+void Entities::Prefabs::load_from_file(const char *file_path) {
   std::ifstream file(file_path);
   std::string line;
 
@@ -548,8 +524,8 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
   #define DEBUG false
   #define DEBUG_LEVEL 5
 
-  GameObject *default_object = GameObjects::ObjectPrefabs::create("default", ResourceManager::Texture::get("blank"), {}, Transform());
-  GameObject *object = default_object;
+  Entity *default_object = new Entity();
+  Entity *object = default_object;
 
   if (DEBUG && DEBUG_LEVEL >= 2) printf("\n");
 
@@ -589,12 +565,12 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
         if (dpos != std::string::npos) {
           std::string derived_from = line.substr(dpos + 1, line.find("{"));
           std::string obj_name = line.substr(0, dpos);
-          object = GameObjects::ObjectPrefabs::create(obj_name.c_str(), *GameObjects::ObjectPrefabs::get(derived_from));
+          object = Entities::Prefabs::create(obj_name.c_str(), *Entities::Prefabs::get(derived_from));
           objects_loaded++;
           if (DEBUG && DEBUG_LEVEL >= 2) printf("Loaded object '%s' from file!\n\n", object->handle.c_str());
           if (pos == std::string::npos) continue;
         } else {
-          object = GameObjects::ObjectPrefabs::create(line.c_str(), *default_object);
+          object = Entities::Prefabs::create(line.c_str(), *default_object);
         }
 
         if (pos != std::string::npos) {
@@ -616,7 +592,7 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
               if (fail_on_texture_not_found) p_error("Invalid syntax at line " + std::to_string(line_num) + " ('" + texture.c_str() + "' unknown texture)");
             }
           }
-          object->texture = textures;
+          object->texture_map = TextureMap(textures);
         } else if (substr == "tags") {
           line.erase(0, pos + 1);
           if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (list cannot be empty)");
@@ -628,7 +604,8 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
           if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (list cannot be empty)");
           std::vector<float> position = p_csfloat(line, object);
           try {
-            object->transform.position = glm::vec3(position[0], position[1], position[2]); 
+            object->transform.position = glm::vec2(position[0], position[1]); 
+            object->transform.z = position[2];
           } catch (...) {
             p_error("Invalid syntax at line " + std::to_string(line_num) + " (unsufficient parameters)");
           }
@@ -646,7 +623,7 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
           if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (list cannot be empty)");
           std::vector<float> origin = p_csfloat(line, object);
           try {
-            object->origin = glm::vec2(origin[0], origin[1]);
+            object->transform.origin = glm::vec2(origin[0], origin[1]);
           } catch (...) {
             p_error("Invalid syntax at line " + std::to_string(line_num) + " (unsufficient parameters)");
           }
@@ -660,15 +637,16 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
             p_error("Invalid syntax at line " + std::to_string(line_num) + " (unsufficient parameters)");
           }
         } else if (substr == "position-offset") {
-          line.erase(0, pos + 1);
-          if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (list cannot be empty)");
-          std::vector<float> position_offset = p_csfloat(line, object);
-          try {
-            object->position_offset = glm::vec3(position_offset[0], position_offset[1], position_offset[2]);
-          } catch (...) {
-            p_error("Invalid syntax at line " + std::to_string(line_num) + " (unsufficient parameters)");
-          }
-
+          p_error("WARNING: at line " + std::to_string(line_num) + ": 'position-offset' is deprecated!", false);
+          // line.erase(0, pos + 1);
+          // if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (list cannot be empty)");
+          // std::vector<float> position_offset = p_csfloat(line, object);
+          // try {
+          //   // object->position_offset = glm::vec3(position_offset[0], position_offset[1], position_offset[2]);
+          //   // p_error("WARNING: at line " + std::to_string(line_num) + ": 'position-offset' is deprecated!");
+          // } catch (...) {
+          //   p_error("Invalid syntax at line " + std::to_string(line_num) + " (unsufficient parameters)");
+          // }
         } else if (substr == "interactive") {
           line.erase(0, pos + 1);
           if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (attribute cannot be empty)");
@@ -677,19 +655,21 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
           else if (line == "false") object->interactive = false;
           else p_error("Invalid syntax at line " + std::to_string(line_num) + " (unknown value)");
         } else if (substr == "swap") {
-          line.erase(0, pos + 1);
-          if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (attribute cannot be empty)");
-
-          if (line == "true") object->swap = true;
-          else if (line == "false") object->swap = false;
-          else p_error("Invalid syntax at line " + std::to_string(line_num) + " (unknown value)");
+          p_error("WARNING: at line " + std::to_string(line_num) + ": 'swap' is deprecated!", false);
+          // line.erase(0, pos + 1);
+          // if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (attribute cannot be empty)");
+          //
+          // if (line == "true") object->swap = true;
+          // else if (line == "false") object->swap = false;
+          // else p_error("Invalid syntax at line " + std::to_string(line_num) + " (unknown value)");
         } else if (substr == "locked") {
-          line.erase(0, pos + 1);
-          if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (attribute cannot be empty)");
-
-          if (line == "true") object->locked = true;
-          else if (line == "false") object->locked = false;
-          else p_error("Invalid syntax at line " + std::to_string(line_num) + " (unknown value)");
+          p_error("WARNING: at line " + std::to_string(line_num) + ": 'locked' is deprecated!", false);
+          // line.erase(0, pos + 1);
+          // if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (attribute cannot be empty)");
+          //
+          // if (line == "true") object->locked = true;
+          // else if (line == "false") object->locked = false;
+          // else p_error("Invalid syntax at line " + std::to_string(line_num) + " (unknown value)");
         } else if (substr == "rigidbody") {
           line.erase(0, pos + 1);
           if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (attribute cannot be empty)");
@@ -697,18 +677,28 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
           if (line == "true") object->rigidbody = true;
           else if (line == "false") object->rigidbody = false;
           else p_error("Invalid syntax at line " + std::to_string(line_num) + " (unknown value)");
+        } else if (substr == "active") {
+          line.erase(0, pos + 1);
+          if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (attribute cannot be empty)");
+
+          if (line == "true") object->active = true;
+          else if (line == "false") object->active = false;
+          else p_error("Invalid syntax at line " + std::to_string(line_num) + " (unknown value)");
         } else if (substr == "parent") {
           line.erase(0, pos + 1);
           if (!line.size()) p_error("Invalid syntax at line " + std::to_string(line_num) + " (attribute cannot be empty)");
           
           try {
-            object->set_parent(GameObjects::ObjectPrefabs::get(line));
+            object->set_parent(Entities::Prefabs::get(line));
           } catch (...) {
             p_error("Invalid syntax at line " + std::to_string(line_num) + " (parent does not exist)");
           }
         } else if (substr == ">nochild") {
-          object->children = std::vector<GameObject *>();
+          object->children = std::vector<Entity*>();
+        } else if (substr == ">showcollider") {
+          object->debug_colliders = true;
         } else if (substr == "}") {
+          object->update_colliders(0, object->transform.position.x, object->transform.position.y, object->transform.scale.x, object->transform.scale.y);
           objects_loaded++;
           editing_object = false;
           if (DEBUG && DEBUG_LEVEL >= 2) printf("Loaded object '%s' from file!\n\n", object->handle.c_str());
@@ -721,7 +711,8 @@ void GameObjects::ObjectPrefabs::load_from_file(const char *file_path) {
 
   if (editing_object) p_error("EOF before object was fully initialised (missing '}')");
 
-  if (DEBUG && DEBUG_LEVEL >= 2) printf("Loaded %i objects from file!\n", objects_loaded);
+  // if (DEBUG && DEBUG_LEVEL >= 2) printf("Loaded %i objects from file!\n", objects_loaded);
+  // printf("Loaded %i objects from file!\n", objects_loaded);
 
   // for (auto object : Prefabs) {
   //   auto o = object.second;

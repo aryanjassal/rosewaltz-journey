@@ -1,0 +1,78 @@
+# Alpha is enabled by default
+[textures]
+  background-bg { PATH = "textures/background/background-bg.png" }
+  background-far { PATH = "textures/background/background-far.png" }
+  background-mid { PATH = "textures/background/background-mid.png" }
+  background-near { PATH = "textures/background/background-near.png" }
+
+  full-floor { PATH = "textures/tiles/full-floor.png" }
+  split-floor { PATH = "textures/tiles/split-floor.png" }
+  obstacle-safe { PATH = "textures/tiles/obstacle-safe.png" }
+  obstacle-danger { PATH = "textures/tiles/obstacle-danger.png" }
+  goal { PATH = "textures/tiles/goal.png" }
+  goal-acquired { PATH = "textures/tiles/goal-acquired.png" }
+
+  null {
+    PATH = "textures/null.png"
+    ALPHA = false
+  }
+
+  blank {
+    PATH = "textures/blank.png"
+    ALPHA = false
+  }
+
+  # temporarily using blank
+  placeholder {
+    PATH = "textures/blank.png" 
+    ALPHA = false
+  }
+
+[options]
+  # placeholder texture name
+  TEX_PLACEHOLDER = placeholder
+
+# [constants]
+#   tester = 500
+#   beta = *tester  # (translates to beta = 500)
+
+
+# Prefabs marked with "LOAD = false" will be used as template and
+# discarded when the file is fully read.
+[prefabs]
+  tile {
+    TEXTURE = "blank"
+    TAGS = ["tile"]
+    SCALE = [*TSX, *TSY]
+    ORIGIN = [*TSX / 2, *TSY / 2]
+    GRID = [*TSX, *TSY]
+    POSITION_OFFSET = [0.0, *TSY - *R, 0.0]
+    
+    # Parameters for collider is [relative x, relative y, width, height]
+    BROAD_COLLIDER = [0.0, 0.0, SCALE.X, SCALE.Y]
+
+    INTERACTIVE = true
+    SWAP = true
+    LOAD = false
+  }
+
+  floor {
+    TEXTURE = "full-floor"
+    TAGS = ["tile-floor"]
+    SCALE = [*TSX, *R]
+    POSITION_OFFSET = [0.0, *TSY - *R, 0.0]
+    RIGIDBODY = true
+    LOAD = false
+  }
+
+  tile-full : tile
+  floor-full : floor {
+    PARENT = tile-full
+  }
+
+  boxes {
+    TEXTURE = "obstacle-safe"
+    TAGS = ["obstacle", "obstacle-safe"]
+    SCALE = [75.0, 150.0]
+    RIGIDBODY = true
+  }

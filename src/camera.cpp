@@ -1,35 +1,29 @@
 #include "camera.h"
 
-Camera::Camera(unsigned int width, unsigned int height, float near_plane, float far_plane, glm::mat4 projection_matrix, glm::mat4 view_matrix) {
-  // Set the camera width and height
-  this->width = width;
-  this->height = height;
+Camera::Camera(unsigned int width, unsigned int height, float near_plane, float far_plane) {
+  this->dimensions = glm::vec2(width, height);
   this->near = near_plane;
   this->far = far_plane;
-  this->projection_matrix = projection_matrix;
+  this->projection = glm::ortho(0.0f, (float)width, (float)height, 0.0f, near_plane, far_plane);
 }
 
 void Camera::scale(float x, float y) {
-  this->view_matrix = glm::scale(this->view_matrix, glm::vec3(x, y, 0.0f));
+  this->view = glm::scale(this->view, glm::vec3(x, y, 0.0f));
 }
 
 void Camera::scale(glm::vec2 factor) {
-  this->view_matrix = glm::scale(this->view_matrix, glm::vec3(factor, 0.0f));
+  this->view = glm::scale(this->view, glm::vec3(factor, 0.0f));
 }
 
-OrthoCamera::OrthoCamera(unsigned int width, unsigned int height, float near_plane, float far_plane)
-: Camera(width, height, near_plane, far_plane, glm::mat4(1.0f)) {
-  this->width = width;
-  this->height = height;
-  this->near = near_plane;
-  this->far = far_plane;
-  this->projection_matrix = glm::ortho(0.0f, (float)width, (float)height, 0.0f, near_plane, far_plane);
+void Camera::resize(unsigned int width, unsigned int height) {
+  this->dimensions = glm::vec2(width, height);
+  this->projection = glm::ortho(0.0f, (float)width, (float)height, 0.0f, this->near, this->far);
 }
 
-void OrthoCamera::resize(unsigned int width, unsigned int height) {
-  this->width = width;
-  this->height = height;
-  this->projection_matrix = glm::ortho(0.0f, (float)width, (float)height, 0.0f, this->near, this->far);
+void Camera::resize(glm::vec2 dimensions) {
+  this->projection = glm::ortho(0.0f, dimensions.x, dimensions.y, 0.0f, this->near, this->far);
 }
 
-
+bool Camera::in_range(glm::vec2 position, float z) {
+  return (z >= this->near && z <= this->far);
+}

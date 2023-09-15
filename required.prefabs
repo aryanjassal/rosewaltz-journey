@@ -4,6 +4,7 @@
 
 %tex-failure = failure
 
+// Required textures
 #nothing
 #tile-full-floor
 #tile-half-floor
@@ -53,11 +54,12 @@
 $tile-full {
   texture = nothing
   tags = tile
-  scale = *TSX, *R
+  scale = *TSX, *TSY
   origin = *TSX/2, *TSY/2
   grid = *TSX, *TSY
   interactive = true
   swap = true
+  rigidbody = false
 }
 
 $tile-floor {

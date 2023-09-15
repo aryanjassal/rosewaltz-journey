@@ -4,7 +4,7 @@
 // <texture-handle> <texture-path-relative-to-make> <transparency (default=true)>
 
 // Load the parallax background textures
-background-bg; textures/background/background-bg.png
+background-bg; textures/background/background-bg.png; false
 background-far; textures/background/background-far.png
 background-mid; textures/background/background-mid.png
 background-near; textures/background/background-near.png

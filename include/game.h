@@ -1,8 +1,9 @@
 #ifndef __GAME_H__
 #define __GAME_H__
 
-#include "glad/gl.h"
+#include "glad/glad.h"
 #include <GLFW/glfw3.h>
+#include "glm/glm.hpp"
 
 #include <stdio.h>
 #include <map>
@@ -11,9 +12,7 @@
 #include <unistd.h>
 #include <fstream>
 
-#include "glm/glm.hpp"
-
-#include "sprite.h"
+#include "renderer.h"
 #include "texture.h"
 #include "shader.h"
 #include "camera.h"
@@ -22,6 +21,8 @@
 #include "player.h"
 #include "utils.h"
 #include "font.h"
+#include "physics.h"
+#include "tutils.h"
 
 class Game {
   public:
@@ -32,9 +33,8 @@ class Game {
       bool right_button, right_button_down, right_button_up;
       glm::vec2 position;
       
-      // Information relating to selected GameObjects
-      GameObject *clicked_object = nullptr;
-      std::vector<GameObject *> focused_objects;
+      // Information relating to selected objects
+      Entity *clicked_object = nullptr;
     };
 
     // This sturct defines how information about the current key and keyboard state is stored within the program
@@ -88,7 +88,7 @@ class Game {
     void set_window_hints();
 
     // Create a GLFW window
-    void create_window(GLFWwindow *&window);
+    void create_window();
 
     // Toggle the fullscreen status of the window
     void toggle_fullscreen();

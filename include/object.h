@@ -7,59 +7,41 @@
 #include <algorithm>
 #include <cmath>
 
-#include "camera.h"
 #include "glm/glm.hpp"
 
 #include "texture.h"
-#include "sprite.h"
+#include "renderer.h"
 #include "utils.h"
 #include "physics.h"
 #include "resource_manager.h"
+#include "tutils.h"
+#include "camera.h"
 
 // This class handles all game objects, containing boilerplate code for
 // collision detection or motion or anything else an object might need.
 // For complex object interactions, usage of this namespace is recommended
 // over using the default SpriteRenderer, as it will only take you so far.
-class GameObject {
+class Entity {
   public:
-    // Defines an name or handle for each GameObject
+    // Defines an name or handle for each object
     std::string handle;
 
-    // Defines a unique identifier for each GameObject
+    // Defines a unique identifier for each object
     unsigned long id;
 
-    // Defines the transformations of the object
+    // Defines the transform of the object
     Transform transform;
-
-    // The offset to be added to the transform
-    // Tip: This is typically used when paired up with another parent transform object
-    glm::vec3 position_offset = glm::vec3(0.0f);
-
-    // Defines the old transform before the object was clicked
     Transform old_transform;
 
-    // Defines a vector of tags that the GameObject has
-    // The tags can help filter GameObjects or pair them up together
-    std::vector<std::string> tags;
-
-    // Defines the texture the GameObject will render
-    std::vector<Texture> texture;
-    unsigned int texture_index = 0;
-
-    // Defines the origin of the object
-    glm::vec2 origin = glm::vec2(0.0f);
-
-    // Define the grid-snap of the object
+    // Define the snap grid of the object
     glm::vec2 grid = glm::vec2(0.0f);
 
-    // Snap controls whether the object should snap to a predefined grid or not.
-    bool snap = false;
+    // Defines a vector of tags that the object has.
+    // The tags can help filter object or pair them up together.
+    std::vector<std::string> tags;
 
-    // Swap controls whethe the object should swap with another object at the same position or not.
-    bool swap = false;
-
-    // Originate controls whether the origin setting will be respected or not.
-    bool originate = false;
+    // The texture map information for the object
+    TextureMap texture_map;
 
     // Inactive object won't be rendered or have any calculations run on them.
     bool active = true;
@@ -70,101 +52,115 @@ class GameObject {
     // Ridigbody controls if the object will be involved in physics collisions or not.
     bool rigidbody = false;
 
-    // Locked controls whether the tile can move at all or not. This includes swapping and everything.
-    bool locked = false;
+    // Snap controls whether the object should snap to a predefined grid or not.
+    bool can_snap = false;
 
-    // Should the collider be revealed?
-    // Tip: This is a debug function
-    bool collider_revealed = false;
+    // Reveal the bound colliders and the origin in a visual format.
+    bool debug_colliders = false;
 
-    // Flip the sprite on an axis without tampering with the scale or anything
-    bool flip_x = false, flip_y = false;
+    // Flip the sprite on an axis.
+    void flip_x();
+    void flip_y();
 
-    // Declare a parent object
-    GameObject *parent = nullptr;
+    // The parent of this object.
+    Entity *parent = nullptr;
 
-    // Declare the child objects
-    std::vector<GameObject *> children = std::vector<GameObject *>();
-  
-    // Define a bounding box for the object.
-    // This will be used in the collision detection and the collider used for mouse interaction
-    BoundingBox bounding_box = BoundingBox();
+    // The object's constructor
+    Entity();
+    Entity(std::string handle, TextureMap texture_map, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
 
-    // Create an empty constructor for an object, as otherwise it won't play nice with std::map
-    GameObject() { }
-
-    // Actually render the GameObject using a SpriteRenderer
-    void render(glm::vec4 colour = glm::vec4(1.0f), int focus = 0);
+    // Render the object
+    void render(glm::vec4 colour = glm::vec4(1.0f));
 
     // Translate the object to a given point
     void translate(glm::vec2 point);
+  
+    // Stores a pointer to all the object's children
+    std::vector<Entity*> children = std::vector<Entity*>();
 
-    // Set or unset this object's parent
-    void set_parent(GameObject *parent);
+    // Set the object's parent
+    void set_parent(Entity *parent);
     void unset_parent();
 
-    // Set or unset this object's child
-    void set_child(GameObject *child);
-    void unset_child(GameObject *child);
-
-    // Check if the object is intersecting with a point
-    bool check_point_intersection(glm::vec2 point);
-
-    // Check collision between two bounding boxes
-    Collision check_collision(GameObject *object);
-
-    // Update the bounding box according to the new position of the object
-    void update_bounding_box();
+    // Set the object's child
+    void set_child(Entity *child);
+    void unset_child(Entity *child);
 
     // Update the position of the object based on the snap set
-    void update_snap_position();
+    void snap();
+
+    // Check collision between this object and another entity
+    Collision check_collision(Entity *object);
+    Collision check_collision(glm::vec2 point);
+
+    // Define a bounding box for the object. This will be used in the
+    // collision detection and the collider used for mouse interaction.
+    std::vector<Collider> colliders = std::vector<Collider>();
+
+    // Create a number of colliders with attributes
+    void create_colliders(int n, float x, float y, float w, float h, float angle);
+    void create_colliders(int n, float x, float y, float w, float h);
+    void create_colliders(int n);
+
+    // Update the bounding box according to the new position of the object
+    void update_colliders(int index, float x, float y, float w, float h);
+    void update_colliders(int index, float x, float y);
+    void update_colliders();
 };
 
-// This namespace handles generic functions related to dealing with GameObjects
-namespace GameObjects {
+// class Tile : Entity {
+//   public:
+//     // Define the snap grid of the object
+//     glm::vec2 grid = glm::vec2(0.0f);
+//
+//     // Update the position of the object based on the snap set
+//     void snap();
+// };
+
+// This namespace handles generic functions related to dealing with Entities
+namespace Entities {
   // Externally declare the main Renderer and the Camera
-  extern SpriteRenderer *Renderer;
-  extern OrthoCamera *Camera;
+  extern Renderer *Renderer;
+  extern Camera *Camera;
 
   // This namespace handles creating and dealing with Prefabs
-  namespace ObjectPrefabs {
-    GameObject *create(std::string handle, Texture texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
-    GameObject *create(std::string handle, std::vector<Texture> texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
-    GameObject *create(std::string handle, GameObject prefab);
-    GameObject *get(std::string handle);
+  namespace Prefabs {
+    Entity *create(std::string handle, Texture texture);
+    Entity *create(std::string handle, TextureMap texture_map);
+    Entity *create(std::string handle, Texture texture, std::string tag = "", Transform transform = Transform());
+    Entity *create(std::string handle, TextureMap texture_map, std::string tag = "", Transform transform = Transform());
+    Entity *create(std::string handle, Texture texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
+    Entity *create(std::string handle, TextureMap texture_map, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
+    Entity *create(std::string handle, Entity prefab);
+    Entity *get(std::string handle);
 
-    // Load GameObject Prefabs from the given file (should be `required.prefabs` with R* syntax)
+    // Load Entity Prefabs from the given file (should be `required.prefabs` with R* syntax)
     void load_from_file(const char *file_path);
   }
 
-  // Create a GameObject by providing all the required parameters
-  GameObject *create(std::string handle, Texture texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
-  GameObject *create(std::string handle, std::vector<Texture> texture, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform());
-
   // Instantiate an existing prefab with all the required settings already set
-  GameObject *instantiate(std::string prefab_handle);
-  GameObject *instantiate(GameObject prefab);
-  GameObject *instantiate(std::string prefab_handle, Transform transform);
-  GameObject *instantiate(GameObject prefab, Transform transform);
+  Entity *instantiate(std::string prefab_handle);
+  Entity *instantiate(Entity prefab);
+  Entity *instantiate(std::string prefab_handle, Transform transform);
+  Entity *instantiate(Entity prefab, Transform transform);
 
   // Delete an instantiated object (only removes the object and not the prefab)
   void uninstantiate(std::string handle);
   void uninstantiate(unsigned long id);
+  void uninstantiate_all();
 
-  // Fetch the pointer to a GameObject from the list of GameObjects
-  GameObject *get(std::string handle);
+  // Fetch the pointer to an enitiy from the list of entities
+  Entity *get(std::string handle);
+  Entity *get(unsigned int id);
 
-  // Fetch a vector with a pointer to all active GameObjects
-  std::vector<GameObject *> all();
+  // Fetch a vector with a pointer to all active entities
+  std::vector<Entity*> all();
 
-  // Filter all the GameObjects and return a vector with a pointer to active filtered GameObjects
-  // Note: Any operation involving filtering is very performance-hungry and its use should be minimised
-  std::vector<GameObject *> filter(std::string tag);
-  std::vector<GameObject *> filter(std::vector<std::string> tags);
-
-  // Filter all the GameObjects and return a vector with a pointer to active filtered GameObjects
-  // Note: Any operation involving filtering is very performance-hungry and its use should be minimised
-  std::vector<GameObject *> except(std::string tag);
+  // Filter all the active entities and return a vector with a pointer to the filtered entities
+  // Note: Any operation involving filtering is performance-hungry [O(n^2) complexity] and its use should be minimised
+  std::vector<Entity*> filter(std::string tag);
+  std::vector<Entity*> filter(std::vector<std::string> tags);
+  std::vector<Entity*> except(std::string tag);
 }
 
 #endif

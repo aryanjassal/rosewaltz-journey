@@ -10,13 +10,13 @@
 #include <algorithm>
 
 #include "camera.h"
-#include "sprite.h"
+#include "renderer.h"
 #include "object.h"
 #include "resource_manager.h"
 #include "texture.h"
 
 // Create a Player class to handle any and all player-related code 
-class Player : public GameObject {
+class Player : public Entity {
   public:
     // The velocity acting on the player at every frame
     glm::vec2 velocity = glm::vec2(0.0f);
@@ -26,6 +26,9 @@ class Player : public GameObject {
 
     // The impulse force will apply for one frame only
     glm::vec2 impulse = glm::vec2(0.0f, 5.0f);
+
+    // Movable controlls whether the player can move or not
+    bool movable = true;
 
     // The walk speed the player walks with
     float walk_speed = 100.0f;
@@ -37,14 +40,13 @@ class Player : public GameObject {
     bool won = false;
 
     // Did the player die?
-    bool die = false;
+    bool dead = false;
 
-    // Animation related variables 
-    float fps = 100.0f;
-    float animation_timer = this->fps;
-
-    // Empty construtor
+    // Constructor
+    // TODO: Remove all instances of singular tag and singular texture, instead migrate to texture maps and tag vectors
     Player() { }
+    Player(std::string handle, TextureMap texture_map, std::vector<std::string> tags = std::vector<std::string>(), Transform transform = Transform()):
+      Entity(handle, texture_map, tags, transform) { }
 
     // Update the player every frame
     void update();
@@ -54,28 +56,18 @@ class Player : public GameObject {
 
     // Resolve all collisions with other objects
     void resolve_collisions();
-
-    // Update the animation state
-    void animate();
 };
 
 // When handling GameObjects gets too annoying and more control over
 // the object or more interactive features are needed, then this class
-// will come in clutch. Examples include but are not limited to a Player
-// or a mob/NPC controller.
+// will come in clutch.
 namespace Characters {
   namespace Players {
-    // Keep track of all the players created
-    static std::map<std::string, Player> Players;
-
-    // Assign a static, active player
-    static Player *ActivePlayer;
-
     // Create a Player by providing all the required parameters
-    Player *create(const char *handle, std::vector<Texture> texture, Transform transform = Transform(), std::vector<std::string> tags = std::vector<std::string>());
-    Player *create(const char *handle, Texture texture, Transform transform = Transform(), std::vector<std::string> tags = std::vector<std::string>());
+    Player *create(std::string handle, std::vector<Texture> texture, Transform transform = Transform(), std::vector<std::string> tags = std::vector<std::string>());
+    Player *create(std::string handle, Texture texture, Transform transform = Transform(), std::vector<std::string> tags = std::vector<std::string>());
 
-    std::vector<Player *> all();
+    std::vector<Player*> all();
   }
 };
 

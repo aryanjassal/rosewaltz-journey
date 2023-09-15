@@ -1,7 +1,7 @@
 #ifndef __RESOURCE_MANAGER_H__
 #define __RESOURCE_MANAGER_H__
 
-#include "glad/gl.h"
+#include "glad/glad.h"
 #include "stb/stb_image.h"
 
 #include "shader.h"
@@ -58,7 +58,7 @@ namespace ResourceManager {
   // ResourceManager::Texture uses functions from this namespace.
   namespace Image {
     // Load raw pixel data from an image. Do not track it in the resource manager. 
-    unsigned char *load(const char *file_path, int &width, int &height, int &colour_channels);
+    unsigned char *load(const char *file_path, int &width, int &height, int &colour_channels, int pixels);
     unsigned char *load(const char *file_path);
 
     // Delete any hogged memory by removing image data no longer required
@@ -74,11 +74,6 @@ namespace ResourceManager {
     // NOTE: Only one font is supported. Loading another font will overwrite existing font.
     void load(const char *file_path, std::string font_name, unsigned int num_chars, short filtering = FILTER_LINEAR);
   }
-
-  // // Manages loading and reading all files like level maps or required resource or prefabs
-  // namespace File {
-  //   void load(const char *path, int filetype);
-  // }
 
   // Deallocates all resources being managed by the program, freeing up memory.
   void deallocate();

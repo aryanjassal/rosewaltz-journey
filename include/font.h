@@ -35,7 +35,7 @@ typedef struct Character {
 
 extern std::map<std::string, std::map<char, Character>> CharacterLookup;
 extern Shader TextShader; 
-extern OrthoCamera *TextCamera;
+extern Camera *TextCamera;
 
 // Namespace to generally deal with text rendering
 namespace Text {

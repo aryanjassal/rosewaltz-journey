@@ -3,7 +3,7 @@
 // Set global character lookup variable 
 std::map<std::string, std::map<char, Character>> CharacterLookup;
 Shader TextShader;
-OrthoCamera *TextCamera = nullptr;
+Camera *TextCamera = nullptr;
 
 void Fonts::init(FT_Library &ft) {
   if (FT_Init_FreeType(&ft)) {
@@ -27,7 +27,7 @@ void Text::render(std::string str, const char *font, Transform transform, short 
 
   switch (alignment) {
     case TEXT_TOP_LEFT: {
-      transform.position += glm::vec3(0.0f);
+      transform.position += glm::vec2(0.0f);
 
       float best_y = 0.0f;
       for (std::string::const_iterator c = str.begin(); c != str.end(); c++) {
@@ -37,7 +37,7 @@ void Text::render(std::string str, const char *font, Transform transform, short 
       break;
     }
     case TEXT_TOP_CENTER: {
-      transform.position += glm::vec3(TextCamera->width / 2.0f, 0.0f, 0.0f);
+      transform.position += glm::vec2(TextCamera->dimensions.x / 2.0f, 0.0f);
 
       float best_y = 0.0f;
       for (std::string::const_iterator c = str.begin(); c != str.end(); c++) {
@@ -48,7 +48,7 @@ void Text::render(std::string str, const char *font, Transform transform, short 
       break;
     }
     case TEXT_TOP_RIGHT: {
-      transform.position += glm::vec3((float)(TextCamera->width), 0.0f, 0.0f);
+      transform.position += glm::vec2((float)(TextCamera->dimensions.x), 0.0f);
 
       float best_y = 0.0f;
       for (std::string::const_iterator c = str.begin(); c != str.end(); c++) {
@@ -59,7 +59,7 @@ void Text::render(std::string str, const char *font, Transform transform, short 
       break;
     }
     case TEXT_MIDDLE_LEFT: {
-      transform.position += glm::vec3(0.0f, TextCamera->height / 2.0f, 0.0f);
+      transform.position += glm::vec2(0.0f, TextCamera->dimensions.y / 2.0f);
 
       float best_y = 0.0f;
       for (std::string::const_iterator c = str.begin(); c != str.end(); c++) {
@@ -69,7 +69,7 @@ void Text::render(std::string str, const char *font, Transform transform, short 
       break;
     }
     case TEXT_MIDDLE_CENTER: {
-      transform.position += glm::vec3(TextCamera->width / 2.0f, TextCamera->height / 2.0f, 0.0f);
+      transform.position += glm::vec2(TextCamera->dimensions.x / 2.0f, TextCamera->dimensions.y / 2.0f);
 
       float best_y = 0.0f;
       for (std::string::const_iterator c = str.begin(); c != str.end(); c++) {
@@ -80,7 +80,7 @@ void Text::render(std::string str, const char *font, Transform transform, short 
       break;
     }
     case TEXT_MIDDLE_RIGHT: {
-      transform.position += glm::vec3(TextCamera->width, TextCamera->height / 2.0f, 0.0f);
+      transform.position += glm::vec2(TextCamera->dimensions.x, TextCamera->dimensions.y / 2.0f);
 
       float best_y = 0.0f;
       for (std::string::const_iterator c = str.begin(); c != str.end(); c++) {
@@ -91,18 +91,18 @@ void Text::render(std::string str, const char *font, Transform transform, short 
       break;
     }
     case TEXT_BOTTOM_LEFT: {
-      transform.position += glm::vec3(0.0f, TextCamera->height, 0.0f);
+      transform.position += glm::vec2(0.0f, TextCamera->dimensions.y);
       break;
     }
     case TEXT_BOTTOM_CENTER: {
-      transform.position += glm::vec3(TextCamera->width / 2.0f, TextCamera->height, 0.0f);
+      transform.position += glm::vec2(TextCamera->dimensions.x / 2.0f, TextCamera->dimensions.y);
       for (std::string::const_iterator c = str.begin(); c != str.end(); c++) {
         transform.position.x -= ((CharacterLookup[font][*c].advance >> 6) * transform.scale.x) / 2.0f;
       }
       break;
     }
     case TEXT_BOTTOM_RIGHT: {
-      transform.position += glm::vec3(TextCamera->width, TextCamera->height, 0.0f);
+      transform.position += glm::vec2(TextCamera->dimensions.x, TextCamera->dimensions.y);
 
       for (std::string::const_iterator c = str.begin(); c != str.end(); c++) {
         transform.position.x -= ((CharacterLookup[font][*c].advance >> 6) * transform.scale.x);
@@ -118,7 +118,7 @@ void Text::render(std::string str, const char *font, Transform transform, short 
   // Activate corresponding rendering shader	
   TextShader.activate();
   TextShader.set_vector_4f("text_colour", colour);
-  TextShader.set_matrix_4f("projection", TextCamera->projection_matrix);
+  TextShader.set_matrix_4f("projection", TextCamera->projection_matrix());
   glActiveTexture(GL_TEXTURE0);
   glBindVertexArray(t_vao);
 

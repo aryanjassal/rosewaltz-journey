@@ -1,44 +1,33 @@
 #include "player.h"
+#include "physics.h"
 
-Player *Characters::Players::create(const char *handle, std::vector<Texture> texture, Transform transform, std::vector<std::string> tags) {
-  Player player = Player();
-  player.handle = handle;
-  player.texture = texture;
-  player.tags = tags;
-  player.transform = transform;
+std::map<std::string, Player> AllPlayers;
+
+Player *Characters::Players::create(std::string handle, std::vector<Texture> texture, Transform transform, std::vector<std::string> tags) {
+  Player player = Player(handle, TextureMap(texture));
   player.rigidbody = true;
-  player.update_bounding_box();
 
-  Characters::Players::Players[handle] = player;
-  return &Characters::Players::Players[handle];
+  AllPlayers[handle] = player;
+  return &AllPlayers[handle];
 }
 
-Player *Characters::Players::create(const char *handle, Texture texture, Transform transform, std::vector<std::string> tags) {
+Player *Characters::Players::create(std::string handle, Texture texture, Transform transform, std::vector<std::string> tags) {
   return Characters::Players::create(handle, (std::vector<Texture>){ texture }, transform, tags);
-}
-
-void Player::animate() {
-  this->animation_timer -= Time::delta * 1000;
-
-  if (this->animation_timer <= 0.0f) {
-    this->texture_index = (this->texture_index + 1) % this->texture.size();
-    // this->texture = this->texture.at(texture_index);
-    this->animation_timer = this->fps;
-  }
 }
 
 void Player::update() {
   if (this->rigidbody) {
-    if (this->bounding_box.left <= 0.0f || this->bounding_box.right >= GameObjects::Camera->width) {
+    if (this->colliders.at(0).x <= 0.0f || this->colliders.at(0).x + this->colliders.at(0).w >= Entities::Camera->dimensions.x) {
       this->walk_speed *= -1;
       
-      if (this->walk_speed < 0) this->flip_x = true;
-      else this->flip_x = false;
+      // if (this->walk_speed < 0) this->flip_x = true;
+      // else this->flip_x = false;
 
-      this->transform.position.x = std::clamp(this->transform.position.x - this->position_offset.x, 0.0f, (float)GameObjects::Camera->width - this->transform.scale.x);
+      this->transform.position.x = std::clamp(this->transform.position.x, 0.0f, Entities::Camera->dimensions.x - this->transform.scale.x);
     }
   }
-  this->transform.position.z = 1.0f;
+  this->transform.z = 1.0f;
+  this->texture_map.tick(Time::delta * 1000.0f);
 }
 
 void Player::resolve_vectors() {
@@ -54,11 +43,12 @@ void Player::resolve_vectors() {
   this->velocity.y += this->impulse.y;
 
   // Flip the y-component of the velocity as it points upwards, which is incorrect in this context
-  this->transform.position += glm::vec3((this->velocity.x + this->walk_speed) * Time::delta, -this->velocity.y * Time::delta, 0.0f);
+  this->transform.position += glm::vec2((this->velocity.x + this->walk_speed) * Time::delta, -this->velocity.y * Time::delta);
   this->impulse = glm::vec2(0.0f);
 
   // Update the bounding box of the player
-  this->update_bounding_box();
+  this->update_colliders(0, this->transform.position.x, this->transform.position.y + (this->transform.scale.y / 2.0f), this->transform.scale.x, this->transform.scale.y / 2.0f);
+  // this->update_colliders(1, this->transform.position.x - 1.5 * this->transform.scale.x + this->transform.scale.x, this->transform.position.y - (this->transform.scale.y / 2.0f), this->transform.scale.x * 2.0f, this->transform.scale.y / 2.0f);
 }
 
 void Player::resolve_collisions() {
@@ -72,38 +62,24 @@ void Player::resolve_collisions() {
   // with any tiles, and running collisions is redundant
   if (this->parent != nullptr) {
     int t_touching = 0;
-    for (GameObject *&object : GameObjects::all()) {
+    for (Entity *&object : Entities::all()) {
+      
       // The collision is being checked here as it is needed for the lock-unlock calculation
-      Collision collision = object->check_collision(this);
+      Collision collision = this->check_collision(object);
 
       // If the object is a rigidbody, then execute the collision checking
-      if (object->rigidbody) {
-        if (collision) {
-          if (collision.vertical && collision.vertical.direction == DOWN) {
-            this->grounded = true;
-            this->transform.position.y -= collision.vertical.mtv;
-          } else if (collision.vertical && collision.vertical.direction == UP && !this->grounded) {
-            this->grounded = false;
-            this->transform.position.y -= collision.vertical.mtv - object->transform.scale.y - this->transform.scale.y - 20.0f;
-            this->velocity.y = 0.0f;
-          } 
-
-          if (object->tags[0] == "obstacle") {
-            if (object->tags[1] == "obstacle-safe") {
-              if (collision.vertical && collision.vertical.direction == DOWN) this->transform.position.y -= collision.vertical.mtv;
-              else {
-                if (collision.horizontal && collision.horizontal.direction == LEFT) this->transform.position.x -= collision.horizontal.mtv;
-                else if (collision.horizontal && collision.horizontal.direction == RIGHT) this->transform.position.x -= collision.horizontal.mtv - object->transform.scale.x - this->transform.scale.x;
-                this->walk_speed *= -1.0;
-
-                if (this->walk_speed < 0) this->flip_x = true;
-                else this->flip_x = false;
-              }
-            } else if (object->tags[1] == "obstacle-danger") {
-              this->die = true;
-            }
-          }
+      if (object->rigidbody && collision) {
+        if (object->tags[0] == "obstacle") {
+          // this->flip_x = !this->flip_x;
+          this->walk_speed *= -1;
         }
+
+        printf("COLLSISION (mtv: %.2f, %.2f)\n", collision.mtv.x, collision.mtv.y);
+        this->grounded = true;
+        if (collision.mtv.x > collision.mtv.y) this->transform.position.y += collision.mtv.y;
+        else this->transform.position.x += collision.mtv.x;
+        // this->transform.position -= glm::vec3(collision.mtv, 0.0f);
+        this->update_colliders();
       } 
 
       if (collision && !object->rigidbody) {
@@ -113,23 +89,23 @@ void Player::resolve_collisions() {
       }
 
       if (collision && object->tags[0] == "goal") {
-        object->texture_index = 1;
+        object->texture_map.index = 1;
         this->won = true;
-        this->locked = true;
+        this->movable = false;
       }
     }
 
     if (t_touching >= 2) {
-      this->locked = true;
+      this->movable = true;
     } else {
-      this->locked = false;
+      this->movable = false;
     }
   }
 }
 
 std::vector<Player *> Characters::Players::all() {
   std::vector<Player *> all_players;
-  for (auto &pair : Characters::Players::Players)
+  for (auto &pair : AllPlayers)
     if (pair.second.active)
       all_players.push_back(&pair.second);
   return all_players;

@@ -17,6 +17,9 @@ void main() {
   // Calculate the OpenGL vertex position
   gl_Position = projection * view * model * vec4(vertex, 0.0, 1.0);
 
+  //TODO: FIX THIS SHIT
+  gl_Position.z = 1.0;
+
   // Output the correct texture coordinate for each vertex
   texture_coordinate = texture;
 }

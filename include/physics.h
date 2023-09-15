@@ -1,68 +1,57 @@
 #ifndef __PHYSICS_H__
 #define __PHYSICS_H__
 
+#include <limits>
+#include <vector>
+#include <math.h>
+#include <cstdio>
+
 #include "glm/glm.hpp"
 
-// Directional enum to handle collision direction
-typedef enum Direction {
-  UP,
-  RIGHT,
-  DOWN,
-  LEFT,
-  NONE
-};
+#include "tutils.h"
 
-// A struct to define the structure of information regarding the GameObject's bounding box
-typedef struct BoundingBox {
+// A struct to define the structure of information regarding an object's oriented collider.
+typedef struct Collider {
   // Default constructor to initialise with default empty values
-  BoundingBox() : top(0.0f), bottom(0.0f), left(0.0f), right(0.0f) { }
-  BoundingBox(float _top, float _bottom, float _left, float _right) : top{_top}, bottom{_bottom}, left{_left}, right{_right} { }
+  Collider() : x(0.0f), y(0.0f), w(0.0f), h(0.0f), angle(0.0f) { }
+  Collider(float _x, float _y, float _w, float _h) : x{_x}, y{_y}, w{_w}, h{_h}, angle(0.0f) { }
+  Collider(float _x, float _y, float _w, float _h, float _angle) : x{_x}, y{_y}, w{_w}, h{_h}, angle{_angle} { }
 
-  // Fields of the struct
-  float top;
-  float bottom;
-  float left;
-  float right;
-};
+  // Dimensions of the collider
+  float x, y, w, h;
 
-// Return the best direction the target vector is facing
-Direction vector_direction(glm::vec2 target);
+  // The angle of the collider (in degrees)
+  float angle;
 
-// Define a tuple storing all the relevant information about a collision
-typedef struct CollisionInfo {
-  // Default constructor to set default values
-  CollisionInfo(): collision(false), direction(NONE), mtv(0.0f) { }
-  CollisionInfo(bool _collision): collision{_collision}, direction(NONE), mtv(0.0f) { }
-  CollisionInfo(bool _collision, Direction _direction): collision{_collision}, direction{_direction}, mtv(0.0f) { }
-  CollisionInfo(bool _collision, Direction _direction, float _mtv): collision{_collision}, direction{_direction}, mtv{_mtv} { }
-
-  // Override the boolean conversion
-  operator bool() { return collision; }
-
-  // Fields of the struct
-  Direction direction;
-  float mtv;
-
-  private: 
-    bool collision;
+  // Returns all the vertices of the collider as a 2D vector
+  std::vector<glm::vec2> vertices() {
+    std::vector<glm::vec2> out;
+    out.push_back(glm::vec2(x + w, y + h));
+    out.push_back(glm::vec2(x + w, y));
+    out.push_back(glm::vec2(x, y));
+    out.push_back(glm::vec2(x, y + h));
+    return out;
+  }
 };
 
 // A struct which combines the vertical and horizontal collision information
 typedef struct Collision {
-  // Default constructor to set default values
-  Collision() : collision(false), horizontal(CollisionInfo()), vertical(CollisionInfo()) { }
-  Collision(bool _collision) : collision{_collision}, horizontal(CollisionInfo()), vertical(CollisionInfo()) { }
-  Collision(bool _collision, CollisionInfo _horizontal, CollisionInfo _vertical) : collision{_collision}, horizontal{_horizontal}, vertical{_vertical} { }
+  Collision() : collision(false), mtv(glm::vec2()) { }
+  Collision(bool _collision) : collision{_collision}, mtv(glm::vec2()) { }
+  Collision(bool _collision, glm::vec2 _mtv) : collision{_collision}, mtv{_mtv} { }
 
-  // Override the boolean conversion
+  // Collision information
+  bool collision;
+  glm::vec2 mtv;
+
+  // Simplify checking for collision
   operator bool() { return collision; }
-
-  // Fields of the struct
-  CollisionInfo horizontal;
-  CollisionInfo vertical;
-
-  private: 
-    bool collision;
 };
+
+namespace Physics {
+  // Note: The collider-point collision doesn't return a minimum translation vector
+  Collision collider_point_collision(Collider collider, glm::vec2 point);
+  Collision collider_collider_collision(Collider a, Collider b);
+}
 
 #endif

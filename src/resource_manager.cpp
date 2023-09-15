@@ -6,8 +6,6 @@
 std::map<std::string, ::Shader> Shaders;
 std::map<std::string, ::Texture> Textures;
 
-// std::map<char, Character> ResourceManager::Font::Characters;
-
 void ResourceManager::Font::load(const char *path, std::string font_name, unsigned int num_chars, short filtering) {
   // Declare the freetype library and fontface variables
   FT_Library freetype;
@@ -151,11 +149,17 @@ void ResourceManager::Shader::deallocate(std::string handle) {
   if (alpha) {
     texture.texture_format = GL_RGBA;
     texture.image_format = GL_RGBA;
+  } else {
+    texture.texture_format = GL_RGB;
+    texture.image_format = GL_RGB;
   }
 
   // Load the requested image as raw bytes
   int width, height, colour_channels;
-  unsigned char *data = ResourceManager::Image::load(file_path, width, height, colour_channels);
+  unsigned char *data = ResourceManager::Image::load(file_path, width, height, colour_channels, alpha ? STBI_rgb_alpha : STBI_rgb);
+
+  // texture.texture_format = colour_channels;
+  // texture.image_format = colour_channels;
 
   // Generate the texture
   texture.generate(width, height, data);
@@ -178,9 +182,9 @@ void ResourceManager::Texture::deallocate(std::string handle) {
   glDeleteTextures(1, &Textures[handle].id);
 }
 
-unsigned char *ResourceManager::Image::load(const char *file_path, int &width, int &height, int &colour_channels) {
+unsigned char *ResourceManager::Image::load(const char *file_path, int &width, int &height, int &colour_channels, int pixels) {
   // Load the image file as raw bytes
-  unsigned char* data = stbi_load(file_path, &width, &height, &colour_channels, 4);
+  unsigned char* data = stbi_load(file_path, &width, &height, &colour_channels, pixels);
 
   // If the pixel data is empty, then throw a runtime error
   if (!data) {
@@ -258,7 +262,7 @@ void ResourceManager::Texture::load_from_file(const char *file_path) {
 
 unsigned char *ResourceManager::Image::load(const char *file_path) {
   int width, height, colour_channels;
-  return ResourceManager::Image::load(file_path, width, height, colour_channels);
+  return ResourceManager::Image::load(file_path, width, height, colour_channels, STBI_rgb);
 }
 
 void ResourceManager::Image::deallocate(unsigned char *image_data) {

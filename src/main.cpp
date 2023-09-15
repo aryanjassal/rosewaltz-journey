@@ -10,7 +10,7 @@ void keyboard_callback(GLFWwindow *window, int key, int scancode, int action, in
 
 int main() {
   // Create a new Game with the given parameters
-  RosewaltzJourney = new Game(1280, 720, "Rosewaltz Journey");
+  RosewaltzJourney = new Game(1280, 720, "Rosewaltz Journey", false);
 
   // Set callback handlers for the game
   RosewaltzJourney->set_callbacks(mouse_callback, mouse_button_callback, keyboard_callback);
