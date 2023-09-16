@@ -6,9 +6,6 @@
 #include "glm/glm.hpp"
 #include "camera.h"
 
-// Declare commonly used global variables
-extern glm::vec2 WindowSize;
-
 // Struct holding the transformations to be applied to the object
 typedef struct Transform {
   // Declare the constructors for a transform

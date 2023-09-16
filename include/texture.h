@@ -25,6 +25,8 @@ class Texture {
 
     // The texture constructor which assigns a default value to every option
     Texture();
+    // Properly deconstruct the texture to avoid memory leaks
+    ~Texture();
 
     // Generate the texture given image width, height, and pixel data
     void generate(unsigned int width, unsigned int height, unsigned char *data);

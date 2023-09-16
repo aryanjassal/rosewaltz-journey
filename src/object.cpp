@@ -6,11 +6,11 @@ Camera *Entities::Camera = nullptr;
 Renderer *Entities::Renderer = nullptr;
 
 // Store a list of all the GameObjects and Prefabs ever created
-std::map<unsigned long, Entity> AllEntities;
+std::map<unsigned long long, Entity> AllEntities;
 std::map<std::string, Entity> AllPrefabs;
 
 // Counter to keep track of the next ID for instantiated GameObjects
-static unsigned long instantiation_id = 0;
+static unsigned long long instantiation_id = 0;
 
 // Constructor of the entity class
 Entity::Entity() {

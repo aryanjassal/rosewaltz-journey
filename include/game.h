@@ -5,13 +5,14 @@
 #include <GLFW/glfw3.h>
 #include "glm/glm.hpp"
 
-#include <stdio.h>
+#include <cstdio>
 #include <map>
 #include <stdexcept>
 #include <chrono>
 #include <unistd.h>
 #include <fstream>
 
+#include "input.h"
 #include "renderer.h"
 #include "texture.h"
 #include "shader.h"
@@ -26,22 +27,6 @@
 
 class Game {
   public:
-    // This struct defines how information about the current mouse state is stored within the program
-    typedef struct MouseState {
-      // General mouse information
-      bool left_button, left_button_down, left_button_up;
-      bool right_button, right_button_down, right_button_up;
-      glm::vec2 position;
-      
-      // Information relating to selected objects
-      Entity *clicked_object = nullptr;
-    };
-
-    // This sturct defines how information about the current key and keyboard state is stored within the program
-    typedef struct KeyState {
-      bool pressed, down, released;
-    };
-
     // Set up state variables
     MouseState Mouse;
     std::map<int, KeyState> Keyboard;

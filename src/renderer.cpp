@@ -35,11 +35,11 @@ Renderer::Renderer(Shader &shader, Camera *camera) {
 
   // Bind the VBO and set some options for it
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
   // Bind the EBO and set some options for it
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ebo);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
   // Edit some options for the VAOs after modifying both the EBO and the VBO
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
@@ -85,8 +85,6 @@ void Renderer::render(Texture texture, Transform transform, glm::vec4 colour) {
   //   warn(warning);
   // }
 
-  transform.z *= -1;
-
   // Active this shader before starting the rendering process
   this->shader.activate();
 
@@ -108,12 +106,12 @@ void Renderer::render(Texture texture, Transform transform, glm::vec4 colour) {
   // Properly scale the object
   model_transform = glm::scale(model_transform, glm::vec3(transform.scale, 0.0f));
 
-  // Actually apply these transformations to the sprite
+  // Actually apply these transformations and set other matrices in the shader
   this->shader.set_matrix_4f("model", model_transform);
   this->shader.set_matrix_4f("view", camera->view_matrix());
+  this->shader.set_vector_4f("colour", colour);
 
   // Prepare the texture
-  this->shader.set_vector_4f("colour", colour);
   glActiveTexture(GL_TEXTURE0);
   texture.bind();
 

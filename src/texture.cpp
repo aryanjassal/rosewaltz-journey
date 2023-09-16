@@ -13,6 +13,10 @@ Texture::Texture() :
     glGenTextures(1, &this->id);
 }
 
+Texture::~Texture() {
+  glDeleteTextures(1, &this->id);
+}
+
 void Texture::generate(unsigned int width, unsigned int height, unsigned char *data) {
   // Set the texture width and height of the texture
   this->width = width;

@@ -164,4 +164,8 @@ void Text::render(std::string str, const char *font, Transform transform, short 
   // Unbind the VAOs and the textures
   glBindVertexArray(0);
   glBindTexture(GL_TEXTURE_2D, 0);
+
+  // Delete the VAOs and VBOs
+  glDeleteVertexArrays(1, &t_vao);
+  glDeleteBuffers(1, &t_vbo);
 }
