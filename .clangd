@@ -3,4 +3,4 @@ CompileFlags:
 Diagnostics:
   ClangTidy:
     Add: [modernize*, google*]
-    Remove: [modernize-use-trailing-return-type]
+    Remove: [modernize-use-trailing-return-type, google-explicit-constructor]

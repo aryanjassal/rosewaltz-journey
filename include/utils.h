@@ -2,9 +2,13 @@
 #define __UTILS_H__
 
 #include <chrono>
+#include <vector>
 
 #include "glm/glm.hpp"
 #include "camera.h"
+
+//INFO TEMP:
+extern glm::vec2 WindowSize;
 
 // Struct holding the transformations to be applied to the object
 typedef struct Transform {
@@ -44,14 +48,29 @@ class Timer {
     Timer(double time_milliseconds) : time{time_milliseconds}, max_time{time_milliseconds} { }
 
     // Simplify evaluating the timer 
-    operator bool() { return test(); }
+    explicit operator bool() { return test(); }
 
   private:
     // The maximum internal time threshold (in milliseconds)
     double max_time;
-  
+    
     // The internal timer (in milliseconds)
     double time;
+};
+
+// Struct holding a vector of vertices for an object
+typedef struct Vertex {
+  std::vector<glm::vec2> vertex_coordinates;
+  std::vector<glm::vec2> texture_coordinates;
+
+  void add(float px, float py, float tx, float ty) {
+    this->vertex_coordinates.emplace_back(px, py);
+    this->vertex_coordinates.emplace_back(tx, ty);
+  }
+  void add(glm::vec2 point_coord, glm::vec2 texture_coord) {
+    this->vertex_coordinates.push_back(point_coord);
+    this->vertex_coordinates.push_back(texture_coord);
+  }
 };
 
 // Convert the screen coordinates to the world coordinates

@@ -12,7 +12,7 @@ Player *BasePlayer;
 
 // FPS
 int FPS = 0;
-Timer fps_timer = Timer(100);
+Timer fps_timer = Timer(500);
 
 // Game constructor
 Game::Game(unsigned int width, unsigned int height, std::string window_title, bool fullscreen) {
@@ -117,7 +117,7 @@ void Game::init() {
   GameRenderer = new Renderer(SpriteShader, GameCamera);
 
   // Initialise the font renderer
-  ResourceManager::Font::load("fonts/monocraft.ttf", "monocraft", 128, FILTER_NEAREST);
+  // ResourceManager::Font::load("fonts/inclusive.ttf", "monocraft", 128, FILTER_LINEAR);
   ResourceManager::Texture::load("textures/blank.png", true, "blank");
 
   // Assign the camera and the renderer as global renderers for the GameObject
@@ -140,7 +140,7 @@ void Game::init() {
   // }
   
   // Load the ObjectPrefabs from the Prefabs R* file
-  Entities::Prefabs::load_from_file("required.prefabs");
+  // Entities::Prefabs::load_from_file("required.prefabs");
 }
 
 bool Game::state(std::string state) {
@@ -164,6 +164,7 @@ void Game::run() {
     Time::delta = elapsed_seconds.count();
     if (fps_timer) {
       FPS = 1.0f / Time::delta;
+      glfwSetWindowTitle(GameWindow, (this->GameTitle + " [FPS: " + std::to_string(FPS) + "]").c_str());
       fps_timer.reset();
     }
 
@@ -216,8 +217,8 @@ void Game::render() {
   // GameRenderer->render(ResourceManager::Texture::get("background-mid"), Transform((Mouse.position / glm::vec2(100.0f) - glm::vec2(zoom / 2.0f)), scale, 0.0f, z_index));
   // GameRenderer->render(ResourceManager::Texture::get("background-near"), Transform((Mouse.position / glm::vec2(50.0f) - glm::vec2(zoom / 2.0f)), scale, 0.0f, z_index));
 
-  // Render the current fps of the game
-  Text::render("FPS: " + std::to_string(FPS), "monocraft", Transform(glm::vec2(0.0f), glm::vec2(0.5f)), TEXT_BOTTOM_LEFT);
+  // // Render the current fps of the game
+  // Text::render("FPS: " + std::to_string(FPS), "monocraft", Transform(glm::vec2(0.0f), glm::vec2(0.5f)), TEXT_BOTTOM_LEFT);
   
   // Actually display the updated images to the screen
   glfwSwapBuffers(this->GameWindow);
