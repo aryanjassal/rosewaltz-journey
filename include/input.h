@@ -27,4 +27,6 @@ typedef struct KeyState {
   char modifiers;
 };
 
+using KeyboardState = std::map<unsigned char, KeyState>;
+
 #endif

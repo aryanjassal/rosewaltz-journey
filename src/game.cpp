@@ -1,25 +1,72 @@
 #include "game.h"
 
-// Set up pointers to global objects for the game
-Renderer *GameRenderer;
-Camera *GameCamera;
-
-// Forward-declare the tile size constant
-glm::vec2 TileSize; 
-
-// Forward-declare the default player object
-Player *BasePlayer;
+// Declare an active game object to which all input events will go through
+Game *ActiveGame;
 
 // FPS
-int FPS = 0;
-Timer fps_timer = Timer(500);
+int max_fps = 480;
+double min_frame_time = 1.0f / max_fps;
+const double sleep_buffer = 0.0005f;
+Timer fps_timer = Timer(0);
+
+// SUPER ULTRA TEMP
+void newfps(int fps) {
+  if (fps == 0) {
+    max_fps = 0;
+    min_frame_time = 0;
+    return;
+  }
+  max_fps = fps;
+  min_frame_time = 1.0f / max_fps;
+}
+
+// Callbacks for GLFW
+void mouse_button_callback(GLFWwindow* window, int button, int clicked, int mods) {
+  switch (button) {
+    case GLFW_MOUSE_BUTTON_LEFT: {
+      if (clicked) {
+        ActiveGame->Mouse.left_button = true;
+        ActiveGame->Mouse.left_button_down = true;
+      } else {
+        ActiveGame->Mouse.left_button = false;
+        ActiveGame->Mouse.left_button_up = true;
+      }
+      break;
+    }
+
+    case GLFW_MOUSE_BUTTON_RIGHT: {
+      if (clicked) {
+        ActiveGame->Mouse.right_button = true;
+        ActiveGame->Mouse.right_button_down = true;
+      } else {
+        ActiveGame->Mouse.right_button = false;
+        ActiveGame->Mouse.right_button_up = true;
+      }
+      break;
+    }
+  }
+}
+
+void mouse_callback(GLFWwindow* window, double x, double y) {
+  ActiveGame->Mouse.position = glm::vec2(x, y);
+}
+
+void keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mode) {
+  if (key >= 0) {
+    if (action == GLFW_PRESS) {
+      ActiveGame->Keyboard[key] = { true, true, false };
+    } else if (action == GLFW_RELEASE) {
+      ActiveGame->Keyboard[key] = { false, false, true };
+    }
+  }
+}
 
 // Game constructor
 Game::Game(unsigned int width, unsigned int height, std::string window_title, bool fullscreen) {
   // Set internal width and height
   this->width = width;
   this->height = height;
-  this->GameTitle = window_title;
+  this->title = window_title;
 
   // Initialise GLFW
   if (!glfwInit()) {
@@ -27,7 +74,7 @@ Game::Game(unsigned int width, unsigned int height, std::string window_title, bo
   }
 
   // Create a window for the game
-  this->fullscreen = false;
+  // this->fullscreen = false;
   set_window_hints();
   create_window();
   if (fullscreen) toggle_fullscreen();
@@ -36,73 +83,11 @@ Game::Game(unsigned int width, unsigned int height, std::string window_title, bo
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  // Initialise the game
-  this->init();
-}
+  // Set the callbacks for the game
+  glfwSetCursorPosCallback(this->window, mouse_callback);
+  glfwSetMouseButtonCallback(this->window, mouse_button_callback);
+  glfwSetKeyCallback(this->window, keyboard_callback);
 
-// Game deconstructor
-Game::~Game() {
-  // Properly remove all the resources in resource manager's list
-  ResourceManager::deallocate();
-  delete GameRenderer;
-
-  // Clean up and close the game
-  glfwDestroyWindow(this->GameWindow);
-  glfwTerminate();
-}
-
-void Game::load_level(const char *path) {
-  this->GameState = std::map<std::string, bool>();
-
-  Mouse.clicked_object = nullptr;
-
-  for (Entity *&object : Entities::all()) {
-    Entities::uninstantiate(object->id);
-  }
-
-  std::vector<std::vector<std::string>> instantiation_order;
-  std::ifstream levelmap(path);
-  std::string delimiter = ";";
-  std::string line;
-  if (levelmap.is_open()) {
-    while(std::getline(levelmap, line)) {
-      // Erase all spaces from the file
-      line.erase(std::remove_if(line.begin(), line.end(), [](unsigned char x) { return std::isspace(x); }), line.end());
-      if (line.find("//") == 0 || !line.size()) continue;
-
-      std::vector<std::string> layer;
-
-      int pos = 0;
-      pos = line.find(delimiter);
-      while(pos != std::string::npos) {
-        std::string token = line.substr(0, pos);
-        layer.push_back(token);
-        line.erase(0, pos + delimiter.length());
-        pos = line.find(delimiter);
-      }
-      layer.push_back(line);
-      instantiation_order.push_back(layer);
-    }
-  }
-
-  // // Create GameObjects
-  // for (int i = 0; i < instantiation_order.size(); i++) {
-  //   for (int j = 0; j < instantiation_order.begin()->size(); j++) {
-  //     std::string name = instantiation_order.at(i).at(j);
-  //     if (name.find(">") != std::string::npos) {
-  //       printf("%s\n", name.substr(0, name.find(">")).c_str());
-  //       Entity *t = Entities::instantiate(name.substr(0, name.find(">")), Transform(glm::vec2(TileSize.x * j, TileSize.y * i), TileSize, 0.0f, 1.0f));
-  //       if (name.substr(name.find(">") + 1) == "lock") t->interactive = false;
-  //       else throw std::runtime_error("Invalid property\n");
-  //     } else Entity *t = Entities::instantiate(name, Transform(glm::vec2(TileSize.x * j, TileSize.y * i), TileSize));
-  //   }
-  // }
-
-  // if (Entities::filter("goal") == std::vector<Entity*>()) printf("[WARNING] Level has no goal tile!\n");
-}
-
-// Initialise the game by loading in and initialising all the required assets
-void Game::init() {
   // Set the clear colour of the scene background
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -111,82 +96,93 @@ void Game::init() {
   TextShader = ResourceManager::Shader::load("src/shaders/text.vs", "src/shaders/text.fs", "text");
 
   // Instantiate the camera and the renderer
-  GameCamera = new Camera(this->width, this->height, 0.001f, 100.0f);
-  TextCamera = GameCamera;
+  camera = new Camera(this->width, this->height, 0.001f, 100.0f);
+  TextCamera = camera;
   // WindowSize = glm::vec2(this->width, this->height);
-  GameRenderer = new Renderer(SpriteShader, GameCamera);
-
-  // Initialise the font renderer
-  // ResourceManager::Font::load("fonts/inclusive.ttf", "monocraft", 128, FILTER_LINEAR);
-  ResourceManager::Texture::load("textures/blank.png", true, "blank");
+  renderer = new Renderer(SpriteShader, camera);
 
   // Assign the camera and the renderer as global renderers for the GameObject
-  Entities::Camera = GameCamera;
-  Entities::Renderer = GameRenderer;
+  Entities::Camera = camera;
+  Entities::Renderer = renderer;
 
   // Load the textures from a given R* file
   ResourceManager::Texture::load_from_file("required.textures");
-  
-  // // Create the player
-  // BasePlayer = Characters::Players::create("player", ResourceManager::Texture::get("blank"), Transform(glm::vec3(100.0f, 450.0f, 1.0f), glm::vec2(72.72f, 100.0f)), { "player" });
-  // BasePlayer->texture_map = TextureMap(std::vector<Texture>(), true, 150.0);
-  // BasePlayer->debug_colliders = true;
-
-  // // Load the player's animation sprites
-  // std::string base_name = "run";
-  // std::string base_path = "textures/player/";
-  // for (int i = 0; i < 5; i++) {
-  //   BasePlayer->texture_map.textures.push_back(ResourceManager::Texture::load((base_path + base_name + std::to_string(i) + ".png").c_str(), true, "player-" + base_name + "-" + std::to_string(i)));
-  // }
-  
-  // Load the ObjectPrefabs from the Prefabs R* file
-  // Entities::Prefabs::load_from_file("required.prefabs");
 }
 
-bool Game::state(std::string state) {
-  if (this->GameState.find(state) != this->GameState.end())
-    return this->GameState[state];
-  else
-    return false;
+// Game deconstructor
+Game::~Game() {
+  // Properly remove all the resources in resource manager's list
+  ResourceManager::deallocate();
+  delete renderer;
+  delete camera;
+
+  // Clean up and close the game
+  glfwDestroyWindow(this->window);
+  glfwTerminate();
 }
 
-std::string Game::cstate(std::string state) {
-  if (this->CriticalGameState.find(state) != this->CriticalGameState.end())
-    return this->CriticalGameState[state];
-  else
-    return "";
+void Game::set_active() {
+  ActiveGame = this;
 }
 
 void Game::run() {
-  std::chrono::high_resolution_clock::time_point delta_start_point, delta_end_point;
-  while(!glfwWindowShouldClose(this->GameWindow)) {
-    std::chrono::duration<double> elapsed_seconds{delta_end_point - delta_start_point};
+  std::chrono::high_resolution_clock::time_point delta_start, delta_end;
+  std::chrono::high_resolution_clock::time_point update_start, update_end;
+  while(!glfwWindowShouldClose(this->window)) {
+    std::chrono::duration<double> elapsed_seconds{delta_end - delta_start};
     Time::delta = elapsed_seconds.count();
-    if (fps_timer) {
-      FPS = 1.0f / Time::delta;
-      glfwSetWindowTitle(GameWindow, (this->GameTitle + " [FPS: " + std::to_string(FPS) + "]").c_str());
-      fps_timer.reset();
-    }
 
-    delta_start_point = std::chrono::high_resolution_clock::now();
+    delta_start = std::chrono::high_resolution_clock::now();
+
+    update_start = std::chrono::high_resolution_clock::now();
     this->update();
     this->render();
-    delta_end_point = std::chrono::high_resolution_clock::now();
+    update_end = std::chrono::high_resolution_clock::now();
+
+    double sleep_time = min_frame_time - (std::chrono::duration<double>(update_end - update_start).count());
+    if (sleep_time > 0.0f) {
+      const auto t1 = std::chrono::high_resolution_clock::now();
+      std::this_thread::sleep_for(std::chrono::duration<double>(sleep_time - sleep_buffer));
+
+      const auto t2 = std::chrono::high_resolution_clock::now();
+      const std::chrono::duration<double> elapsed = t2 - t1;
+
+      const auto t3 = std::chrono::high_resolution_clock::now();
+      for (auto t = std::chrono::high_resolution_clock::now(); std::chrono::duration<double>(t - t3).count() < sleep_time - elapsed.count(); t = std::chrono::high_resolution_clock::now()) {
+        // printf("t-t3: %.10f, sleep-elapsed: %.6f\n", std::chrono::duration<double>(t - t3).count(), sleep_time - elapsed.count());
+      }
+
+      // printf("meant to sleep: %.6f; slept for %.6f seconds\n", sleep_time, elapsed);
+    }
+
+    delta_end = std::chrono::high_resolution_clock::now();
+    int FPS = 1.0f / std::chrono::duration<double>(delta_end - delta_start).count();
+
+    if (fps_timer) {
+      glfwSetWindowTitle(window, (this->title + " [FPS: " + std::to_string(FPS) + "]").c_str());
+      fps_timer.reset();
+    }
   }
 }
 
 void Game::update() {
-  if (!this->state("game-over")) {
-    fps_timer.tick(Time::delta);
-  }
+  fps_timer.tick(Time::delta);
 
-  if (this->Keyboard['F'].pressed) toggle_fullscreen();
-
-  // Reset the pressed and released status of the mouse buttons
-  Mouse.reset();
+  if (Keyboard['F'].pressed) toggle_fullscreen();
 
   // If the escape key was pressed, then close the window
-  if (Keyboard[GLFW_KEY_ESCAPE].pressed) glfwSetWindowShouldClose(this->GameWindow, true);
+  if (Keyboard[GLFW_KEY_ESCAPE].pressed) glfwSetWindowShouldClose(this->window, true);
+
+  if (Keyboard['0'].pressed) newfps(10);
+  if (Keyboard['1'].pressed) newfps(60);
+  if (Keyboard['2'].pressed) newfps(144);
+  if (Keyboard['3'].pressed) newfps(480);
+  if (Keyboard['4'].pressed) newfps(960);
+  if (Keyboard['5'].pressed) newfps(1000);
+  if (Keyboard['6'].pressed) newfps(3000);
+  if (Keyboard['7'].pressed) newfps(7000);
+  if (Keyboard['8'].pressed) newfps(10000);
+  if (Keyboard['9'].pressed) newfps(0);
 
   // Reset KeyState::pressed and KeyState::released
   std::vector<int> released_keys;
@@ -199,29 +195,22 @@ void Game::update() {
     this->Keyboard.erase(this->Keyboard.find(key));
   }
 
+  // Reset the pressed and released status of the mouse buttons
+  Mouse.reset();
+
   // Poll GLFW for new events
   glfwPollEvents();
 }
 
 void Game::render() {
   // Clear the screen (paints it to the predefined clear colour)
-  // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  glClear(GL_COLOR_BUFFER_BIT);
-
-  // // Render the parallax background
-  // const float zoom = 100.0f;
-  // const float z_index = 1.0f;
-  // const glm::vec2 scale = glm::vec2(width + zoom, height + zoom);
-  // GameRenderer->render(ResourceManager::Texture::get("background-bg"), Transform(glm::vec2(0.0f), scale, 0.0f, z_index));
-  // GameRenderer->render(ResourceManager::Texture::get("background-far"), Transform((Mouse.position / glm::vec2(150.0f) - glm::vec2(zoom / 2.0f)), scale, 0.0f, z_index));
-  // GameRenderer->render(ResourceManager::Texture::get("background-mid"), Transform((Mouse.position / glm::vec2(100.0f) - glm::vec2(zoom / 2.0f)), scale, 0.0f, z_index));
-  // GameRenderer->render(ResourceManager::Texture::get("background-near"), Transform((Mouse.position / glm::vec2(50.0f) - glm::vec2(zoom / 2.0f)), scale, 0.0f, z_index));
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   // // Render the current fps of the game
   // Text::render("FPS: " + std::to_string(FPS), "monocraft", Transform(glm::vec2(0.0f), glm::vec2(0.5f)), TEXT_BOTTOM_LEFT);
   
   // Actually display the updated images to the screen
-  glfwSwapBuffers(this->GameWindow);
+  glfwSwapBuffers(this->window);
 }
 
 void Game::set_window_hints() {
@@ -236,24 +225,18 @@ void Game::set_window_hints() {
 
 void Game::create_window() {
   // Create a GLFW window
-  this->GameWindow = glfwCreateWindow(width, height, this->GameTitle.c_str(), this->fullscreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
-  glfwMakeContextCurrent(this->GameWindow);
+  this->window = glfwCreateWindow(width, height, this->title.c_str(), this->fullscreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
+  glfwMakeContextCurrent(this->window);
   glfwSwapInterval(0);
 
   // Initialise OpenGL using GLAD
   gladLoadGL();
 
   // If the window does not exist, then something went wrong!
-  if (this->GameWindow == NULL) error("GLFW window failed to initialise!");
+  if (this->window == nullptr) error("GLFW window failed to initialise!");
 
   // Set the GLFW cursor mode to normal
-  glfwSetInputMode(this->GameWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-}
-
-void Game::set_callbacks(GLFWcursorposfun cursorpos_callback, GLFWmousebuttonfun cursorbutton_callback, GLFWkeyfun keyboard_callback) {
-  glfwSetCursorPosCallback(this->GameWindow, cursorpos_callback);
-  glfwSetMouseButtonCallback(this->GameWindow, cursorbutton_callback);
-  glfwSetKeyCallback(this->GameWindow, keyboard_callback);
+  glfwSetInputMode(this->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 
 void Game::toggle_fullscreen() {
@@ -282,5 +265,6 @@ void Game::toggle_fullscreen() {
   WindowSize = glm::vec2(width, height);
 
   // Toggle the window fullscreen state
-  glfwSetWindowMonitor(this->GameWindow, this->fullscreen ? glfwGetPrimaryMonitor() : nullptr, 0, 0, width, height, this->fullscreen ? refresh : GLFW_DONT_CARE);
+  glfwSetWindowMonitor(this->window, this->fullscreen ? glfwGetPrimaryMonitor() : nullptr, 0, 0, width, height, this->fullscreen ? refresh : GLFW_DONT_CARE);
 }
+

@@ -1,7 +1,4 @@
-obj/
 *.out
 out/
-.vscode
 .cache
 neovide_backtraces.log
-AppDir/

@@ -15,7 +15,7 @@ CPP_OBJ_FILES := $(patsubst $(SRC_DIR)%.cpp, $(OUT_DIR)%.o, $(CPP_SRC_FILES))
 OBJ_FILES := $(C_OBJ_FILES) $(CPP_OBJ_FILES)
 
 # The output file that the program will create after compiling everything
-OUT_FILE := game
+OUT_FILE := final-game
 
 # The C++ compiler
 # The '@' symbol just silences the line, meaning that the command will not be echoed to the console
@@ -25,7 +25,7 @@ MKDIR := @mkdir -p
 
 # The flags to be passed to the C compiler (the $CC)
 # -w -> supresses all warnings
-COMPILER_FLAGS := -w -std=c++20 -I$(INC_DIR) -I/usr/include/freetype2 -g
+COMPILER_FLAGS := -w -I$(INC_DIR) -I/usr/include/freetype2 -g
 
 # The libraries that our executable is being linked against
 LIBRARIES := -L$(LIB_DIR) -lfreetype -lGL -lglfw3 -lX11 -lm

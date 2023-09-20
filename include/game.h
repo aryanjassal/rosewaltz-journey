@@ -11,6 +11,7 @@
 #include <chrono>
 #include <unistd.h>
 #include <fstream>
+#include <thread>
 
 #include "input.h"
 #include "renderer.h"
@@ -29,9 +30,7 @@ class Game {
   public:
     // Set up state variables
     MouseState Mouse;
-    std::map<int, KeyState> Keyboard;
-    std::map<std::string, bool> GameState;
-    std::map<std::string, std::string> CriticalGameState;
+    KeyboardState Keyboard;
 
     // Set up other generic variables
     unsigned int width, height;
@@ -41,33 +40,20 @@ class Game {
     Game(unsigned int width, unsigned int height, std::string window_title, bool fullscreen = false);
     ~Game();
 
-    // This function initialises all the variables and other resources that the game will need access to
-    void init();
-
     // This function handles the main game logic loop
     void run();
 
-    // This function contains code to render stuff on the screen
-    void render();
-
-    // This function contains code to update variables like input events, etc.
-    void update();
-
-    // Returns the global state of the variable if it exists, otherwise returns false.
-    bool state(std::string);
-
-    // Returns the global state of the critical variable if it exists, otherwise returns false.
-    std::string cstate(std::string);
-
-    // Set GLFW callbacks
-    void set_callbacks(GLFWcursorposfun cursorpos_callback, GLFWmousebuttonfun cursorbutton_callback, GLFWkeyfun keyboard_callback);
-  
+    // Set the game as active, redirecting input events to this game
+    void set_active();
+    
   private:
-    // The GLFW window to which everything is output
-    GLFWwindow *GameWindow;
+    // Global variables used by the game
+    GLFWwindow *window;
+    Renderer *renderer;
+    Camera *camera;
 
     // Store the name of the window
-    std::string GameTitle;
+    std::string title;
 
     // Set all flags/hints for the window
     void set_window_hints();
@@ -78,8 +64,11 @@ class Game {
     // Toggle the fullscreen status of the window
     void toggle_fullscreen();
 
-    // Load a level from a R* level file
-    void load_level(const char *path);
+    // Render stuff onto the screen
+    void render();
+    
+    // Run the logic and other computations
+    void update();
 };
 
 #endif
