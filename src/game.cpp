@@ -4,20 +4,24 @@
 Game *ActiveGame;
 
 // FPS
+int FPS;
 int max_fps = 480;
 double min_frame_time = 1.0f / max_fps;
-const double sleep_buffer = 0.0005f;
-Timer fps_timer = Timer(0);
+double sleep_buffer = 0.0005f;
+Timer fps_timer = Timer(100);
 
 // SUPER ULTRA TEMP
+// TODO (new module): never mind actually super useful code which needs its own module
 void newfps(int fps) {
   if (fps == 0) {
     max_fps = 0;
     min_frame_time = 0;
+    sleep_buffer = 0;
     return;
   }
   max_fps = fps;
-  min_frame_time = 1.0f / max_fps;
+  min_frame_time = 1.0f / fps;
+  sleep_buffer = 0.3f / fps;
 }
 
 // Callbacks for GLFW
@@ -107,6 +111,8 @@ Game::Game(unsigned int width, unsigned int height, std::string window_title, bo
 
   // Load the textures from a given R* file
   ResourceManager::Texture::load_from_file("required.textures");
+
+  ResourceManager::Font::load("fonts/inclusive.ttf", "inclusive", 128);
 }
 
 // Game deconstructor
@@ -140,6 +146,7 @@ void Game::run() {
     update_end = std::chrono::high_resolution_clock::now();
 
     double sleep_time = min_frame_time - (std::chrono::duration<double>(update_end - update_start).count());
+    //TODO (new feature): move this whole thing into a separate function `smart_sleep(time_until, smart_sleep_margin)`
     if (sleep_time > 0.0f) {
       const auto t1 = std::chrono::high_resolution_clock::now();
       std::this_thread::sleep_for(std::chrono::duration<double>(sleep_time - sleep_buffer));
@@ -148,17 +155,13 @@ void Game::run() {
       const std::chrono::duration<double> elapsed = t2 - t1;
 
       const auto t3 = std::chrono::high_resolution_clock::now();
-      for (auto t = std::chrono::high_resolution_clock::now(); std::chrono::duration<double>(t - t3).count() < sleep_time - elapsed.count(); t = std::chrono::high_resolution_clock::now()) {
-        // printf("t-t3: %.10f, sleep-elapsed: %.6f\n", std::chrono::duration<double>(t - t3).count(), sleep_time - elapsed.count());
-      }
-
-      // printf("meant to sleep: %.6f; slept for %.6f seconds\n", sleep_time, elapsed);
+      for (auto t = std::chrono::high_resolution_clock::now(); std::chrono::duration<double>(t - t3).count() < (sleep_time - elapsed.count()); t = std::chrono::high_resolution_clock::now());
     }
 
     delta_end = std::chrono::high_resolution_clock::now();
-    int FPS = 1.0f / std::chrono::duration<double>(delta_end - delta_start).count();
 
     if (fps_timer) {
+      FPS = std::ceil(1.0f / std::chrono::duration<double>(delta_end - delta_start).count());
       glfwSetWindowTitle(window, (this->title + " [FPS: " + std::to_string(FPS) + "]").c_str());
       fps_timer.reset();
     }
@@ -206,8 +209,8 @@ void Game::render() {
   // Clear the screen (paints it to the predefined clear colour)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  // // Render the current fps of the game
-  // Text::render("FPS: " + std::to_string(FPS), "monocraft", Transform(glm::vec2(0.0f), glm::vec2(0.5f)), TEXT_BOTTOM_LEFT);
+  // Render the current fps of the game
+  Text::render("FPS: " + std::to_string(FPS), "inclusive", Transform(glm::vec2(0.0f), glm::vec2(0.5f)), TEXT_BOTTOM_LEFT);
   
   // Actually display the updated images to the screen
   glfwSwapBuffers(this->window);
